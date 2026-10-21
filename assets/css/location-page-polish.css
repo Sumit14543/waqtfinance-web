@@ -1,0 +1,676 @@
+/* ==========================================================================
+   LOCATION LANDING PAGES PREMIUM REDESIGN
+   ========================================================================== */
+.wf-location-page {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+/* 1. Hero Section */
+.wf-location-page .wf-location-hero {
+    background: linear-gradient(135deg, #091e3b 0%, #062547 50%, #001730 100%);
+    min-height: 360px;
+    overflow: hidden;
+    padding: 60px 0 65px;
+    position: relative;
+    text-align: center;
+}
+
+.wf-location-page .wf-location-hero::after {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    content: "";
+    inset: 0;
+    mask-image: radial-gradient(circle at center, #000 65%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at center, #000 65%, transparent 100%);
+    opacity: 0.65;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+}
+
+.wf-location-page .wf-location-hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.wf-location-page .wf-location-breadcrumb {
+    font-size: 13px;
+    margin-bottom: 30px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    display: flex;
+    justify-content: center;
+}
+
+.wf-location-page .wf-location-breadcrumb a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.wf-location-page .wf-location-breadcrumb a:hover {
+    color: #ffffff;
+}
+
+.wf-location-page .wf-location-breadcrumb span {
+    margin: 0 8px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.wf-location-page .wf-location-hero-content {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.wf-location-page .wf-location-kicker {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #93c5fd;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.wf-location-page .wf-location-kicker i {
+    font-size: 12px;
+}
+
+.wf-location-page .wf-location-hero h1 {
+    font-size: clamp(34px, 4.2vw, 54px);
+    font-weight: 850;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin: 16px 0;
+    color: #ffffff;
+    max-width: 760px;
+}
+
+.wf-location-page .wf-location-hero-content p {
+    font-size: 16px;
+    line-height: 1.65;
+    color: #cbd5e1;
+    margin: 0 auto 28px;
+    max-width: 680px;
+}
+
+.wf-location-page .wf-location-actions {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.wf-location-page .wf-location-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13.5px;
+    font-weight: 700;
+    min-height: 46px;
+    padding: 12px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.wf-location-page .wf-location-btn.primary {
+    background: #18529c;
+    border: 1px solid #18529c;
+    color: #ffffff;
+}
+
+.wf-location-page .wf-location-btn.primary:hover {
+    background: #0d3f7b;
+    border-color: #0d3f7b;
+    transform: translateY(-1px);
+}
+
+.wf-location-page .wf-location-btn.secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+}
+
+.wf-location-page .wf-location-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* 3. Products Section */
+.wf-location-page .wf-location-products {
+    background: #f8fafc;
+    padding: 80px 0;
+}
+
+.wf-location-page .wf-location-section-head {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto 36px;
+}
+
+.wf-location-page .wf-location-section-head span {
+    color: #18529c;
+    font-size: 12.5px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.wf-location-page .wf-location-section-head h2 {
+    font-size: clamp(26px, 3.2vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    color: #0f172a;
+    margin-top: 6px;
+}
+
+.wf-location-page .wf-location-section-head p {
+    font-size: 14.5px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+.wf-location-page .wf-location-area-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px 0 40px;
+}
+
+.wf-location-page .wf-location-area-chips span {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    font-size: 12.5px;
+    font-weight: 650;
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.wf-location-page .wf-location-area-chips span:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.wf-location-page .wf-location-product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+/* 4. Scenario Guidance Section */
+.wf-location-page .wf-location-context {
+    padding: 80px 0;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+}
+
+.wf-location-page .wf-location-scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 36px;
+}
+
+.wf-location-page .wf-location-scenario-grid article {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #cbd5e1 !important; /* Left neutral brand border */
+    border-radius: 12px !important;
+    padding: 24px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+}
+
+.wf-location-page .wf-location-scenario-grid article:hover {
+    border-color: #cbd5e1 !important;
+    border-left-color: #18529c !important; /* Active brand border on hover */
+    box-shadow: 0 12px 20px -8px rgba(15, 23, 42, 0.05) !important;
+    transform: translateY(-3px) !important;
+}
+
+.wf-location-page .wf-location-scenario-grid article > span {
+    width: 32px !important;
+    height: 32px !important;
+    background: rgba(24, 82, 156, 0.08) !important; /* Soft blue background */
+    color: #18529c !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 16px !important;
+    transition: all 0.25s ease !important;
+}
+
+.wf-location-page .wf-location-scenario-grid article:hover > span {
+    background: #18529c !important;
+    color: #ffffff !important;
+}
+
+.wf-location-page .wf-location-scenario-grid h3 {
+    font-size: 16px !important;
+    font-weight: 750 !important;
+    color: #0f172a !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+}
+
+.wf-location-page .wf-location-scenario-grid p {
+    font-size: 13.5px !important;
+    color: #64748b !important;
+    line-height: 1.6 !important;
+    margin: 0 !important;
+}
+
+.wf-location-page .wf-location-note {
+    margin-top: 32px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #18529c !important; /* Bold brand highlight */
+    border-radius: 12px !important;
+    padding: 18px 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.01) !important;
+}
+
+.wf-location-page .wf-location-note i {
+    color: #18529c !important;
+    font-size: 18px !important;
+    flex-shrink: 0 !important;
+}
+
+.wf-location-page .wf-location-note p {
+    font-size: 13.5px !important;
+    color: #475569 !important;
+    margin: 0 !important;
+    line-height: 1.6 !important;
+    font-weight: 500 !important;
+}
+
+/* 5. EMI Calculator Section */
+.wf-location-page .wf-location-calculator {
+    background: #f1f5f9;
+    padding: 80px 0;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.wf-location-page .wf-location-calc-grid {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: 40px;
+    align-items: center;
+}
+
+.wf-location-page .wf-location-calc-grid h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+
+.wf-location-page .wf-location-calc-grid p {
+    font-size: 13.5px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.wf-location-page .wf-location-fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.wf-location-page .wf-location-fields label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #475569;
+    letter-spacing: 0.5px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wf-location-page .wf-location-fields input {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #1e293b;
+    height: 44px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.wf-location-page .wf-location-fields input:focus {
+    border-color: #18529c;
+    box-shadow: 0 0 0 4px rgba(0, 102, 214, 0.1);
+    outline: none;
+}
+
+.wf-location-page .wf-location-result {
+    background: linear-gradient(135deg, #0b3c7b 0%, #062b5d 100%) !important;
+    color: #ffffff !important;
+    border-radius: 14px !important;
+    padding: 30px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(6, 43, 93, 0.15) !important;
+}
+
+.wf-location-page .wf-location-result span {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.wf-location-page .wf-location-result strong {
+    font-size: 38px;
+    font-weight: 850;
+    letter-spacing: -1px;
+    margin: 8px 0;
+    color: #ffffff;
+    display: block;
+}
+
+.wf-location-page .wf-location-result small {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 6. FAQ Section */
+.wf-location-page .wf-location-faq {
+    padding: 80px 0;
+    background: #ffffff;
+}
+
+.wf-location-page .wf-location-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 30px auto 0;
+    max-width: 860px;
+}
+
+.wf-location-page .wf-location-faq-list article {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.wf-location-page .wf-location-faq-list article:hover {
+    border-color: #cbd5e1;
+}
+
+.wf-location-page .wf-location-faq-list button {
+    background: #ffffff;
+    width: 100%;
+    border: none;
+    padding: 18px 24px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wf-location-page .wf-location-faq-list button:focus-visible {
+    outline: 2px solid #18529c;
+}
+
+.wf-location-page .wf-location-faq-list button i {
+    align-items: center;
+    background: #f1f5f9;
+    border-radius: 50%;
+    color: #18529c;
+    display: flex;
+    height: 28px;
+    justify-content: center;
+    width: 28px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.wf-location-page .wf-location-faq-list article.open {
+    border-color: #cbd5e1;
+}
+
+.wf-location-page .wf-location-faq-list article.open button {
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.wf-location-page .wf-location-faq-list article.open button i {
+    background: #18529c;
+    color: #ffffff;
+    transform: rotate(45deg); /* Plus turns to X */
+}
+
+.wf-location-page .wf-location-faq-list article > div {
+    padding: 18px 24px;
+}
+
+.wf-location-page .wf-location-faq-list article > div p {
+    font-size: 14.2px;
+    color: #475569;
+    line-height: 1.65;
+    margin: 0;
+}
+
+/* 7. Nearby & Guide Section */
+.wf-location-page .wf-location-nearby {
+    background: #f8fafc;
+    padding: 60px 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.wf-location-page .wf-location-nearby .container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
+.wf-location-page .wf-location-nearby .container > div {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.wf-location-page .wf-location-nearby h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.wf-location-page .wf-location-nearby p {
+    font-size: 14.5px !important;
+    color: #64748b !important;
+    margin-bottom: 24px !important;
+    line-height: 1.6 !important;
+}
+
+/* Nearby service areas tag pills */
+.wf-location-page .wf-location-nearby .container > div:nth-child(1) a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 30px !important;
+    padding: 8px 18px !important;
+    color: #475569 !important;
+    font-weight: 650 !important;
+    text-decoration: none !important;
+    margin-right: 10px !important;
+    margin-bottom: 12px !important;
+    font-size: 13.5px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.wf-location-page .wf-location-nearby .container > div:nth-child(1) a:hover {
+    background: rgba(24, 82, 156, 0.04) !important;
+    color: #18529c !important;
+    border-color: #18529c !important;
+    transform: translateY(-2px) !important;
+}
+
+.wf-location-page .wf-location-nearby .container > div:nth-child(1) a i {
+    font-size: 11px !important;
+    margin-left: 8px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.wf-location-page .wf-location-nearby .container > div:nth-child(1) a:hover i {
+    transform: translateX(2px) !important;
+}
+
+/* Contact guide action buttons */
+.wf-location-page .wf-location-nearby .container > div:nth-child(2) a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: all 0.25s ease !important;
+    box-sizing: border-box !important;
+}
+
+/* Secondary outline button (Read FAQs) */
+.wf-location-page .wf-location-nearby .container > div:nth-child(2) a:nth-of-type(1) {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #475569 !important;
+}
+
+.wf-location-page .wf-location-nearby .container > div:nth-child(2) a:nth-of-type(1):hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+/* Primary solid button (Contact support) */
+.wf-location-page .wf-location-nearby .container > div:nth-child(2) a:nth-of-type(2) {
+    background: #18529c !important;
+    border: 1px solid #18529c !important;
+    color: #ffffff !important;
+    margin-left: 12px !important;
+}
+
+.wf-location-page .wf-location-nearby .container > div:nth-child(2) a:nth-of-type(2):hover {
+    background: #0d3f7b !important;
+    border-color: #0d3f7b !important;
+    box-shadow: 0 4px 12px rgba(24, 82, 156, 0.15) !important;
+}
+
+/* Responsive Overrides */
+@media (max-width: 991px) {
+    .wf-location-page .wf-location-hero-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+    .wf-location-page .wf-location-product-grid,
+    .wf-location-page .wf-location-scenario-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .wf-location-page .wf-location-calc-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .wf-location-page .wf-location-nearby .container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 640px) {
+    .wf-location-page .wf-location-hero {
+        min-height: 0;
+        padding: 30px 0 44px;
+    }
+    .wf-location-page .wf-location-breadcrumb {
+        margin-bottom: 24px;
+    }
+    .wf-location-page .wf-location-hero h1 {
+        font-size: 32px;
+    }
+    .wf-location-page .wf-location-products,
+    .wf-location-page .wf-location-context,
+    .wf-location-page .wf-location-calculator,
+    .wf-location-page .wf-location-faq {
+        padding: 48px 0;
+    }
+    .wf-location-page .wf-location-product-grid,
+    .wf-location-page .wf-location-scenario-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .wf-location-page .wf-location-fields {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .wf-location-page .wf-location-result {
+        padding: 24px !important;
+    }
+    .wf-location-page .wf-location-nearby .container > div:nth-child(2) a {
+        display: flex !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-bottom: 10px !important;
+    }
+}

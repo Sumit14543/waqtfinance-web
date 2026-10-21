@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /uploads/blogs/
+Disallow: /control-panel/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /form-actions/
+Disallow: /uploads/
+Disallow: /scratch/
+Disallow: /vendor/
+Disallow: /search
+Sitemap: https://waqtfinance.com/sitemap.xml

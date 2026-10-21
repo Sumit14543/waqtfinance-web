@@ -1,0 +1,245 @@
+# ----------------------------------------------------------------------
+# Waqt Finance - Production Apache Server Configuration (.htaccess)
+# Fully Optimized for SEO, Security & 100% Crawl Efficiency
+# ----------------------------------------------------------------------
+
+# 1. HTTP Security Headers Hardening
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Auto-Noindex for Admin Control Panel
+    SetEnvIf Request_URI "^/control-panel" IS_ADMIN
+    Header always set X-Robots-Tag "noindex, nofollow" env=IS_ADMIN
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Custom 404 error page routing
+ErrorDocument 404 /404.php
+
+RewriteEngine On
+
+# ==========================================================
+# 2. FORCE HTTPS + NON-WWW CANONICAL (Single 1-Hop)
+# ==========================================================
+RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$ [NC]
+RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$ [NC]
+RewriteCond %{HTTP_HOST} ^www\.waqtfinance\.com$ [NC,OR]
+RewriteCond %{HTTPS} !=on [OR]
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule ^ https://waqtfinance.com%{REQUEST_URI} [R=301,L]
+
+# Force trailing slash on /control-panel directory externally
+RewriteRule ^control-panel$ %{REQUEST_URI}/ [R=302,L]
+
+# Admin directory root should open the login screen instead of directory listing
+RewriteRule ^control-panel/$ control-panel/login.php [L]
+
+# Route /login to customer-login.php
+RewriteRule ^login/?$ customer-login.php [L]
+
+# Block direct access to hidden files and folders except ACME/well-known paths
+RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+RewriteRule (^|/)\. - [F,L]
+
+# Block accidental public debug/legacy PHP entry points
+RewriteRule ^test(\.php)?$ - [F,L,NC]
+RewriteRule ^assets/images/.*\.php$ - [F,L,NC]
+
+# Uploaded files must never execute as scripts
+RewriteRule ^uploads/.*\.(php|phtml|phar|cgi|pl|asp|aspx|jsp)$ - [F,L,NC]
+RewriteRule ^uploads/(edi|edi-documents)(/|$) - [F,L,NC]
+RewriteRule ^storage/ - [F,L,NC]
+
+# Block sensitive files (.env, .sql, .bak, .git, etc.)
+<FilesMatch "\.(env|sql|bak|git.*|yml|json|log|ini|conf)$">
+    <IfModule authz_core_module>
+        Require all denied
+    </IfModule>
+    <IfModule !authz_core_module>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<Files "test-gcs.php">
+    Require all denied
+</Files>
+
+# ==============================================================
+# 3. CRITICAL 410 GONE RULES (PREVENTS HTTP 500 SERVER CRASHES)
+# Must run BEFORE blog-detail.php routing
+# ==============================================================
+RewriteRule ^blog/personal-loan-vs-credit-card/?$ - [G,L,NC]
+RewriteRule ^blog/difference-between-emi-loan-and-payday-loan/?$ - [G,L,NC]
+RewriteRule ^blog/payday-loan-in-india-a-complete-guide-everything-you-need-to-know/?$ - [G,L,NC]
+RewriteRule ^search/?$ - [G,L,NC]
+
+# ==============================================================
+# 4. DUAL-URL BLOG REDIRECTS (FIXES ROOT CANNIBALIZATION)
+# Must run BEFORE Rule #5 extensionless rewrite
+# ==============================================================
+RewriteRule ^complete-guide-for-payday-loan(\.php)?/?$ /blog/complete-guide-for-payday-loan [R=301,L,NC]
+RewriteRule ^how-to-get-instant-salary-loan(\.php)?/?$ /blog/how-to-get-instant-salary-loan [R=301,L,NC]
+RewriteRule ^vehicle-loan-for-self-employed(\.php)?/?$ /blog/vehicle-loan-for-self-employed [R=301,L,NC]
+RewriteRule ^nbfc-for-business-loan(\.php)?/?$ /blog/nbfc-for-business-loan [R=301,L,NC]
+RewriteRule ^electric-vehicle-benefits(\.php)?/?$ /blog/electric-vehicle-benefits [R=301,L,NC]
+RewriteRule ^commercial-vehicle-loan-guide(\.php)?/?$ /blog/commercial-vehicle-loan-guide [R=301,L,NC]
+RewriteRule ^how-cibil-score-affects-your-personal-loan(\.php)?/?$ /blog/how-cibil-score-affects-your-personal-loan [R=301,L,NC]
+RewriteRule ^business-loan-women(\.php)?/?$ /blog/business-loan-for-women-entrepreneurs [R=301,L,NC]
+RewriteRule ^mistake-to-avoid-personal-loan(\.php)?/?$ /blog/mistake-to-avoid-personal-loan [R=301,L,NC]
+RewriteRule ^startup-business-loan-how-to-apply(\.php)?/?$ /blog/startup-business-loan-how-to-apply [R=301,L,NC]
+RewriteRule ^low-interest-rate(\.php)?/?$ /blog/low-interest-rate [R=301,L,NC]
+RewriteRule ^benefits-of-payday-loan-for-salaried-employees(\.php)?/?$ /blog/benefits-of-payday-loan-for-salaried-employees [R=301,L,NC]
+RewriteRule ^apply-for-edi-loan-online(\.php)?/?$ /blog/apply-for-edi-loan-online [R=301,L,NC]
+# ==============================================================
+# 5. LEGACY BLOG-CONTENT & STATIC REDIRECTS
+# ==============================================================
+RewriteRule ^blog-content/about-us\.php$ /about-us [R=301,L,NC]
+RewriteRule ^blog-content/personal-loan\.php$ /personal-loan [R=301,L,NC]
+RewriteRule ^blog-content/fair-practice-code\.php$ /fair-practice-code [R=301,L,NC]
+RewriteRule ^blog-content/refund-cancellation\.php$ /refund-cancellation [R=301,L,NC]
+RewriteRule ^blog-content/edi-loan\.php$ /edi-loan [R=301,L,NC]
+RewriteRule ^blog-content/vehicle-loan\.php$ /vehicle-loan [R=301,L,NC]
+RewriteRule ^blog-content/bussiness-loan\.php$ /business-loan [R=301,L,NC]
+RewriteRule ^blog-content/anti-money-laundering\.php$ /anti-money-laundering [R=301,L,NC]
+RewriteRule ^blog-content/pay-day-loan\.php$ /pay-day-loan [R=301,L,NC]
+RewriteRule ^blog-content/grievance-redressal-policy\.php$ /grievance-redressal-policy [R=301,L,NC]
+RewriteRule ^blog-content/apr-calc\.php$ /emi-calculator [R=301,L,NC]
+RewriteRule ^blog-content/interest-rate-policy\.php$ /interest-rate-policy [R=301,L,NC]
+RewriteRule ^blog-content/privacy-policy\.php$ /privacy-policy [R=301,L,NC]
+RewriteRule ^blog-content/terms-condition\.php$ /terms-condition [R=301,L,NC]
+RewriteRule ^blog-content/emi-calculator\.php$ /emi-calculator [R=301,L,NC]
+RewriteRule ^blog-content/home-loan-cal\.php$ /emi-calculator [R=301,L,NC]
+RewriteRule ^blog-content/eligibility-calculator\.php$ /eligibility-calculator [R=301,L,NC]
+
+# Specific slug typo fixes
+RewriteRule ^blog/msme-business-laon/?$ /blog/msme-business-loan [R=301,L,NC]
+RewriteRule ^blog/business-loan-women/?$ /blog/business-loan-for-women-entrepreneurs [R=301,L,NC]
+RewriteRule ^blog/is-pday-loan-safe/?$ /blog/is-payday-loan-safe [R=301,L,NC]
+RewriteRule ^blog/lap-10/?$ /blog/get-loan-against-property-at-lowest-interest [R=301,L,NC]
+RewriteRule ^blog/pday-loan-interest-rates-explained/?$ /blog/payday-loan-interest-rates-explained [R=301,L,NC]
+RewriteRule ^blog/pday-vs-personal-loan/?$ /blog/payday-loan-vs-personal-loan [R=301,L,NC]
+RewriteRule ^blog/pday-8/?$ /blog/payday-loan-in-india-a-complete-guide-to-instant-payday-loan-online-for-salaried-employees [R=301,L,NC]
+RewriteRule ^blog/vehile-9/?$ /blog/vehicle-loan-for-self-employed [R=301,L,NC]
+RewriteRule ^blog/lap-8/?$ /blog/residential-vs-commercial-lap [R=301,L,NC]
+RewriteRule ^blog/edi-7/?$ /blog/top-banks-for-edi-loan-india [R=301,L,NC]
+RewriteRule ^blog/business-laon-eligibility-criteria-explained/?$ /blog/business-loan-eligibility-criteria-explained [R=301,L,NC]
+
+# Legacy Page Typo / Extension Redirects
+RewriteRule ^contact-us\.php$ /contact-us [R=301,L,NC]
+RewriteRule ^apply\.php$ /apply [R=301,L,NC]
+RewriteRule ^barcode(\.php)?$ /pay-online [R=301,L,NC]
+RewriteRule ^Edi-loan(\.php)?$ /edi-loan [R=301,L]
+RewriteRule ^edi-loan/?$ edi-loan.php [L]
+
+RewriteRule ^commercial-vehical-loan-giude/?$ /blog/commercial-vehicle-loan-guide [R=301,L,NC]
+RewriteRule ^Default\.aspx$ / [R=301,L,NC]
+RewriteRule ^bussiness-loan/?$ /business-loan [R=301,L,NC]
+RewriteRule ^index\.html$ / [R=301,L,NC]
+RewriteRule ^payday-loan\.php$ /pay-day-loan [R=301,L,NC]
+RewriteRule ^edi-loan-complete-guide/?$ /blog/edi-loan-complete-guide [R=301,L,NC]
+RewriteRule ^polices/?$ /privacy-policy [R=301,L,NC]
+RewriteRule ^improve-loan-eligibility/?$ /blog/improve-loan-eligibility [R=301,L,NC]
+RewriteRule ^loan-blogs/?$ /blog [R=301,L,NC]
+RewriteRule ^car-down-payment\.php$ /vehicle-loan [R=301,L,NC]
+RewriteRule ^apply-now\.html$ /apply [R=301,L,NC]
+RewriteRule ^contact-us\.html$ /contact-us [R=301,L,NC]
+RewriteRule ^faqs\.html$ /faqs [R=301,L,NC]
+RewriteRule ^car-loan\.html$ /vehicle-loan [R=301,L,NC]
+RewriteRule ^Products/?$ /products [R=301,L]
+RewriteRule ^products/?$ products.php [L]
+RewriteRule ^how-it-works\.html$ / [R=301,L,NC]
+RewriteRule ^product\.html$ /products [R=301,L,NC]
+RewriteRule ^msme-loan\.html$ /business-loan [R=301,L,NC]
+RewriteRule ^home-loan\.html$ /loan-against-property [R=301,L,NC]
+RewriteRule ^repay-loan\.html$ /repay [R=301,L,NC]
+RewriteRule ^AboutUs\.aspx$ /about-us [R=301,L,NC]
+RewriteRule ^service-area\.html$ / [R=301,L,NC]
+RewriteRule ^apr-calc/?$ /emi-calculator [R=301,L,NC]
+RewriteRule ^home-loan-cal/?$ /emi-calculator [R=301,L,NC]
+RewriteRule ^personal-loan-vs-credit-card/?$ /blog/tips-for-choosing-personal-loan [R=301,L,NC]
+
+# Generic fallback for any remaining /blog-content/<slug>
+RewriteRule ^blog-content/([^/]+)(\.php)?/?$ /blog/$1 [R=301,L,NC]
+RewriteRule ^blog-content/?$ /blog [R=301,L,NC]
+
+# ==============================================================
+# 6. DYNAMIC APPLICATION ROUTING
+# ==============================================================
+# 6.1 Product in City Routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(personal-loan|business-loan|pay-day-loan|edi-loan|vehicle-loan|loan-against-property)-in-([^/]+)/?$ product-city-landing.php?product=$1&city=$2 [L,QSA]
+
+# 6.2 Blog Detail Routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^blog/([^/]+)/?$ blog-detail.php?slug=$1 [L,QSA]
+
+# 6.3 Location Page Routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^loan-in-([^/]+)/?$ location-detail.php?slug=$1 [L,QSA]
+
+# 6.4 API Extensionless Routing
+RewriteRule ^api/cibil/fetch/?$ api/cibil/fetch.php [L,QSA]
+
+# 6.5 Aadhaar KYC Callback & Flow Clean Routing
+RewriteRule ^callback/?$ callback.php [L,QSA]
+RewriteRule ^aadhaar-callback/?$ aadhaar_callback.php [L,QSA]
+RewriteRule ^aadhaar-initiate/?$ aadhaar_initiate.php [L,QSA]
+
+# ==============================================================
+# 7. EXTENSIONLESS URL HANDLING
+# ==============================================================
+# Strip .php extension via external 301 redirect
+RewriteCond %{THE_REQUEST} \s/+(.+)\.php[\s?] [NC]
+RewriteCond %{REQUEST_URI} !/control-panel [NC]
+RewriteCond %{REQUEST_URI} !/api [NC]
+RewriteCond %{REQUEST_URI} !/(callback|aadhaar) [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# Route extensionless URL to .php file internally
+RewriteCond %{REQUEST_URI} !/control-panel [NC]
+RewriteCond %{REQUEST_URI} !/api [NC]
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^ %{REQUEST_URI}.php [L]
+
+# ----------------------------------------------------------------------
+# 8. GZIP Compression (mod_deflate)
+# ----------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json application/xml application/rss+xml application/atom+xml image/svg+xml application/vnd.ms-fontobject application/x-font-ttf image/x-icon
+</IfModule>
+
+# ----------------------------------------------------------------------
+# 9. Leverage Browser Caching (mod_expires)
+# ----------------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType application/x-javascript "access plus 1 year"
+
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+</IfModule>

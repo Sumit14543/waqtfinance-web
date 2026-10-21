@@ -1,0 +1,222 @@
+a {
+    text-decoration: none;
+}
+
+/* Section */
+.prop-sec {
+width:100%;
+height:310px;
+display:flex;
+position:relative;
+font-family:Arial, sans-serif;
+}
+
+/* LEFT SIDE */
+.prop-left {
+width:50%;
+background:#0f548f !important;
+display:flex;
+align-items:center;
+padding-left:120px;
+position:relative;
+color:#fff;
+z-index:2;
+}
+
+/* Tirchi patti */
+.prop-left::after {
+content:"";
+position:absolute;
+right:-60px;
+top:0;
+height:100%;
+width:120px;
+background:#0f548f;
+transform:skewX(-20deg);
+z-index:2;
+}
+
+/* Text */
+.prop-text {
+max-width:420px;
+}
+
+.prop-line {
+height:4px;
+width:70px;
+background:#f6c123;
+border-radius:5px;
+margin-bottom:12px;
+}
+
+.prop-text h1 {
+color: white;
+font-size:30px !important;
+margin:0 0 10px;
+}
+
+.prop-text p {
+font-size:24px;
+margin-bottom:18px;
+line-height:1.4;
+}
+
+.prop-btn {
+background:#fff !important;
+color:#0e2758 !important;
+border:none !important;
+padding:6px 12px;
+border-radius:6px !important; 
+font-weight:600 !important;
+cursor:pointer !important;
+transition:.3s !important;
+text-decoration: none;
+}
+
+.prop-btn:hover {
+transform:scale(1.05);
+}
+
+/* RIGHT SIDE */
+.prop-right {
+width:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+position:relative;
+z-index:1;
+overflow:hidden;
+}
+
+/* IMAGE */
+.prop-right img {
+    max-height: 163%;
+    position: relative;
+    top: 30px;
+max-width:100%;
+object-fit:contain;
+filter:drop-shadow(0 20px 20px rgba(0,0,0,.25));
+
+}
+
+/* Responsive */
+@media(max-width:1024px) {
+    .prop-right img{
+        top: 13px;
+    }
+}
+
+@media(max-width:768px) {
+    .prop-sec {
+flex-direction:column;
+height:auto;
+}
+
+.prop-left {
+width:100%;
+padding:10px 20px;
+}
+
+.prop-left::after {
+display:none;
+}
+
+.prop-right {
+width:100%;
+padding: 0px 10px;
+        height: auto;
+}
+
+.prop-sec {
+        background: #0f548f !important;
+        padding-bottom:20px ;
+    }
+}
+
+@media only screen and (max-width:600px) {
+    .prop-right img {
+        border-radius: 10px;
+        position: relative;
+        top: -19px;
+       z-index:999999;	
+    }
+
+.prop-sec {
+        background: #0e2758;
+    }
+
+.prop-text h1 {
+font-size: 20px !important;
+}
+
+.prop-btn {
+    padding: 5px 5px;
+    font-size: 14px;
+    border-radius: 2px !important;
+}
+
+.why_wrap  h1 {
+font-size:20px;
+font-weight:500;
+margin-bottom:5px;
+}
+
+.choose_card h3, .why_wrap h3 {
+font-size:16px !important;
+}
+
+.process-h h2 {
+font-size:20px;
+margin-bottom:10px;
+}
+
+.process_wrap .process_card h3 {
+font-size:16px !important;
+}
+
+.loan-calculator h2 {
+
+margin-bottom:8px;
+}
+
+.section-light  h2 {
+font-size:20px;
+font-weight:500 !important;
+}
+
+.loan-charges h2 {
+font-size:20px;
+font-weight:500 !important;
+margin-bottom:8px;
+}
+
+.eligibility-section h2 {
+font-size:20px;
+font-weight:500 !important;
+}
+
+.badge-number {
+position:relative;
+left: 40%;
+top: -11px;
+}
+
+.faq-section h2 {
+font-size:18px;
+}
+}
+#faqToggleBtn {
+    background: #ffffff !important;
+    border: 1px solid #18529c !important;
+    color: #18529c !important;
+    box-shadow: none !important;
+}
+
+#faqToggleBtn:hover,
+#faqToggleBtn:focus,
+#faqToggleBtn:active {
+    background: #18529c !important;
+    border-color: #18529c !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(24, 82, 156, .14) !important;
+}

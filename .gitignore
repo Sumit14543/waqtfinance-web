@@ -1,0 +1,28 @@
+# Environment & Secrets (Never push to GitHub)
+.env
+storage/keys/*.pem
+config/*.json
+
+# User Uploads & Media (Privacy & Size)
+uploads/*
+!uploads/.htaccess
+!uploads/blogs/
+uploads/blogs/*
+!uploads/cibil/
+uploads/cibil/*
+!uploads/shop_photos/
+uploads/shop_photos/*
+
+# Backup & Scratch Files
+*.bak
+test_*.php
+
+# Logs & Temporary Cache
+storage/logs/*.log
+*.log
+
+# System & OS Files
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/

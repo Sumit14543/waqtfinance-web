@@ -1,0 +1,139 @@
+/* ==========================================================================
+   PRODUCT CARD COMPONENT FOR LOCATION PAGES
+   ========================================================================== */
+.wf-location-page .wf-location-product-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 28px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+}
+
+.wf-location-page .wf-location-product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #18529c 0%, #38bdf8 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.wf-location-page .wf-location-product-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 16px 24px -8px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.wf-location-page .wf-location-product-card:hover::before {
+    opacity: 1;
+}
+
+.wf-location-page .wf-location-product-icon {
+    width: 46px !important;
+    height: 46px !important;
+    background: rgba(0, 102, 214, 0.06) !important;
+    color: #18529c !important;
+    border: 1px solid rgba(0, 102, 214, 0.1) !important;
+    border-radius: 50% !important; /* Premium circular design */
+    font-size: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 20px !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.wf-location-page .wf-location-product-card:hover .wf-location-product-icon {
+    background: #18529c !important;
+    color: #ffffff !important;
+    border-color: #18529c !important;
+    transform: rotate(360deg) !important; /* Premium micro-animation */
+}
+
+.wf-location-page .wf-location-product-card h3 {
+    margin: 0 0 10px 0 !important;
+    font-size: 18px !important;
+    font-weight: 750 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.2px !important;
+}
+
+.wf-location-page .wf-location-product-card p {
+    color: #64748b !important;
+    font-size: 13.5px !important;
+    line-height: 1.62 !important;
+    margin: 0 0 24px 0 !important;
+    flex-grow: 1 !important;
+}
+
+.wf-location-page .wf-location-product-card div {
+    display: flex !important;
+    gap: 12px !important;
+    margin-top: auto !important;
+}
+
+.wf-location-page .wf-location-product-card a {
+    flex: 1 !important; /* Balanced equal-width buttons */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: all 0.25s ease !important;
+    box-sizing: border-box !important;
+}
+
+/* View Details link button */
+.wf-location-page .wf-location-product-card a:not(.wf-location-apply) {
+    color: #475569 !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.wf-location-page .wf-location-product-card a:not(.wf-location-apply):hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+/* Start Application call to action button */
+.wf-location-page .wf-location-product-card a.wf-location-apply {
+    color: #ffffff !important;
+    background: #18529c !important;
+    border: 1px solid #18529c !important;
+}
+
+.wf-location-page .wf-location-product-card a.wf-location-apply:hover {
+    background: #0d3f7b !important;
+    border-color: #0d3f7b !important;
+    box-shadow: 0 4px 12px rgba(0, 102, 214, 0.2) !important;
+}
+
+.wf-location-page .wf-location-product-card a.wf-location-apply i {
+    font-size: 11px !important;
+    margin-left: 6px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.wf-location-page .wf-location-product-card a.wf-location-apply:hover i {
+    transform: translateX(3px) !important;
+}
+
+@media (max-width: 640px) {
+    .wf-location-page .wf-location-product-card {
+        padding: 24px !important;
+    }
+}

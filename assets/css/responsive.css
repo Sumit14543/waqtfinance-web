@@ -1,0 +1,258 @@
+@media (max-width: 992px) {
+    .custom-toggler {
+    display: flex;
+  }
+
+.custom-nav .logo {
+    position: absolute;
+    top: 20px;
+    left: 0;
+  }
+
+header .container {
+    padding: 20px;
+  }
+
+.custom-nav {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 300px;
+    height: 100vh;
+    background: var(--background-color);
+    transition: .4s;
+    z-index: 10;
+  }
+
+.custom-nav.open {
+    left: 0;
+  }
+
+.navbar-nav .navbar-menu {
+    display: block;
+    padding: 60px 0;
+    width: 100%;
+  }
+
+.navbar-menu .nav-list {
+    padding: 0 !important
+  }
+
+.navbar-menu .nav-list:first-child .nav-link {
+    border-top: 1px solid #2d2d2d;
+  }
+
+.navbar-menu .nav-link {
+    width: 100%;
+    border-bottom: 1px solid #1c1c1c;
+    padding: 10px 20px;
+  }
+
+.navbar-menu .nav-link:hover {
+    background: #2d2d2d;
+  }
+
+.has-dropdown.active .nav-link {
+    color: var(--primary-color);
+    background: #2d2d2d;
+  }
+
+.navbar-menu .nav-link.apply-btn:hover {
+    background: #c88f00;
+  }
+
+.navbar-menu .nav-link.apply-btn {
+    border-bottom: 0;
+    margin-top: 20px;
+    width: fit-content;
+    margin-left: 20px;
+  }
+
+.navbar-menu .nav-list.has-dropdown::after {
+    top: 22px;
+    right: 16px;
+  }
+
+.custom-dropdown {
+    position: relative !important;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+    opacity: 1;
+    background: none;
+    max-height: 0;
+    padding-left: 0;
+    border-radius: unset;
+    transition: max-height 0.4s ease;
+  }
+
+.custom-dropdown ul li a {
+    padding: 10px 20px;
+    color: #fff;
+    font-size: 14px;
+    border-bottom: 1px solid #2d2d2d;
+  }
+
+.custom-dropdown ul li:last-child a {
+    border-bottom: 1px solid #2d2d2d;
+  }
+
+.container {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 767px) {
+    .loan-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+
+.loan-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+.loan-tabs li {
+    flex: 0 0 auto;
+    min-width: 120px;
+    white-space: nowrap;
+  }
+
+.loan-tabs li span {
+    font-size: 13px;
+  }
+
+.loan-tabs li.active::after {
+    left: 20%;
+    width: 60%;
+  }
+}
+
+@media (max-width: 600px) {
+    .loan-logo img {
+      height: 70px !important;
+        top: -23px !important;
+        left: -34px !important;
+    }
+
+.loan-h h2 {
+      font-size: 20px;
+    }
+
+.content-h1 h1 {
+      font-size: 20px;
+    }
+
+.wf-card {
+      width: 290px;
+    }
+
+.second-check {
+      top: -38px;
+    }
+
+.loan-box h2 {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+.loan-box p {
+      font-size: 14px !important;
+    }
+
+#amount {
+      font-size: 20px;
+     }
+
+.emi {
+      font-size: 17px;
+     }
+
+#emi {
+      font-size: 18px !important;
+     }
+
+.second-apply {
+    padding: 3px 5px;
+    font-size: 14px;
+    border-radius: 4px;
+     }
+
+.check span {
+      font-size: 13px;
+     }
+
+.card-text {
+      color: grey;
+     }
+
+#about h2 {
+      font-size: 18px;
+     }
+
+#about h5 {
+      font-size: 16px;
+     }
+
+.testimonial-inner .testimonial-heading {
+      font-size: 18px;
+        line-height: 22px;
+     }
+
+.w-h {
+      font-size: 18px !important;
+     }
+
+.swiper-slide--inner .testimonial-detail span {
+      font-size: 14px !important;
+     }
+
+.blog-section h2 {
+      font-size: 18px;
+     }
+
+.blog-title {
+      font-size: 16px !important;
+     }
+
+.wf-footer-about h2 {
+      font-size: 25px;
+     }
+
+.slick-prev, .slick-next {
+display:none !important;
+}
+}
+
+@media (max-width: 576px) {
+    .hero_banner .slick-dots {
+    right: 1.25rem;
+    left: auto;
+    bottom: 2rem;
+    transform: none;
+    padding: .3125rem;
+  }
+
+.slick-dotted.slick-slider {
+    margin-bottom: 0;
+  }
+
+h2 {
+    font-size: 25px;
+    font-weight: 500;
+  }
+}
+
+
+.my-one-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.my-one-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+}

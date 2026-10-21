@@ -1,0 +1,2442 @@
+/* ============================================================
+   WAQT FINANCE — LOAN FLOW DESIGN SYSTEM
+   Shared across: payday-apply, mobile-otp, basic-details, pan-verification, aadhaar-verification, company-details, bank-details, salary-slip-upload, application-status
+   ============================================================ */
+
+/* ---------- CSS Variables (Brand Palette) ---------- */
+:root {
+    --wf-primary:      #0b213a;
+    --wf-blue:         #18529c;
+    --wf-blue-light:   #f0f7ff;
+    --wf-blue-hover:   #0b213a;
+    --wf-accent:       #dc2626;
+    --wf-bg:           #f4f6fa;
+    --wf-white:        #ffffff;
+    --wf-card:         #ffffff;
+    --wf-border:       #e2e8f0;
+    --wf-text:         #334155;
+    --wf-muted:        #64748b;
+    --wf-success:      #10b981;
+    --wf-success-bg:   #ecfdf5;
+    --wf-error:        #ef4444;
+    --wf-error-bg:     #fef2f2;
+    --wf-warning:      #f59e0b;
+    --wf-shadow-sm:    0 1px 3px rgba(0,0,0,0.05);
+    --wf-shadow:       0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --wf-shadow-lg:    0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    --wf-radius:       12px;
+    --wf-radius-sm:    8px;
+    --wf-radius-xs:    6px;
+    --wf-input-h:      52px;
+    --wf-font:         'Inter', 'Segoe UI', sans-serif;
+}
+
+/* ---------- Page Wrapper ---------- */
+.lf-page {
+    background: var(--wf-bg);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    font-family: var(--wf-font);
+}
+
+/* ---------- Centered Container ---------- */
+.lf-container {
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.lf-container-wide {
+    max-width: 760px;
+}
+
+/* ---------- Step Progress Bar ---------- */
+.lf-progress {
+    margin-bottom: 24px;
+}
+
+.lf-progress-track {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: relative;
+    padding: 0 4px;
+}
+
+.lf-progress-track::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    right: 16px;
+    height: 2px;
+    background: var(--wf-border);
+    z-index: 0;
+}
+
+.lf-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.lf-step-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--wf-white);
+    border: 2px solid var(--wf-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--wf-muted);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.lf-step.done .lf-step-dot {
+    background: var(--wf-success);
+    border-color: var(--wf-success);
+    color: #fff;
+}
+
+.lf-step.active .lf-step-dot {
+    background: var(--wf-blue);
+    border-color: var(--wf-blue);
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(44,110,213,0.15);
+}
+
+.lf-step-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--wf-muted);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    max-width: 52px;
+}
+
+.lf-step.done .lf-step-label, .lf-step.active .lf-step-label {
+    color: var(--wf-text);
+}
+
+/* ---------- Main Card ---------- */
+.lf-card {
+    background: var(--wf-card);
+    border-radius: var(--wf-radius);
+    box-shadow: var(--wf-shadow);
+    border: 1px solid rgba(226,232,240,0.8);
+    overflow: hidden;
+}
+
+/* ---------- Card Header ---------- */
+.lf-card-header {
+    padding: 28px 28px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--wf-border);
+}
+
+.lf-card-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--wf-blue-light);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 22px;
+    color: var(--wf-blue);
+}
+
+.lf-card-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--wf-primary);
+    margin: 0 0 6px;
+    line-height: 1.3;
+}
+
+.lf-card-sub {
+    font-size: 13px;
+    color: var(--wf-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ---------- Card Body ---------- */
+.lf-card-body {
+    padding: 24px 28px;
+}
+
+/* ---------- Form Groups ---------- */
+.lf-form-group {
+    margin-bottom: 14px;
+}
+
+.lf-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wf-text);
+    margin-bottom: 8px;
+    letter-spacing: 0.1px;
+}
+
+.lf-label .lf-req {
+    color: var(--wf-accent);
+    margin-left: 2px;
+}
+
+/* ---------- Inputs ---------- */
+.lf-input, .lf-select, .lf-textarea {
+    width: 100%;
+    height: var(--wf-input-h);
+    padding: 0 16px;
+    border: 1.5px solid var(--wf-border);
+    border-radius: var(--wf-radius-xs);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--wf-text);
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+    font-family: var(--wf-font);
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.lf-textarea {
+    height: auto;
+    padding: 14px 16px;
+    resize: vertical;
+    min-height: 90px;
+}
+
+.lf-input::placeholder, .lf-textarea::placeholder {
+    color: #b0bec5;
+    font-weight: 400;
+}
+
+.lf-input:focus, .lf-select:focus, .lf-textarea:focus {
+    border-color: var(--wf-blue);
+    box-shadow: 0 0 0 3px rgba(44,110,213,0.12);
+}
+
+.lf-input.lf-verified {
+    border-color: var(--wf-success);
+    background: var(--wf-success-bg);
+}
+
+.lf-input.lf-error-border, .lf-select.lf-error-border {
+    border-color: var(--wf-error);
+}
+
+/* Prefix input (₹ sign) */
+.lf-input-prefix-wrap {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--wf-border);
+    border-radius: var(--wf-radius-xs);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: #fff;
+}
+
+.lf-input-prefix-wrap:focus-within {
+    border-color: var(--wf-blue);
+    box-shadow: 0 0 0 3px rgba(44,110,213,0.12);
+}
+
+.lf-input-prefix {
+    padding: 0 14px;
+    height: var(--wf-input-h);
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--wf-muted);
+    background: #f8fafc;
+    border-right: 1.5px solid var(--wf-border);
+    flex-shrink: 0;
+}
+
+.lf-input-prefix-wrap .lf-input {
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    flex: 1;
+}
+
+.lf-input-prefix-wrap .lf-input:focus {
+    border: none;
+    box-shadow: none;
+}
+
+/* Select wrapper */
+.lf-select-wrap {
+    position: relative;
+}
+
+.lf-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--wf-muted);
+    font-size: 13px;
+}
+
+/* ---------- Error Text ---------- */
+.lf-error-text {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--wf-error);
+    margin-top: 6px;
+    min-height: 0;
+}
+
+.lf-error-text:empty {
+    display: none !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}
+
+.lf-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: var(--wf-radius-xs);
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 16px;
+}
+
+.lf-alert i {
+    margin-top: 2px;
+}
+
+.lf-alert-error {
+    border: 1px solid #fecaca;
+    background: var(--wf-error-bg);
+    color: var(--wf-error);
+}
+
+.lf-alert-info {
+    border: 1px solid #bfdbfe;
+    background: var(--wf-blue-light);
+    color: var(--wf-primary);
+}
+
+.lf-form-compact .lf-form-group {
+    margin-bottom: 12px;
+}
+
+.lf-form-compact .lf-label {
+    margin-bottom: 7px;
+}
+
+.lf-form-compact .lf-check-wrap {
+    margin: 4px 0 18px;
+}
+
+.lf-page-payday .lf-form-compact {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    row-gap: 2px;
+}
+
+.lf-page-payday .lf-check-wrap, .lf-page-payday .lf-btn, .lf-page-payday .lf-form-group:nth-child(1) {
+    grid-column: 1 / -1;
+}
+
+/* ---------- Toggle Button Group ---------- */
+.lf-toggle-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.lf-toggle-btn {
+    flex: 1;
+    min-width: 90px;
+    height: 44px;
+    border: 1.5px solid var(--wf-border);
+    border-radius: var(--wf-radius-xs);
+    background: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--wf-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--wf-font);
+}
+
+.lf-toggle-btn:hover {
+    border-color: var(--wf-blue);
+    color: var(--wf-blue);
+    background: var(--wf-blue-light);
+}
+
+.lf-toggle-btn.active {
+    border-color: var(--wf-blue);
+    background: var(--wf-blue);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(44,110,213,0.25);
+}
+
+/* ---------- Employment Radio (payday-apply) ---------- */
+.lf-emp-group {
+    display: flex;
+    gap: 12px;
+}
+
+.lf-emp-group input[type="radio"] {
+    display: none;
+}
+
+.lf-emp-group label {
+    flex: 1;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--wf-border);
+    border-radius: var(--wf-radius-xs);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--wf-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.lf-emp-group input[type="radio"]:checked + label {
+    border-color: var(--wf-blue);
+    background: var(--wf-blue);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(44,110,213,0.25);
+}
+
+/* ---------- Primary Button ---------- */
+.lf-btn {
+    width: 100%;
+    height: var(--wf-input-h);
+    border: none;
+    border-radius: var(--wf-radius-xs);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--wf-font);
+    letter-spacing: 0.2px;
+}
+
+.lf-btn-primary {
+    background: var(--wf-blue);
+    color: #fff;
+}
+
+.lf-btn-primary:hover:not(:disabled) {
+    background: var(--wf-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(44,110,213,0.30);
+}
+
+.lf-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.lf-btn-primary:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.lf-btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--wf-blue);
+    color: var(--wf-blue);
+    height: 44px;
+}
+
+.lf-btn-outline:hover {
+    background: var(--wf-blue-light);
+}
+
+.lf-btn-ghost {
+    background: #f1f5f9;
+    color: var(--wf-muted);
+    height: 44px;
+    width: auto;
+    padding: 0 20px;
+}
+
+/* Spinner */
+.lf-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: lf-spin 0.7s linear infinite;
+    display: inline-block;
+}
+@keyframes lf-spin {
+    to { transform: rotate(360deg); }
+}
+/* ---------- Trust Badge ---------- */
+.lf-trust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: #f8fafc;
+    border-top: 1px solid var(--wf-border);
+}
+
+.lf-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--wf-muted);
+}
+
+.lf-trust-item i {
+    font-size: 13px;
+    color: var(--wf-success);
+}
+
+/* ---------- Terms Checkbox ---------- */
+.lf-check-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.lf-check-wrap input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: var(--wf-blue);
+    cursor: pointer;
+    flex-shrink: 0;
+  height:auto !important;
+}
+
+.lf-check-label {
+    font-size: 13px;
+    color: var(--wf-muted);
+    line-height: 1.5;
+    cursor: pointer;
+display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lf-check-label span {
+    color: var(--wf-blue);
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.lf-check-label a {
+    color: var(--wf-blue);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.lf-check-label a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- OTP Inputs ---------- */
+.lf-otp-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0 8px;
+}
+
+.lf-otp-box {
+    width: 50px;
+    height: 56px;
+    border: 2px solid var(--wf-border);
+    border-radius: var(--wf-radius-xs);
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--wf-primary);
+    transition: all 0.2s ease;
+    outline: none;
+    background: #fff;
+    font-family: var(--wf-font);
+}
+
+.lf-otp-box:focus {
+    border-color: var(--wf-blue);
+    box-shadow: 0 0 0 3px rgba(44,110,213,0.15);
+    background: var(--wf-blue-light);
+}
+
+.lf-otp-box.filled {
+    border-color: var(--wf-primary);
+    background: #fff;
+}
+
+/* ---------- Timer ---------- */
+.lf-timer-row {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.lf-timer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wf-blue);
+    background: var(--wf-blue-light);
+    padding: 6px 14px;
+    border-radius: 20px;
+}
+
+.lf-resend-row {
+    text-align: center;
+    font-size: 13px;
+    color: var(--wf-muted);
+}
+
+.lf-resend-row a {
+    color: var(--wf-blue);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.lf-resend-row a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Verification Feedback ---------- */
+.lf-verify-success {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wf-success);
+    background: var(--wf-success-bg);
+    border: 1px solid #a7f3d0;
+    border-radius: var(--wf-radius-xs);
+    padding: 10px 14px;
+    margin-top: 10px;
+}
+
+.lf-verify-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wf-error);
+    background: var(--wf-error-bg);
+    border: 1px solid #fecaca;
+    border-radius: var(--wf-radius-xs);
+    padding: 10px 14px;
+    margin-top: 10px;
+}
+
+/* ---------- Document Upload Card ---------- */
+.lf-upload-card {
+    border: 2px dashed var(--wf-border);
+    border-radius: var(--wf-radius-sm);
+    padding: 20px;
+    text-align: center;
+    background: #fafbfc;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.lf-upload-card:hover {
+    border-color: var(--wf-blue);
+    background: var(--wf-blue-light);
+}
+
+.lf-upload-card.has-file {
+    border-color: var(--wf-success);
+    background: var(--wf-success-bg);
+}
+
+.lf-upload-card.lf-error-border, .lf-input-prefix-wrap.lf-error-border {
+    border-color: var(--wf-error);
+}
+
+.lf-upload-icon {
+    font-size: 28px;
+    color: var(--wf-muted);
+    margin-bottom: 8px;
+}
+
+.lf-upload-card.has-file .lf-upload-icon {
+    color: var(--wf-success);
+}
+
+.lf-upload-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--wf-text);
+    margin-bottom: 4px;
+}
+
+.lf-upload-hint {
+    font-size: 12px;
+    color: var(--wf-muted);
+}
+
+.lf-upload-filename {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--wf-success);
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lf-upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+/* ---------- Camera / Selfie Section ---------- */
+.lf-camera-wrap {
+    background: #0b213a;
+    border-radius: var(--wf-radius-sm);
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 4/3;
+}
+
+.lf-camera-wrap video, .lf-camera-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.lf-camera-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.5));
+    display: flex;
+    gap: 8px;
+}
+
+.lf-action-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+/* ---------- Status Page ---------- */
+.lf-status-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 16px;
+}
+
+.lf-status-icon.submitted { background: #dbeafe; }
+
+.lf-status-icon.review { background: #fef3c7; }
+
+.lf-status-icon.approved { background: var(--wf-success-bg); }
+
+.lf-status-icon.rejected { background: var(--wf-error-bg); }
+
+.lf-status-icon.disbursed { background: var(--wf-success-bg); }
+
+.lf-progress-bar-wrap {
+    height: 8px;
+    background: var(--wf-border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 16px 0;
+}
+
+.lf-progress-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--wf-blue), var(--wf-success));
+    transition: width 0.6s ease;
+}
+
+.lf-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.lf-timeline::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--wf-border);
+}
+
+.lf-timeline-item {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    position: relative;
+}
+
+.lf-timeline-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--wf-border);
+    border: 2px solid var(--wf-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--wf-muted);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.lf-timeline-item.done .lf-timeline-dot {
+    background: var(--wf-success);
+    border-color: var(--wf-success);
+    color: #fff;
+}
+
+.lf-timeline-item.active .lf-timeline-dot {
+    background: var(--wf-blue);
+    border-color: var(--wf-blue);
+    color: #fff;
+}
+
+.lf-timeline-content {
+    padding-top: 4px;
+}
+
+.lf-timeline-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--wf-text);
+}
+
+.lf-timeline-meta {
+    font-size: 12px;
+    color: var(--wf-muted);
+}
+
+/* Detail Row */
+.lf-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--wf-border);
+}
+
+.lf-detail-row:last-child {
+    border-bottom: none;
+}
+
+.lf-detail-label {
+    font-size: 13px;
+    color: var(--wf-muted);
+    font-weight: 500;
+}
+
+.lf-detail-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--wf-text);
+}
+
+/* Status badge */
+.lf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    text-transform: capitalize;
+}
+
+.lf-badge.submitted { background: #dbeafe; color: #1d4ed8; }
+
+.lf-badge.review { background: #fef3c7; color: #b45309; }
+
+.lf-badge.approved { background: var(--wf-success-bg); color: #065f46; }
+
+.lf-badge.rejected { background: var(--wf-error-bg); color: #991b1b; }
+
+.lf-badge.disbursed { background: var(--wf-success-bg); color: #065f46; }
+
+.lf-badge.draft { background: #f1f5f9; color: var(--wf-muted); }
+
+/* --------- PAN Verify Row ---------- */
+.lf-verify-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.lf-verify-row .lf-input {
+    flex: 1;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.lf-verify-btn {
+    height: var(--wf-input-h);
+    padding: 0 20px;
+    background: var(--wf-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--wf-radius-xs);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-family: var(--wf-font);
+    flex-shrink: 0;
+}
+
+.lf-verify-btn:hover:not(:disabled) {
+    background: var(--wf-blue);
+    box-shadow: 0 4px 12px rgba(44,110,213,0.25);
+}
+
+.lf-verify-btn:disabled {
+    background: var(--wf-success);
+    cursor: default;
+}
+
+/* ---------- PAN card preview image ---------- */
+.lf-doc-preview-img {
+    width: 100%;
+    border-radius: var(--wf-radius-sm);
+    object-fit: cover;
+    max-height: 200px;
+    margin-bottom: 8px;
+    border: 1.5px solid var(--wf-border);
+}
+
+.lf-doc-format {
+    text-align: center;
+    font-size: 12px;
+    color: var(--wf-muted);
+    background: #f8fafc;
+    border-radius: var(--wf-radius-xs);
+    padding: 6px 12px;
+    margin-bottom: 16px;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--wf-primary);
+}
+
+/* ---------- Divider ---------- */
+.lf-divider {
+    height: 1px;
+    background: var(--wf-border);
+    margin: 20px 0;
+}
+
+/* ---------- References ---------- */
+.lf-reference-block {
+    border-bottom: 1px solid var(--wf-border);
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+}
+
+.lf-reference-block:last-of-type {
+    border-bottom: none;
+    margin-bottom: 16px;
+}
+
+.lf-reference-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.lf-reference-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--wf-blue);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.lf-reference-head h2 {
+    margin: 0 0 2px;
+    color: var(--wf-primary);
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.lf-reference-head p {
+    margin: 0;
+    color: var(--wf-muted);
+    font-size: 12px;
+}
+
+/* ---------- Mobile first ---------- */
+@media (max-width: 500px) {
+    .lf-page { padding: 16px 12px 48px; }
+    .lf-card-header { padding: 22px 20px 16px; }
+    .lf-card-body { padding: 20px; }
+    .lf-card-title { font-size: 18px; }
+    .lf-otp-box { width: 42px; height: 50px; font-size: 20px; }
+    .lf-trust { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+    .lf-step-label { display: none; }
+    .lf-progress-track::before { top: 14px; }
+    .lf-action-row { grid-template-columns: 1fr; }
+    .lf-action-row .lf-btn { width: 100%; }
+    .lf-page-payday .lf-form-compact { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   PAYDAY FORM MATURE DESIGN SYSTEM OVERRIDES (MATURE FINTECH STYLE)
+   ========================================================================== */
+.lf-page,
+.lf-page *,
+.lf-progress,
+.lf-progress * {
+    font-family: 'Inter', sans-serif !important;
+}
+
+.lf-page {
+    padding-top: 85px !important; /* Clears sticky header and matches other pages */
+    background: #f8fafc !important;
+}
+
+.lf-container-wide {
+    max-width: 880px !important; /* Wider layout for desktop breathing room */
+}
+
+/* Stepper Connection Line & Nodes Alignment */
+.lf-progress-track::before {
+    top: 14px !important;
+    height: 2px !important;
+    background: #cbd5e1 !important;
+}
+
+.lf-step-dot {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    border: 2px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    box-shadow: none !important;
+    transition: all 0.25s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+}
+
+.lf-step.active .lf-step-dot {
+    background: #18529c !important;
+    border-color: #18529c !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(24, 82, 156, 0.15) !important;
+}
+
+.lf-step.done .lf-step-dot {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.lf-step-label {
+    text-transform: uppercase !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    color: #64748b !important;
+    max-width: 72px !important;
+}
+
+.lf-step.active .lf-step-label {
+    color: #18529c !important;
+    font-weight: 800 !important;
+}
+
+.lf-step.done .lf-step-label {
+    color: #10b981 !important;
+    font-weight: 700 !important;
+}
+
+/* Main Card Redesign */
+.lf-card {
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03), 0 8px 10px -6px rgba(15, 23, 42, 0.03), 0 0 1px 0 rgba(15, 23, 42, 0.1) !important;
+    background: #ffffff !important;
+}
+
+/* Header style override - Hidden inside card so we can render outside header */
+.lf-card .lf-card-header {
+    display: none !important;
+}
+
+.lf-page-header {
+    margin-bottom: 15px !important;
+}
+
+/* Inputs styling */
+.lf-input,
+.lf-select,
+.lf-select-wrap select {
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    height: 44px !important; /* Sleek mature height */
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    color: #0c1a30 !important;
+    background: #ffffff !important;
+    transition: all 0.2s ease !important;
+    padding: 0 14px !important;
+}
+
+.lf-input:focus,
+.lf-select:focus {
+    border-color: #18529c !important;
+    box-shadow: 0 0 0 3px rgba(24, 82, 156, 0.1) !important;
+}
+
+/* Input groups grid spanning updates */
+.lf-page-payday .lf-form-compact {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    column-gap: 20px !important;
+    row-gap: 0px !important;
+    align-items: start !important;
+}
+
+.lf-form-group {
+    grid-column: span 1 !important;
+    margin-bottom: 16px !important;
+}
+
+/* Specific fields span full width (like email) */
+.lf-form-group:has(input[type="email"]),
+.lf-form-group:has(#email),
+.lf-form-group:nth-of-type(7),
+.lf-check-wrap,
+.new-check,
+.lf-btn {
+    grid-column: span 2 !important;
+}
+
+/* Label styling */
+.lf-label {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    color: #475569 !important;
+    margin-bottom: 6px !important;
+}
+
+/* Segmented Toggle Control for Employment and Has Running Loan */
+.lf-emp-group {
+    display: flex !important;
+    gap: 8px !important;
+    background: #f1f5f9 !important;
+    padding: 3px !important;
+    border-radius: 8px !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
+}
+
+.lf-emp-group label {
+    flex: 1 !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+.lf-emp-group input[type="radio"]:checked + label {
+    background: #ffffff !important;
+    color: #18529c !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Rupee Prefix Input Wrap */
+.lf-input-prefix-wrap {
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    height: 44px !important;
+    background: #ffffff !important;
+    transition: all 0.2s ease !important;
+}
+
+.lf-input-prefix-wrap:focus-within {
+    border-color: #18529c !important;
+    box-shadow: 0 0 0 3px rgba(24, 82, 156, 0.1) !important;
+}
+
+.lf-input-prefix {
+    height: 100% !important;
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    background: #f8fafc !important;
+    border-right: 1px solid #cbd5e1 !important;
+    padding: 0 12px !important;
+}
+
+.lf-input-prefix-wrap .lf-input {
+    border: none !important;
+    box-shadow: none !important;
+    height: 100% !important;
+}
+
+/* Checkboxes */
+.lf-check-wrap {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    margin-bottom: 12px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    box-sizing: border-box !important;
+}
+
+.new-check {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+.new-check .terms-check {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.lf-check-wrap input[type="checkbox"],
+.new-check input[type="checkbox"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border: 2px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    outline: none !important;
+    transition: all 0.2s !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    background: #ffffff !important;
+}
+
+.lf-check-wrap input[type="checkbox"]:checked,
+.new-check input[type="checkbox"]:checked {
+    background-color: #18529c !important;
+    border-color: #18529c !important;
+}
+
+.lf-check-wrap input[type="checkbox"]:checked::before,
+.new-check input[type="checkbox"]:checked::before {
+    content: "\f00c" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    color: white !important;
+    font-size: 10px !important;
+    display: block !important;
+}
+
+.lf-check-label {
+    font-size: 12.5px !important;
+    color: #475569 !important;
+    line-height: 1.5 !important;
+}
+
+/* Action button style */
+.lf-btn-primary {
+    background: #18529c !important;
+    border-radius: 8px !important;
+    height: 44px !important;
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(24, 82, 156, 0.15) !important;
+    transition: all 0.2s ease !important;
+}
+
+.lf-btn-primary:hover {
+    background: #0c1a30 !important;
+    box-shadow: 0 6px 15px rgba(24, 82, 156, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+.lf-btn-primary:disabled {
+    background: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+    .lf-page-payday .lf-form-compact {
+        grid-template-columns: 1fr !important;
+    }
+    .lf-form-group {
+        grid-column: span 1 !important;
+    }
+}
+
+/* Fix for intlTelInput flags overlapping placeholder or input text */
+.iti input.lf-input {
+    padding-left: 88px !important;
+}
+
+/* ==========================================================================
+   LOANTAP-STYLE PAYDAY JOURNEY SKIN
+   Shared by payday apply and its continuation pages. Functionality classes,
+   validation IDs, and API hooks remain unchanged.
+   ========================================================================== */
+body:has(.lf-page) {
+    background: #cfc6dc !important;
+}
+
+body:has(.lf-page) > .loan-topbar,
+body:has(.lf-page) > header,
+body:has(.lf-page) .wf-footer-modern,
+body:has(.lf-page) .sticky-sunrise,
+body:has(.lf-page) #scroll-top {
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-page,
+body:has(.lf-page) .lf-page * {
+    font-family: 'Inter', 'DM Sans', Arial, sans-serif !important;
+    letter-spacing: 0 !important;
+}
+
+body:has(.lf-page) .lf-page {
+    --lt-purple: #724aa8;
+    --lt-purple-soft: #ad9ccc;
+    --lt-ink: #1f1c22;
+    --lt-muted: #9a9a9a;
+    --lt-line: #dddddd;
+    --lt-rail: #f8f8f8;
+    --lt-page: #cfc6dc;
+    background: var(--lt-page) !important;
+    min-height: 100vh !important;
+    padding: 0 0 34px !important;
+}
+
+body:has(.lf-page) .lf-page::before {
+    align-items: center !important;
+    background: #efecf4 !important;
+    border-top: 8px solid #3a2731 !important;
+    color: var(--lt-purple) !important;
+    content: "Waqt Finance";
+    display: flex !important;
+    font-size: clamp(25px, 2.7vw, 38px) !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    min-height: 92px !important;
+    padding: 22px clamp(22px, 5vw, 78px) !important;
+}
+
+body:has(.lf-page) .lf-container,
+body:has(.lf-page) .lf-container-wide {
+    background: #ffffff !important;
+    display: grid !important;
+    grid-template-columns: 300px minmax(0, 1fr) !important;
+    margin: 30px auto 0 !important;
+    max-width: min(1720px, calc(100vw - 110px)) !important;
+    min-height: calc(100vh - 166px) !important;
+    overflow: hidden !important;
+}
+
+body:has(.lf-page) .lf-progress {
+    background: #f8fafc !important;
+    border-right: 1px solid #e2e8f0 !important;
+    grid-column: 1 !important;
+    grid-row: 1 / span 20 !important;
+    margin: 0 !important;
+    min-height: 100% !important;
+    padding: 86px 36px 76px 58px !important;
+    position: relative !important;
+}
+
+body:has(.lf-page) .lf-progress::before {
+    color: #0b213a !important;
+    content: "Complete Your Application";
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    left: 58px !important;
+    line-height: 1.25 !important;
+    position: absolute !important;
+    right: 22px !important;
+    top: 34px !important;
+}
+
+body:has(.lf-page) .lf-progress::after {
+    bottom: 18px !important;
+    color: #5f6670 !important;
+    content: "Fast . Flexible . Friendly";
+    font-size: 21px !important;
+    font-weight: 400 !important;
+    left: 88px !important;
+    position: absolute !important;
+}
+
+body:has(.lf-page) .lf-progress-track {
+    align-items: stretch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 34px !important;
+    justify-content: flex-start !important;
+    margin-top: 48px !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .lf-progress-track::before {
+    background: #e2e8f0 !important;
+    bottom: 16px !important;
+    height: auto !important;
+    left: 17px !important;
+    right: auto !important;
+    top: 16px !important;
+    width: 1.5px !important;
+}
+
+body:has(.lf-page) .lf-step {
+    align-items: center !important;
+    display: flex !important;
+    flex: 0 0 auto !important;
+    flex-direction: row !important;
+    gap: 22px !important;
+    justify-content: flex-start !important;
+    min-height: 34px !important;
+    width: 100% !important;
+}
+
+body:has(.lf-page) .lf-step-dot {
+    background: #ffffff !important;
+    border: 2px solid #cbd5e1 !important;
+    border-radius: 50% !important;
+    box-shadow: none !important;
+    color: #64748b !important;
+    flex: 0 0 32px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    height: 32px !important;
+    width: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body:has(.lf-page) .lf-step.active .lf-step-dot {
+    background: #18529c !important;
+    border-color: #18529c !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(24, 82, 156, 0.15) !important;
+}
+
+body:has(.lf-page) .lf-step.done .lf-step-dot {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+body:has(.lf-page) .lf-step-label {
+    color: #64748b !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    max-width: none !important;
+    text-align: left !important;
+    text-transform: none !important;
+}
+
+body:has(.lf-page) .lf-step.active .lf-step-label {
+    color: #0b213a !important;
+    font-weight: 700 !important;
+}
+
+body:has(.lf-page) .lf-step.done .lf-step-label {
+    color: #10b981 !important;
+    font-weight: 600 !important;
+}
+
+body:has(.lf-page) .lf-page-header {
+    grid-column: 2 !important;
+    margin: 34px 42px 0 !important;
+    text-align: left !important;
+}
+
+body:has(.lf-page) .lf-page-header h1 {
+    border: 0 !important;
+    color: var(--lt-purple) !important;
+    font-size: clamp(21px, 1.8vw, 28px) !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .lf-page-header h1::before {
+    color: var(--lt-ink) !important;
+    content: "You're Applying for : ";
+    font-weight: 700 !important;
+}
+
+body:has(.lf-page) .lf-page-header p {
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-card {
+    align-self: start !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    grid-column: 2 !important;
+    margin: 34px 42px 92px !important;
+    max-width: 720px !important;
+    overflow: visible !important;
+}
+
+body:has(.lf-page) .lf-card-header {
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 0 24px !important;
+    text-align: left !important;
+}
+
+body:has(.lf-page) .lf-card-icon {
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-card-title {
+    color: var(--lt-ink) !important;
+    font-size: 26px !important;
+    font-weight: 500 !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+}
+
+body:has(.lf-page) .lf-card-sub {
+    color: #777777 !important;
+    font-size: 14px !important;
+    margin-top: 6px !important;
+}
+
+body:has(.lf-page) .lf-card-body {
+    background: #ffffff !important;
+    box-shadow: 0 14px 28px rgba(29, 22, 38, 0.08) !important;
+    padding: 30px !important;
+}
+
+body:has(.lf-page) .lf-form-compact {
+    display: block !important;
+}
+
+body:has(.lf-page) .lf-form-group {
+    margin: 0 0 20px !important;
+}
+
+body:has(.lf-page) .lf-label {
+    color: #777777 !important;
+    display: block !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    margin: 0 0 2px !important;
+}
+
+body:has(.lf-page) .lf-input,
+body:has(.lf-page) .lf-select,
+body:has(.lf-page) .lf-textarea {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    color: #1e293b !important;
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 8px 14px !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+}
+
+body:has(.lf-page) .lf-input:focus,
+body:has(.lf-page) .lf-select:focus,
+body:has(.lf-page) .lf-textarea:focus {
+    border-color: #18529c !important;
+    box-shadow: 0 0 0 3px rgba(24, 82, 156, 0.1) !important;
+    background: #ffffff !important;
+}
+
+body:has(.lf-page) .lf-input::placeholder,
+body:has(.lf-page) .lf-textarea::placeholder {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+}
+
+body:has(.lf-page) .lf-input-prefix-wrap {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+    overflow: hidden !important;
+}
+
+body:has(.lf-page) .lf-input-prefix-wrap:focus-within {
+    border-color: #18529c !important;
+    box-shadow: 0 0 0 3px rgba(24, 82, 156, 0.1) !important;
+}
+
+body:has(.lf-page) .lf-input-prefix {
+    background: #f8fafc !important;
+    border-right: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    min-width: 40px !important;
+    height: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .lf-input-prefix-wrap .lf-input {
+    border: 0 !important;
+    min-height: 100% !important;
+    height: 100% !important;
+    padding-left: 12px !important;
+    box-shadow: none !important;
+}
+
+body:has(.lf-page) .iti input.lf-input {
+    padding-left: 88px !important;
+}
+
+body:has(.lf-page) .lf-select-wrap {
+    border: 0 !important;
+}
+
+body:has(.lf-page) .lf-emp-group,
+body:has(.lf-page) .lf-toggle-group {
+    background: #f1f5f9 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    gap: 4px !important;
+    padding: 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+body:has(.lf-page) .lf-emp-group label,
+body:has(.lf-page) .lf-toggle-btn {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+body:has(.lf-page) .lf-emp-group input:checked + label,
+body:has(.lf-page) .lf-toggle-btn.active {
+    background: #ffffff !important;
+    color: #18529c !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+    border: none !important;
+}
+
+body:has(.lf-page) .lf-check-wrap,
+body:has(.lf-page) .new-check .terms-check {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: #151515 !important;
+    display: flex !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    gap: 12px !important;
+    line-height: 1.45 !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .new-check {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+body:has(.lf-page) .lf-check-wrap input[type="checkbox"],
+body:has(.lf-page) .new-check input[type="checkbox"] {
+    border: 1.5px solid #9a9a9a !important;
+    border-radius: 3px !important;
+    height: 18px !important;
+    margin-top: 4px !important;
+    width: 18px !important;
+}
+
+body:has(.lf-page) .lf-check-wrap input[type="checkbox"]:checked,
+body:has(.lf-page) .new-check input[type="checkbox"]:checked {
+    background: var(--lt-purple) !important;
+    border-color: var(--lt-purple) !important;
+}
+
+body:has(.lf-page) .lf-check-label {
+    color: #151515 !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    line-height: 1.45 !important;
+}
+
+body:has(.lf-page) .lf-btn,
+body:has(.lf-page) .lf-btn-primary {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    transform: none !important;
+    transition: all 0.2s ease !important;
+}
+
+body:has(.lf-page) .lf-btn-primary {
+    background: #18529c !important;
+    color: #ffffff !important;
+    margin-top: 26px !important;
+}
+
+body:has(.lf-page) .lf-btn-primary:hover:not(:disabled) {
+    background: #0b213a !important;
+    box-shadow: 0 4px 12px rgba(24, 82, 156, 0.2) !important;
+    transform: translateY(-1px) !important;
+}
+
+body:has(.lf-page) .lf-btn-primary:disabled {
+    background: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+}
+
+body:has(.lf-page) .lf-btn-secondary {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border-radius: 8px !important;
+}
+
+body:has(.lf-page) .lf-trust {
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-upload-card,
+body:has(.lf-page) .lf-doc-card,
+body:has(.lf-page) .lf-info-card,
+body:has(.lf-page) .lf-summary-card {
+    border-color: #dedede !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+body:has(.lf-page) .as-container {
+    margin: 30px auto 0 !important;
+    max-width: min(1180px, calc(100vw - 60px)) !important;
+}
+
+body:has(.lf-page) .as-panel {
+    border-radius: 8px !important;
+}
+
+@media (max-width: 1180px) {
+    body:has(.lf-page) .lf-container,
+    body:has(.lf-page) .lf-container-wide {
+        grid-template-columns: 260px minmax(0, 1fr) !important;
+        max-width: calc(100vw - 34px) !important;
+    }
+
+    body:has(.lf-page) .lf-progress {
+        padding-left: 34px !important;
+        padding-right: 24px !important;
+    }
+
+    body:has(.lf-page) .lf-progress::before {
+        left: 34px !important;
+    }
+
+    body:has(.lf-page) .lf-step-label {
+        font-size: 18px !important;
+    }
+}
+
+@media (max-width: 820px) {
+    body:has(.lf-page) .lf-page::before {
+        min-height: 86px !important;
+        padding: 18px !important;
+    }
+
+    body:has(.lf-page) .lf-container,
+    body:has(.lf-page) .lf-container-wide {
+        display: block !important;
+        margin-top: 16px !important;
+        max-width: calc(100vw - 20px) !important;
+        min-height: auto !important;
+    }
+
+    body:has(.lf-page) .lf-progress {
+        min-height: auto !important;
+        padding: 58px 18px 18px !important;
+    }
+
+    body:has(.lf-page) .lf-progress::before {
+        font-size: 19px !important;
+        left: 18px !important;
+        top: 18px !important;
+    }
+
+    body:has(.lf-page) .lf-progress::after {
+        display: none !important;
+    }
+
+    body:has(.lf-page) .lf-progress-track {
+        flex-direction: row !important;
+        gap: 0 !important;
+        justify-content: space-between !important;
+        margin-top: 0 !important;
+    }
+
+    body:has(.lf-page) .lf-progress-track::before {
+        bottom: auto !important;
+        height: 1.5px !important;
+        left: 16px !important;
+        right: 16px !important;
+        top: 17px !important;
+        width: auto !important;
+    }
+
+    body:has(.lf-page) .lf-step {
+        flex: 1 1 0 !important;
+        justify-content: center !important;
+        min-width: 0 !important;
+    }
+
+    body:has(.lf-page) .lf-step-label {
+        display: none !important;
+    }
+
+    body:has(.lf-page) .lf-page-header {
+        margin: 22px 16px 0 !important;
+    }
+
+    body:has(.lf-page) .lf-card {
+        margin: 22px 14px 72px !important;
+        max-width: none !important;
+    }
+
+    body:has(.lf-page) .lf-card-body {
+        padding: 22px 16px !important;
+    }
+
+    body:has(.lf-page) .lf-card-title {
+        font-size: 23px !important;
+    }
+
+    body:has(.lf-page) .lf-input,
+    body:has(.lf-page) .lf-select,
+    body:has(.lf-page) .lf-textarea {
+        font-size: 16px !important;
+    }
+
+    body:has(.lf-page) .lf-check-label,
+    body:has(.lf-page) .lf-check-wrap,
+    body:has(.lf-page) .new-check .terms-check {
+        font-size: 14px !important;
+    }
+
+    body:has(.lf-page) .as-container {
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+
+/* Waqt Finance brand colors on the LoanTap-inspired payday flow */
+body:has(.lf-page) {
+    background: #eef3f8 !important;
+}
+
+body:has(.lf-page) .whatsapp-float-box {
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-page {
+    --lt-purple: #18529c;
+    --lt-purple-soft: #18529c;
+    --lt-ink: #0b213a;
+    --lt-muted: #6b7280;
+    --lt-line: #dbe3ee;
+    --lt-rail: #f8fafc;
+    --lt-page: #eef3f8;
+}
+
+body:has(.lf-page) .lf-page::before {
+    background: #ffffff !important;
+    background-image: url("../images/logo1.webp") !important;
+    background-position: clamp(18px, 5vw, 78px) center !important;
+    background-repeat: no-repeat !important;
+    background-size: 48px 48px !important;
+    border-top-color: #ef0d0d !important;
+    box-shadow: 0 1px 0 rgba(11, 33, 58, 0.08) !important;
+    color: #0b213a !important;
+    padding-left: calc(clamp(22px, 5vw, 78px) + 62px) !important;
+}
+
+body:has(.lf-page) .lf-page-header h1 {
+    color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-page-header h1::before,
+body:has(.lf-page) .lf-card-title,
+body:has(.lf-page) .lf-step.active .lf-step-label,
+body:has(.lf-page) .lf-progress::before {
+    color: #0b213a !important;
+}
+
+body:has(.lf-page) .lf-progress-track::before {
+    background: #0b213a !important;
+}
+
+body:has(.lf-page) .lf-step-dot {
+    border-color: #b7c4d6 !important;
+    color: #8a98aa !important;
+}
+
+body:has(.lf-page) .lf-step.active .lf-step-dot {
+    border-color: #18529c !important;
+    color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-step.done .lf-step-dot {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+body:has(.lf-page) .lf-step.done .lf-step-label,
+body:has(.lf-page) .lf-emp-group input:checked + label,
+body:has(.lf-page) .lf-toggle-btn.active {
+    color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-emp-group input:checked + label,
+body:has(.lf-page) .lf-toggle-btn.active {
+    border-color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-check-wrap input[type="checkbox"]:checked,
+body:has(.lf-page) .new-check input[type="checkbox"]:checked {
+    background: #18529c !important;
+    border-color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-btn-primary {
+    background: #18529c !important;
+}
+
+body:has(.lf-page) .lf-btn-primary:hover:not(:disabled) {
+    background: #0b213a !important;
+}
+
+body:has(.lf-page) .lf-btn-primary:disabled {
+    background: #b9c9dc !important;
+    color: rgba(255, 255, 255, 0.86) !important;
+}
+
+body:has(.lf-page) .lf-input:focus,
+body:has(.lf-page) .lf-select:focus,
+body:has(.lf-page) .lf-textarea:focus,
+body:has(.lf-page) .lf-input-prefix-wrap:focus-within {
+    border-color: #18529c !important;
+}
+
+/* Use the website's real header and footer on payday flow pages */
+body:has(.lf-page) > .loan-topbar,
+body:has(.lf-page) > header,
+body:has(.lf-page) .wf-footer-modern {
+    display: block !important;
+}
+
+body:has(.lf-page) #scroll-top {
+    display: flex !important;
+}
+
+body:has(.lf-page) .sticky-sunrise {
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-page {
+    padding: 28px 0 44px !important;
+}
+
+body:has(.lf-page) .lf-page::before,
+body:has(.lf-page) .lf-page-header h1::before {
+    content: none !important;
+    display: none !important;
+}
+
+body:has(.lf-page) .lf-page-header {
+    margin: 0 42px 18px !important;
+    text-align: center !important;
+}
+
+body:has(.lf-page) .lf-page-header h1 {
+    color: #0b213a !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    margin: 0 0 6px !important;
+    text-align: center !important;
+}
+
+body:has(.lf-page) .lf-page-header p {
+    color: #64748b !important;
+    display: block !important;
+    font-size: 14.5px !important;
+    margin: 0 !important;
+}
+
+body:has(.lf-page) .lf-container,
+body:has(.lf-page) .lf-container-wide,
+body:has(.lf-page) .as-container {
+    margin-top: 0 !important;
+}
+
+/* ==========================================================================
+   CONSENT CHECKBOXES UI & TEXT ENHANCEMENT
+   ========================================================================== */
+body:has(.lf-page) .lf-check-wrap input[type="checkbox"],
+body:has(.lf-page) .new-check input[type="checkbox"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    outline: none !important;
+    background: #ffffff !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    margin: 2px 0 0 0 !important;
+}
+
+body:has(.lf-page) .lf-check-wrap input[type="checkbox"]:checked,
+body:has(.lf-page) .new-check input[type="checkbox"]:checked {
+    background-color: #18529c !important;
+    border-color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-check-wrap input[type="checkbox"]:checked::before,
+body:has(.lf-page) .new-check input[type="checkbox"]:checked::before {
+    content: "\f00c" !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    color: white !important;
+    font-size: 10px !important;
+    display: block !important;
+}
+
+body:has(.lf-page) .lf-check-wrap {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-top: 14px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .new-check.lf-check-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-top: 12px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .lf-check-label,
+body:has(.lf-page) .terms-check.lf-check-label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+}
+
+body:has(.lf-page) .lf-check-label {
+    display: block !important;
+}
+
+body:has(.lf-page) .terms-check.lf-check-label {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    text-align: left !important;
+    width: 100% !important;
+}
+
+body:has(.lf-page) .lf-check-label a {
+    color: #18529c !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    text-decoration: underline !important;
+    display: inline !important;
+}
+
+body:has(.lf-page) .lf-check-label a:hover {
+    color: #0c1a30 !important;
+}
+
+/* Final consent alignment guard: neutralizes older global offsets and gives
+   each consent item a single, consistent checkbox column. */
+body:has(.lf-page) .lf-card-body .lf-check-wrap:not(.new-check) {
+    align-items: start !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    display: grid !important;
+    gap: 0 14px !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    margin: 16px 0 0 !important;
+    padding: 12px 14px !important;
+}
+
+body:has(.lf-page) .lf-card-body .new-check.lf-check-wrap {
+    background: transparent !important;
+    border: 0 !important;
+    display: grid !important;
+    gap: 10px !important;
+    grid-template-columns: 1fr !important;
+    margin: 10px 0 0 !important;
+    padding: 0 !important;
+}
+
+body:has(.lf-page) .lf-card-body .terms-check.lf-check-label {
+    align-items: start !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    display: grid !important;
+    gap: 0 14px !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    margin: 0 !important;
+    padding: 12px 14px !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-wrap:not(.new-check):hover,
+body:has(.lf-page) .lf-card-body .terms-check.lf-check-label:hover {
+    background: #f3f7fb !important;
+    border-color: #cbd8ea !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-wrap input[type="checkbox"],
+body:has(.lf-page) .lf-card-body .new-check input[type="checkbox"],
+body:has(.lf-page) .lf-card-body .my-checkbox,
+body:has(.lf-page) .lf-card-body .my-checkbox-two,
+body:has(.lf-page) .lf-card-body .second-check {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: #ffffff !important;
+    border: 1.5px solid #b8c7dc !important;
+    border-radius: 5px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    flex: 0 0 20px !important;
+    grid-column: 1 !important;
+    height: 20px !important;
+    left: auto !important;
+    margin: 1px 0 0 !important;
+    min-height: 20px !important;
+    min-width: 20px !important;
+    position: static !important;
+    top: auto !important;
+    transform: none !important;
+    width: 20px !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-wrap input[type="checkbox"]:checked,
+body:has(.lf-page) .lf-card-body .new-check input[type="checkbox"]:checked {
+    background: #18529c !important;
+    border-color: #18529c !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-wrap input[type="checkbox"]:checked::before,
+body:has(.lf-page) .lf-card-body .new-check input[type="checkbox"]:checked::before {
+    color: #ffffff !important;
+    content: "\f00c" !important;
+    display: block !important;
+    font-family: "Font Awesome 6 Free" !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-wrap input[type="checkbox"]:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 4px rgba(24, 82, 156, 0.14) !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-label,
+body:has(.lf-page) .lf-card-body .right-check,
+body:has(.lf-page) .lf-card-body .terms-check.lf-check-label {
+    color: #30435a !important;
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    grid-column: 2 !important;
+    left: auto !important;
+    line-height: 1.55 !important;
+    margin: 0 !important;
+    position: static !important;
+    text-align: left !important;
+}
+
+body:has(.lf-page) .lf-card-body .lf-check-label a {
+    color: #18529c !important;
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px !important;
+}
+
+body:has(.lf-page) #mainSubmitBtn {
+    margin-top: 22px !important;
+}
+
+body:has(.lf-page) .lf-card-body .new-check .terms-check.lf-check-label {
+    align-items: start !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    color: #30435a !important;
+    display: grid !important;
+    gap: 0 14px !important;
+    grid-column: auto !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+    line-height: 1.55 !important;
+    margin: 0 !important;
+    padding: 12px 14px !important;
+    width: 100% !important;
+}
+
+body:has(.lf-page) .lf-card-body .new-check .terms-check.lf-check-label input[type="checkbox"] {
+    grid-column: 1 !important;
+}
+
+/* Document Preview Styling */
+.wf-upload-card.wf-has-preview .wf-upload-icon,
+.wf-upload-card.wf-has-preview .wf-upload-title,
+.wf-upload-card.wf-has-preview .wf-upload-sub,
+.wf-doc-upload-card.wf-has-preview .wf-doc-icon,
+.wf-doc-upload-card.wf-has-preview > span,
+.lf-upload-card.lf-has-preview .lf-upload-icon,
+.lf-upload-card.lf-has-preview .lf-upload-title,
+.lf-upload-card.lf-has-preview .lf-upload-hint,
+.lf-upload-card.lf-has-preview .lf-upload-filename {
+    display: none !important;
+}
+
+.wf-upload-preview-container, .lf-upload-preview-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 10px;
+    gap: 8px;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+.wf-upload-preview-image, .lf-upload-preview-image {
+    max-width: 140px;
+    max-height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #cad7e8;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease;
+}
+
+.wf-upload-preview-image:hover, .lf-upload-preview-image:hover {
+    transform: scale(1.05);
+}
+
+.wf-upload-preview-icon, .lf-upload-preview-icon {
+    font-size: 36px;
+    color: #2c6ed5;
+    margin-bottom: 4px;
+}
+
+.wf-upload-preview-filename, .lf-upload-preview-filename {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wf-upload-preview-meta, .lf-upload-preview-meta {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.wf-upload-preview-remove, .lf-upload-preview-remove {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.wf-upload-preview-remove:hover, .lf-upload-preview-remove:hover {
+    background: #dc2626;
+    transform: scale(1.15);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}

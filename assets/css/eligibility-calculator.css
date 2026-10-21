@@ -1,0 +1,508 @@
+/* ==========================================================================
+   LOAN ELIGIBILITY CALCULATOR STYLES
+   ========================================================================== */
+.eligibility-page {
+    background: #f8fafc;
+    color: #0f172a;
+    padding-bottom: 80px;
+}
+
+.eligibility-hero {
+    background: linear-gradient(135deg, #eef5fc 0%, #ffffff 80%);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 50px 0 44px;
+}
+
+.eligibility-hero h1 {
+    font-size: clamp(28px, 3.8vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin: 12px 0;
+    color: #0f172a;
+}
+
+.eligibility-hero p {
+    color: #64748b;
+    font-size: 15.5px;
+    max-width: 620px;
+    line-height: 1.6;
+    margin: 0 auto;
+}
+
+.eligibility-shell {
+    max-width: 1120px;
+}
+
+.eligibility-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+.eligibility-page .form-label {
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+/* Icons and Input styling */
+.wf-form-group {
+    margin-bottom: 20px;
+}
+
+.wf-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.eligibility-page .form-control {
+    padding-left: 42px !important;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    height: 48px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.eligibility-page .form-control:focus {
+    border-color: #18529c;
+    box-shadow: 0 0 0 4px rgba(0, 102, 214, 0.12);
+    outline: none;
+}
+
+.wf-input-icon {
+    position: absolute;
+    left: 16px;
+    color: #64748b;
+    font-size: 15px;
+    pointer-events: none;
+    transition: color 0.25s ease;
+    z-index: 2 !important;
+}
+
+.wf-input-wrapper:focus-within .wf-input-icon {
+    color: #18529c;
+}
+
+/* Choices.js Dropdown Styling override */
+.choices {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.choices__inner {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    background-color: #ffffff !important;
+    min-height: 48px !important;
+    padding: 6px 16px 6px 42px !important;
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    color: #1e293b !important;
+    display: flex;
+    align-items: center;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+}
+
+.choices.is-focused .choices__inner {
+    border-color: #18529c !important;
+    box-shadow: 0 0 0 4px rgba(0, 102, 214, 0.12) !important;
+}
+
+.choices__list--single {
+    padding: 0 !important;
+}
+
+/* Choices Dropdown Panel */
+.choices__list--dropdown, .choices__list[data-role="dropdown"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
+    z-index: 500 !important;
+    margin-top: 4px !important;
+    overflow: hidden !important;
+}
+
+.choices__list--dropdown .choices__item--selectable {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    color: #334155 !important;
+}
+
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+/* Range Slider */
+.progress-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 10px;
+    background: #e2e8f0;
+    outline: none;
+    margin: 12px 0;
+    cursor: pointer;
+}
+
+.progress-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #18529c;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.progress-range::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.progress-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #18529c;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.progress-range::-moz-range-thumb:hover {
+    transform: scale(1.15);
+}
+
+/* Badges for Credit Score */
+.eligibility-page .badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.eligibility-page .badge.poor { background: rgba(239, 68, 68, 0.12) !important; color: #ef4444 !important; }
+.eligibility-page .badge.fair { background: rgba(245, 158, 11, 0.12) !important; color: #f59e0b !important; }
+.eligibility-page .badge.good { background: rgba(16, 185, 129, 0.12) !important; color: #10b981 !important; }
+.eligibility-page .badge.excellent { background: rgba(5, 150, 105, 0.15) !important; color: #059669 !important; }
+
+/* Buttons */
+.eligibility-page #checkBtn {
+    background: #18529c !important;
+    border: 1px solid #18529c !important;
+    color: #ffffff !important;
+    border-radius: 10px !important;
+    height: 48px !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 6px rgba(0, 102, 214, 0.12);
+}
+
+.eligibility-page #checkBtn:hover:not(:disabled) {
+    background: #0d3f7b !important;
+    border-color: #0d3f7b !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 102, 214, 0.22);
+}
+
+.eligibility-page #checkBtn:disabled {
+    background: #e2e8f0 !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.eligibility-page .btn-outline-secondary {
+    border: 1px solid #cbd5e1 !important;
+    color: #64748b !important;
+    border-radius: 10px !important;
+    height: 44px !important;
+    background: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.eligibility-page .btn-outline-secondary:hover {
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border-color: #94a3b8 !important;
+}
+
+/* Empty State */
+.empty-state {
+    min-height: 400px;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.empty-state i {
+    color: #94a3b8;
+    animation: pulseIcon 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseIcon {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.06); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
+}
+
+.empty-state h5 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #334155;
+    margin: 18px 0 6px;
+}
+
+.empty-state p {
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+/* Summary Card with Gauge */
+.summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.summary-card h5 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 220px;
+    height: 110px; /* Half of width for semi-circle */
+    margin: 0 auto 16px;
+}
+
+.chart-label-center {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.chart-label-center strong {
+    font-size: 26px;
+    font-weight: 850;
+    color: #0f172a;
+    display: block;
+    line-height: 1;
+}
+
+.chart-label-center span {
+    font-size: 11px;
+    font-weight: 750;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    display: block;
+}
+
+.chart-feedback-text {
+    text-align: center;
+    font-size: 14.5px;
+    color: #475569;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Loan Feature Cards */
+.loan-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.loan-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #18529c 0%, #00bfff 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.loan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -8px rgba(0, 102, 214, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    border-color: #cbd5e1;
+}
+
+.loan-card:hover::before {
+    opacity: 1;
+}
+
+.loan-card h6 {
+    font-size: 16px;
+    font-weight: 750;
+    color: #0f172a;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.loan-card .loan-tag {
+    background: rgba(0, 102, 214, 0.08);
+    color: #18529c;
+    font-size: 9.5px;
+    font-weight: 750;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.loan-card .emi-preview {
+    font-size: 22px;
+    font-weight: 850;
+    color: #18529c;
+    margin-bottom: 2px;
+    letter-spacing: -0.5px;
+}
+
+.loan-card .loan-features {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.loan-card .loan-features li {
+    font-size: 12.5px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.loan-card .loan-features li i {
+    color: #10b981;
+    font-size: 13px;
+}
+
+.loan-card .btn-warning {
+    background: #0f172a !important;
+    border-color: #0f172a !important;
+    color: #ffffff !important;
+    border-radius: 9px !important;
+    font-weight: 700 !important;
+    font-size: 13.5px !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s ease !important;
+    margin-top: auto;
+    width: 100%;
+    text-align: center;
+}
+
+.loan-card .btn-warning:hover {
+    background: #1e293b !important;
+    border-color: #1e293b !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+}
+
+/* Ineligible Loans */
+.loan-card.opacity-50 {
+    opacity: 0.82;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    box-shadow: none;
+}
+
+.loan-card.opacity-50::before {
+    background: #94a3b8;
+}
+
+.loan-card.opacity-50 h6 {
+    color: #64748b;
+}
+
+.loan-card.opacity-50 .reason-badge {
+    background: rgba(239, 68, 68, 0.06);
+    color: #ef4444;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    line-height: 1.4;
+    text-align: left;
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 991px) {
+    .eligibility-hero {
+        padding: 40px 0;
+    }
+    .empty-state {
+        min-height: 280px;
+    }
+}
+
+@media (max-width: 576px) {
+    .eligibility-hero h1 {
+        font-size: 30px;
+    }
+    .eligibility-hero p {
+        font-size: 14.5px;
+    }
+}

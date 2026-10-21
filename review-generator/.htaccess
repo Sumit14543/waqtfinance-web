@@ -1,0 +1,27 @@
+# Prevent parent CMS/WordPress rewrite rules from intercepting API files
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Allow direct access to php files in this directory
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+</IfModule>
+
+# Set Security & Crawler Blocking Headers
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>
+
+# Protect sensitive environment and raw config file from direct URL access
+<FilesMatch "^(\.env|\.env\.example|config\.php)$">
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>

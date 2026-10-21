@@ -1,0 +1,23 @@
+# Block execution of PHP and other script files in the uploads folder
+<FilesMatch "\.(php|phtml|php3|php4|php5|php6|php7|php8|phps|phar|cgi|pl|asp|aspx|jsp|exe|sh|py)$">
+    <IfModule authz_core_module>
+        Require all denied
+    </IfModule>
+    <IfModule !authz_core_module>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+RemoveHandler .php .phtml .php3 .php4 .php5 .php6 .php7 .php8 .phps .phar
+RemoveType .php .phtml .php3 .php4 .php5 .php6 .php7 .php8 .phps .phar
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>

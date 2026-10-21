@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, max-video-preview:0, max-image-preview:none" />
+  <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet" />
+  <title>Share Your Genuine Experience | WAQT Finance</title>
+  
+  <!-- Embedded SVG Favicon (Prevents 404 Favicon Error) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a73e8'/><text x='50%' y='54%' dominant-baseline='central' text-anchor='middle' fill='%23ffffff' font-size='48' font-family='system-ui,sans-serif' font-weight='800'>WF</text></svg>" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1557b0;
+      --primary-light: #e8f0fe;
+      --primary-border: #c2dbfe;
+      --google-green: #0f9d58;
+      --google-green-dark: #0b8043;
+      --google-yellow: #f4b400;
+      --bg: #f8fafd;
+      --card-bg: #ffffff;
+      --text-main: #202124;
+      --text-muted: #5f6368;
+      --border-color: #dadce0;
+      --border-light: #edf2f7;
+      --shadow-card: 0 12px 40px rgba(26, 115, 232, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+      --radius-xl: 24px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 12px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-card {
+      width: min(650px, 100%);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Top App Header */
+    .app-header {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #ffffff;
+    }
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(26, 115, 232, 0.25);
+    }
+    .brand-info h1 {
+      font-size: 17.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+    .brand-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-back-nav {
+      background: #f1f3f4;
+      border: none;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .btn-back-nav:hover {
+      background: #e8eaed;
+      color: var(--text-main);
+    }
+    .lang-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Stepper Bar */
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 10px 22px;
+      background: #fafcff;
+      border-bottom: 1px solid var(--border-light);
+      gap: 6px;
+    }
+    .step-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #9aa0a6;
+    }
+    .step-dot-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #e8eaed;
+      color: var(--text-muted);
+      display: grid;
+      place-items: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-dot.active {
+      color: var(--primary);
+    }
+    .step-dot.active .step-dot-num {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .step-dot.completed {
+      color: var(--google-green);
+    }
+    .step-dot.completed .step-dot-num {
+      background: var(--google-green);
+      color: #ffffff;
+    }
+
+    /* Card Content Area */
+    .card-body {
+      padding: 24px 22px;
+      width: 100%;
+    }
+    .step-pane {
+      display: none;
+      width: 100%;
+      animation: fadeIn 0.25s ease-in-out forwards;
+    }
+    .step-pane.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2.title {
+      font-size: clamp(20px, 3.2vw, 24px);
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 5px;
+      letter-spacing: -0.4px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    /* STEP 1: Premium Language Cards */
+    .lang-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      width: 100%;
+    }
+    .lang-item-card {
+      width: 100%;
+      border: 1.5px solid var(--border-color);
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 15px 18px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .lang-item-card:hover {
+      border-color: var(--primary);
+      background: #f8fbff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(26, 115, 232, 0.1);
+    }
+    .lang-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .lang-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 15.5px;
+      flex-shrink: 0;
+      border: 1px solid var(--primary-border);
+    }
+    .lang-text strong {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 2px;
+    }
+    .lang-text small {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .lang-arrow {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #f1f3f4;
+      color: var(--text-muted);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .lang-item-card:hover .lang-arrow {
+      background: var(--primary);
+      color: #ffffff;
+      transform: translateX(3px);
+    }
+
+    /* STEP 2: Interactive Rating Box */
+    .rating-box {
+      background: linear-gradient(180deg, #fbfcfe 0%, #f4f8fe 100%);
+      border: 1.5px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      width: 100%;
+    }
+    .rating-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .rating-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .rating-sentiment-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--google-green-dark);
+      background: #e6f4ea;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .stars-wrap {
+      display: flex;
+      gap: 4px;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 28px;
+      color: #dadce0;
+      padding: 0 1px;
+      transition: transform 0.15s ease, color 0.15s ease;
+      line-height: 1;
+    }
+    .star-btn.active, .star-btn:hover {
+      color: var(--google-yellow);
+      transform: scale(1.18);
+    }
+
+    /* STEP 2: Modern 2-Column Services Grid */
+    .grid-services {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+    .service-card {
+      border: 1.5px solid var(--border-color);
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 14px 14px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .service-card:hover {
+      border-color: var(--primary);
+      background: #f8fbff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(26, 115, 232, 0.08);
+    }
+    .service-card.selected {
+      border-color: var(--primary) !important;
+      background: var(--primary-light) !important;
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+    }
+    .service-card-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+    }
+    .svc-icon-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .svc-icon-badge svg {
+      width: 20px;
+      height: 20px;
+    }
+    .icon-personal { background: #e8f0fe; color: #1a73e8; }
+    .icon-business { background: #fef7e0; color: #b06000; }
+    .icon-micro { background: #fce8e6; color: #c5221f; }
+    .icon-support { background: #e6f4ea; color: #137333; }
+    .icon-closure { background: #f3e8fd; color: #8430ce; }
+    .icon-other { background: #f1f3f4; color: #5f6368; }
+
+    .svc-text-wrap strong {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 2px;
+      line-height: 1.25;
+    }
+    .svc-text-wrap small {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.35;
+      display: block;
+    }
+    .svc-radio {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-color);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: all 0.15s ease;
+    }
+    .service-card.selected .svc-radio {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+    .service-card.selected .svc-radio::after {
+      content: "✓";
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    /* STEP 3: Chips & Notes */
+    .field-group {
+      margin-top: 16px;
+      width: 100%;
+    }
+    .field-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .chips-flow {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .chip-item {
+      border: 1.5px solid var(--border-color);
+      background: #ffffff;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .chip-item:hover {
+      border-color: #a8c5f2;
+      background: #f8fbff;
+    }
+    .chip-item.selected {
+      border-color: var(--primary) !important;
+      background: var(--primary-light) !important;
+      color: var(--primary-dark) !important;
+      font-weight: 700;
+    }
+
+    .textarea-box {
+      position: relative;
+      width: 100%;
+    }
+    textarea.feedback-input {
+      width: 100%;
+      min-height: 90px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 13.5px;
+      color: var(--text-main);
+      resize: vertical;
+      outline: none;
+      line-height: 1.55;
+    }
+    textarea.feedback-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+    }
+    .counter-tag {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      font-size: 11px;
+      color: #9aa0a6;
+    }
+
+    /* STEP 4: Google Review Card Mockup */
+    .google-mockup {
+      border: 1.5px solid #d2e3fc;
+      border-radius: var(--radius-lg);
+      background: #ffffff;
+      box-shadow: 0 4px 18px rgba(66, 133, 244, 0.06);
+      overflow: hidden;
+      margin-bottom: 16px;
+      width: 100%;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .google-mockup:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+    }
+    .mockup-header {
+      padding: 13px 16px;
+      background: linear-gradient(90deg, #f8fbff 0%, #f1f6ff 100%);
+      border-bottom: 1px solid #e3edfc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mockup-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ea4335, #fbbc05, #34a853, #4285f4);
+      padding: 2px;
+      display: grid;
+      place-items: center;
+    }
+    .user-avatar span {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+    }
+    .user-meta strong {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .verified-check {
+      color: #1a73e8;
+      display: inline-flex;
+    }
+    .user-meta small {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .google-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #4285f4;
+      background: #ffffff;
+      border: 1px solid #d2e3fc;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .draft-tabs {
+      display: flex;
+      background: #f1f3f4;
+      padding: 4px;
+      gap: 4px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .draft-tab {
+      flex: 1;
+      border: none;
+      background: none;
+      padding: 8px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .draft-tab.active {
+      background: #ffffff;
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .mockup-body {
+      padding: 16px 18px;
+      position: relative;
+    }
+    .mockup-stars-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .mockup-stars {
+      color: var(--google-yellow);
+      font-size: 18px;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mockup-stars small {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: normal;
+    }
+    .meta-time-tag {
+      font-size: 11px;
+      color: #9aa0a6;
+    }
+    .editable-review {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-main);
+      min-height: 100px;
+      outline: none;
+      white-space: pre-wrap;
+      padding: 4px 2px;
+    }
+    .mockup-footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-light);
+    }
+    .edit-pill {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 9px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .word-count-tag {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #80868b;
+    }
+
+    /* STEP 4: Hero CTA & Clean Horizontal Action Bar */
+    .cta-hero-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--google-green) 0%, var(--google-green-dark) 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-lg);
+      padding: 15px 20px;
+      font-size: 15.5px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      box-shadow: 0 6px 20px rgba(15, 157, 88, 0.3);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .cta-hero-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15, 157, 88, 0.4);
+      filter: brightness(1.04);
+    }
+    .cta-hero-btn:active { transform: scale(0.98); }
+
+    /* Action Toolbar: ALWAYS 3 Compact Columns on Mobile & Desktop */
+    .action-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 8px;
+      margin-top: 10px;
+      width: 100%;
+    }
+    .btn-action {
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-action:hover {
+      background: #f8fafc;
+      border-color: #b0c4de;
+    }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-step-next {
+      width: 100%;
+      margin-top: 20px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-lg);
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(26, 115, 232, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-step-next:hover:not(:disabled) {
+      filter: brightness(1.05);
+      box-shadow: 0 6px 18px rgba(26, 115, 232, 0.35);
+    }
+    .btn-step-next:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .spinner-bar {
+      display: none;
+      margin-top: 14px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--primary);
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+    .spinner-bar.show { display: flex; }
+    .spinner-icon {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(26, 115, 232, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast Notification */
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #202124;
+      color: #ffffff;
+      padding: 12px 22px;
+      border-radius: 30px;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+    }
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* 3-Step Guided Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      display: none;
+      place-items: center;
+      padding: 16px;
+      z-index: 2000;
+    }
+    .modal-overlay.show { display: grid; }
+    .modal-card {
+      width: min(440px, 100%);
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 26px 24px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-card .icon-party { font-size: 38px; margin-bottom: 6px; }
+    .modal-card h3 { font-size: 19.5px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+    .modal-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+    .guide-steps { display: flex; flex-direction: column; gap: 9px; text-align: left; margin-bottom: 20px; }
+    .guide-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      padding: 11px 13px;
+      border-radius: var(--radius-md);
+    }
+    .guide-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 12.5px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .guide-item strong { font-size: 13px; color: var(--text-main); display: block; }
+    .guide-item small { font-size: 11.5px; color: var(--text-muted); }
+    .modal-btn-go {
+      width: 100%;
+      background: var(--google-green);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* Footer */
+    .app-footer {
+      padding: 13px 22px;
+      border-top: 1px solid var(--border-light);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      text-align: center;
+      background: #fafcff;
+    }
+
+    @media (max-width: 580px) {
+      body { padding: 8px 4px; }
+      .app-card { border-radius: 18px; }
+      .app-header, .card-body { padding: 16px 14px; }
+      .grid-services { grid-template-columns: 1fr; }
+      .stepper { padding: 8px 14px; font-size: 10.5px; }
+      .btn-action { font-size: 11px; padding: 9px 4px; }
+    }
+  </style>
+</head>
+<body>
+
+<main class="app-card">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-box">
+      <div class="brand-logo" id="brandLogo">WF</div>
+      <div class="brand-info">
+        <h1 id="brandName">WAQT Finance</h1>
+        <p id="brandTagline">Share your genuine experience</p>
+      </div>
+    </div>
+    <div class="header-nav">
+      <button type="button" class="btn-back-nav" id="topBackBtn">← Back</button>
+      <div class="lang-badge" id="langBadge" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span id="currentLangLabel">English</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stepper Indicator -->
+  <nav class="stepper" id="stepperNav">
+    <div class="step-dot active" data-step-indicator="1">
+      <div class="step-dot-num">1</div>
+      <span class="step-dot-text">Language</span>
+    </div>
+    <div class="step-dot" data-step-indicator="2">
+      <div class="step-dot-num">2</div>
+      <span class="step-dot-text">Rating</span>
+    </div>
+    <div class="step-dot" data-step-indicator="3">
+      <div class="step-dot-num">3</div>
+      <span class="step-dot-text">Feedback</span>
+    </div>
+    <div class="step-dot" data-step-indicator="4">
+      <div class="step-dot-num">4</div>
+      <span class="step-dot-text">Review</span>
+    </div>
+  </nav>
+
+  <!-- Step Contents -->
+  <div class="card-body">
+
+    <!-- STEP 1: Language Selection -->
+    <section class="step-pane active" data-step-pane="1">
+      <h2 class="title">Choose your language</h2>
+      <p class="subtitle">Select the language you are most comfortable writing in.</p>
+      
+      <div class="lang-cards-list">
+        <button type="button" class="lang-item-card" data-lang="en">
+          <div class="lang-left">
+            <div class="lang-avatar">EN</div>
+            <div class="lang-text">
+              <strong>English</strong>
+              <small>Share review in clear, natural English</small>
+            </div>
+          </div>
+          <div class="lang-arrow">➔</div>
+        </button>
+
+        <button type="button" class="lang-item-card" data-lang="hi">
+          <div class="lang-left">
+            <div class="lang-avatar" style="background:#fef3e6; color:#d97706; border-color:#fcd34d;">हिं</div>
+            <div class="lang-text">
+              <strong>हिन्दी (Hindi)</strong>
+              <small>शुद्ध एवं स्वाभाविक हिन्दी में रिव्यू बनाएं</small>
+            </div>
+          </div>
+          <div class="lang-arrow">➔</div>
+        </button>
+
+        <button type="button" class="lang-item-card" data-lang="hinglish">
+          <div class="lang-left">
+            <div class="lang-avatar" style="background:#eafaf1; color:#0d8a57; border-color:#a7f3d0;">अA</div>
+            <div class="lang-text">
+              <strong>Hinglish (हिंग्लिश)</strong>
+              <small>Casual Hindi written in English letters</small>
+            </div>
+          </div>
+          <div class="lang-arrow">➔</div>
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 2: Service & Star Rating -->
+    <section class="step-pane" data-step-pane="2">
+      <h2 class="title" id="s2Title">Which service did you use?</h2>
+      <p class="subtitle" id="s2Sub">Select your service and overall experience rating.</p>
+
+      <!-- 5-Star Interactive Rating Box with Dynamic Feedback -->
+      <div class="rating-box">
+        <div class="rating-left">
+          <span class="rating-title" id="s2RatingTitle">Your rating:</span>
+          <span class="rating-sentiment-badge" id="sentimentBadge">⭐⭐⭐⭐⭐ Excellent (5.0)</span>
+        </div>
+        <div class="stars-wrap" id="starGroup">
+          <button type="button" class="star-btn active" data-star-val="1">★</button>
+          <button type="button" class="star-btn active" data-star-val="2">★</button>
+          <button type="button" class="star-btn active" data-star-val="3">★</button>
+          <button type="button" class="star-btn active" data-star-val="4">★</button>
+          <button type="button" class="star-btn active" data-star-val="5">★</button>
+        </div>
+      </div>
+
+      <!-- Modern 2-Column Services Grid -->
+      <div class="grid-services" id="servicesGrid"></div>
+
+      <button type="button" class="btn-step-next" id="s2NextBtn" disabled>
+        <span id="s2NextText">Continue</span> →
+      </button>
+    </section>
+
+    <!-- STEP 3: Experience Details -->
+    <section class="step-pane" data-step-pane="3">
+      <h2 class="title" id="s3Title">Tell us about your experience</h2>
+      <p class="subtitle" id="s3Sub">Select options that genuinely match your experience.</p>
+
+      <div class="field-group">
+        <label id="s3ProcessLabel">How was the overall process?</label>
+        <div class="chips-flow" id="processFlow"></div>
+      </div>
+
+      <div class="field-group">
+        <label id="s3SupportLabel">How was the team support?</label>
+        <div class="chips-flow" id="supportFlow"></div>
+      </div>
+
+      <div class="field-group">
+        <label id="s3MentionLabel">Key topics to highlight (optional):</label>
+        <div class="chips-flow" id="mentionsFlow"></div>
+      </div>
+
+      <div class="field-group">
+        <label id="s3CommentLabel">Any specific note or feedback? (optional):</label>
+        <div class="textarea-box">
+          <textarea class="feedback-input" id="customNotes" maxlength="400" placeholder="Write a few words about what happened..."></textarea>
+          <span class="counter-tag" id="noteCounter">0/400</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn-step-next" id="generateBtn">
+        <span id="generateBtnText">Generate My Review</span>
+      </button>
+
+      <div class="spinner-bar" id="spinnerBar">
+        <div class="spinner-icon"></div>
+        <span id="spinnerText">Drafting your natural reviews…</span>
+      </div>
+    </section>
+
+    <!-- STEP 4: Review Preview & 1-Click Post -->
+    <section class="step-pane" data-step-pane="4">
+      <h2 class="title" id="s4Title">Your review draft is ready!</h2>
+      <p class="subtitle" id="s4Sub">Review, pick your favorite version, or edit before posting.</p>
+
+      <!-- Google Review Card Mockup -->
+      <div class="google-mockup">
+        <div class="mockup-header">
+          <div class="mockup-user">
+            <div class="user-avatar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4285F4" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="user-meta">
+              <strong id="mockupBrand">
+                WAQT Finance 
+                <span class="verified-check" title="Verified Google Business">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </span>
+              </strong>
+              <small id="mockupMeta">Posting publicly on Google Maps</small>
+            </div>
+          </div>
+          <div class="google-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Google Review</span>
+          </div>
+        </div>
+
+        <!-- 3 Draft Style Tabs -->
+        <div class="draft-tabs" id="draftTabs">
+          <button type="button" class="draft-tab active" data-draft-type="balanced"><span id="tabBalanced">Balanced</span></button>
+          <button type="button" class="draft-tab" data-draft-type="short"><span id="tabShort">Short & Crisp</span></button>
+          <button type="button" class="draft-tab" data-draft-type="detailed"><span id="tabDetailed">Detailed</span></button>
+        </div>
+
+        <div class="mockup-body">
+          <div class="mockup-stars-row">
+            <div class="mockup-stars" id="mockupStars">★★★★★ <small id="mockupStarCount">5.0</small></div>
+            <span class="meta-time-tag">Just now</span>
+          </div>
+          <div class="editable-review" id="reviewOutput" contenteditable="true" spellcheck="true"></div>
+          
+          <div class="mockup-footer-bar">
+            <div class="edit-pill">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span id="editHint">Tap text to edit freely</span>
+            </div>
+            <span class="word-count-tag" id="reviewWordCount">0 words</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero CTA (Top Priority) -->
+      <button type="button" class="cta-hero-btn" id="heroGoogleBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span id="heroGoogleText">Copy & Open Google Maps</span>
+      </button>
+
+      <!-- Clean Horizontal Secondary Actions Bar (Always 3 Columns) -->
+      <div class="action-bar">
+        <button type="button" class="btn-action" id="copyOnlyBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span id="copyOnlyText">Copy Review</span>
+        </button>
+        <button type="button" class="btn-action" id="regenBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          <span id="regenText">Fresh Drafts</span>
+        </button>
+        <button type="button" class="btn-action" id="shareWhatsAppBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          <span>WhatsApp</span>
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    Drafted based on your actual experience. Nothing is published to Google automatically.
+  </footer>
+</main>
+
+<!-- Toast Message Notification -->
+<div class="toast-msg" id="toastMsg">✓ Copied to clipboard!</div>
+
+<!-- 3-Step Guided Posting Modal -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-card">
+    <div class="icon-party">🎉</div>
+    <h3 id="modalTitle">Review Copied!</h3>
+    <p id="modalSub">Complete your post in 3 quick steps on Google:</p>
+
+    <div class="guide-steps">
+      <div class="guide-item">
+        <div class="guide-num">1</div>
+        <div>
+          <strong id="gStep1Title">Select Star Rating</strong>
+          <small id="gStep1Sub">Choose your star rating on Google Maps</small>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-num">2</div>
+        <div>
+          <strong id="gStep2Title">Paste Your Review</strong>
+          <small id="gStep2Sub">Long-press or Ctrl+V in the review box</small>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-num">3</div>
+        <div>
+          <strong id="gStep3Title">Click Post</strong>
+          <small id="gStep3Sub">Your review will be live instantly</small>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="modal-btn-go" id="modalGoGoogleBtn">
+      <span id="modalBtnText">Continue to Google Maps</span> ➔
+    </button>
+  </div>
+</div>
+
+<script>
+// Base directory URL resolution (handles live domains, subfolders, trailing slashes, etc.)
+const currentPath = window.location.pathname;
+const baseDir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1) || '/';
+const API_CONFIG_URL = baseDir + "api-config.php";
+const API_GENERATE_URL = baseDir + "generate-review.php";
+
+let GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJ6wMIyo7vDDkRaSo4sN2-h5o";
+let BUSINESS_NAME = "WAQT Finance";
+
+// SVG Icons Definitions for Services
+const SVGS = {
+  personal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+  business: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+  micro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+  support: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>`,
+  closure: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`,
+  other: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`
+};
+
+// State
+const state = {
+  lang: 'en',
+  rating: 5,
+  service: '',
+  process: '',
+  support: '',
+  mentions: [],
+  comment: '',
+  activeDraftTab: 'balanced',
+  drafts: {
+    short: '',
+    balanced: '',
+    detailed: ''
+  },
+  // Cache user custom manual edits per tab
+  customEdits: {
+    short: null,
+    balanced: null,
+    detailed: null
+  }
+};
+
+// UI Translations & Data
+const dict = {
+  en: {
+    langName: "English",
+    s2Title: "Which service did you use?",
+    s2Sub: "Select your service and overall experience rating.",
+    s2Rating: "Your rating:",
+    sentiments: {
+      5: "⭐⭐⭐⭐⭐ Excellent (5.0)",
+      4: "⭐⭐⭐⭐ Very Good (4.0)",
+      3: "⭐⭐⭐ Average (3.0)",
+      2: "⭐⭐ Needs Improvement (2.0)",
+      1: "⭐ Unsatisfied (1.0)"
+    },
+    services: [
+      { id: "Personal Loan", title: "Personal Loan", iconKey: "personal", iconClass: "icon-personal", desc: "Instant personal financing" },
+      { id: "Business Loan", title: "Business Loan", iconKey: "business", iconClass: "icon-business", desc: "Commercial & MSME funding" },
+      { id: "Micro Loan", title: "Micro Loan", iconKey: "micro", iconClass: "icon-micro", desc: "Fast emergency financing" },
+      { id: "Customer Support", title: "Customer Support", iconKey: "support", iconClass: "icon-support", desc: "Assistance & consultation" },
+      { id: "Loan Closure", title: "Loan Closure", iconKey: "closure", iconClass: "icon-closure", desc: "NOC & settlement" },
+      { id: "Other Services", title: "Other Services", iconKey: "other", iconClass: "icon-other", desc: "General banking services" }
+    ],
+    s3Title: "Tell us about your experience",
+    s3Sub: "Select options that genuinely match your experience.",
+    s3Process: "How was the overall process?",
+    processList: ["Very smooth", "Quick & Easy", "Average", "Took longer than expected", "Could be better"],
+    s3Support: "How was the team support?",
+    supportList: ["Excellent", "Helpful & Polite", "Good", "Average", "Needs improvement"],
+    s3Mention: "Key topics to highlight (optional):",
+    mentionList: ["Documentation", "Application process", "Clear communication", "Disbursement time", "Staff support", "Transparency"],
+    s3Comment: "Any specific note or feedback? (optional):",
+    placeholder: "Write a few words about what happened...",
+    generateBtn: "Generate My Review",
+    spinnerText: "Drafting authentic customer reviews…",
+    s4Title: "Your review draft is ready!",
+    s4Sub: "Pick your favorite version or tap text to edit.",
+    tabBalanced: "Balanced",
+    tabShort: "Short & Crisp",
+    tabDetailed: "Detailed",
+    editHint: "Tap text to edit freely",
+    heroGoogle: "Copy & Open Google Maps",
+    copyOnly: "Copy Review",
+    regen: "Fresh Drafts",
+    copiedToast: "✓ Review copied! Opening Google Maps...",
+    copiedOnlyToast: "✓ Copied to clipboard!",
+    modalTitle: "Review Copied!",
+    modalSub: "Complete your post in 3 quick steps on Google:",
+    gStep1Title: "Select Star Rating",
+    gStep1Sub: "Choose your star rating on Google Maps",
+    gStep2Title: "Paste Review Text",
+    gStep2Sub: "Long-press or press Ctrl+V in the box",
+    gStep3Title: "Click Post",
+    gStep3Sub: "Your review goes live immediately",
+    modalBtnText: "Continue to Google Maps",
+    back: "Back",
+    continue: "Continue"
+  },
+  hi: {
+    langName: "हिन्दी",
+    s2Title: "आपने कौन-सी सेवा ली?",
+    s2Sub: "अपनी सेवा और अनुभव के अनुसार रेटिंग चुनें।",
+    s2Rating: "आपकी रेटिंग:",
+    sentiments: {
+      5: "⭐⭐⭐⭐⭐ शानदार अनुभव (5.0)",
+      4: "⭐⭐⭐⭐ बहुत अच्छा (4.0)",
+      3: "⭐⭐⭐ सामान्य (3.0)",
+      2: "⭐⭐ सुधार की ज़रूरत (2.0)",
+      1: "⭐ असंतोषजनक (1.0)"
+    },
+    services: [
+      { id: "पर्सनल लोन", title: "पर्सनल लोन", iconKey: "personal", iconClass: "icon-personal", desc: "त्वरित व्यक्तिगत ऋण" },
+      { id: "बिज़नेस लोन", title: "बिज़नेस लोन", iconKey: "business", iconClass: "icon-business", desc: "व्यापार एवं एमएसएमई लोन" },
+      { id: "माइक्रो लोन", title: "माइक्रो लोन", iconKey: "micro", iconClass: "icon-micro", desc: "त्वरित अल्पकालिक लोन" },
+      { id: "कस्टमर सपोर्ट", title: "कस्टमर सपोर्ट", iconKey: "support", iconClass: "icon-support", desc: "सहायता एवं परामर्श" },
+      { id: "लोन क्लोज़र", title: "लोन क्लोज़र", iconKey: "closure", iconClass: "icon-closure", desc: "एनओसी एवं सेटलमेंट" },
+      { id: "अन्य सेवाएं", title: "अन्य सेवाएं", iconKey: "other", iconClass: "icon-other", desc: "सामान्य सेवाएं" }
+    ],
+    s3Title: "अपने अनुभव के बारे में बताइए",
+    s3Sub: "सिर्फ वही विकल्प चुनें जो आपके वास्तविक अनुभव को दर्शाते हैं।",
+    s3Process: "पूरी प्रक्रिया कैसी रही?",
+    processList: ["बहुत आसान व सुगम", "आसान", "सामान्य", "थोड़ा समय लगा", "और बेहतर हो सकती थी"],
+    s3Support: "टीम का सहयोग कैसा रहा?",
+    supportList: ["बहुत अच्छा", "सहयोगी एवं विनम्र", "अच्छा", "सामान्य", "सुधार की ज़रूरत"],
+    s3Mention: "किन चीज़ों का ज़िक्र करना चाहेंगे?",
+    mentionList: ["दस्तावेज़ीकरण", "आवेदन प्रक्रिया", "कम्युनिकेशन", "समय पर डिस्बर्समेंट", "स्टाफ सपोर्ट", "पारदर्शिता"],
+    s3Comment: "कुछ खास बात जोड़ना चाहेंगे? (वैकल्पिक):",
+    placeholder: "जो वास्तव में हुआ उसके बारे में कुछ शब्द लिखें...",
+    generateBtn: "मेरा रिव्यू बनाएं",
+    spinnerText: "प्राकृतिक रिव्यू ड्राफ्ट तैयार हो रहे हैं…",
+    s4Title: "आपका रिव्यू ड्राफ्ट तैयार है!",
+    s4Sub: "पसंदीदा ड्राफ्ट चुनें या टेक्स्ट पर क्लिक करके एडिट करें।",
+    tabBalanced: "संतुलित ड्राफ्ट",
+    tabShort: "छोटा व सटीक",
+    tabDetailed: "विस्तृत अनुभव",
+    editHint: "टेक्स्ट पर टैप करके एडिट करें",
+    heroGoogle: "कॉपी करें और Google Maps पर जाएं",
+    copyOnly: "रिव्यू कॉपी करें",
+    regen: "नया ड्राफ्ट बनाएं",
+    copiedToast: "✓ रिव्यू कॉपी हो गया! Google Maps खुल रहा है...",
+    copiedOnlyToast: "✓ क्लिपबोर्ड पर कॉपी हो गया!",
+    modalTitle: "रिव्यू कॉपी हो चुका है!",
+    modalSub: "Google पर सिर्फ 3 आसान स्टेप्स में पोस्ट करें:",
+    gStep1Title: "रेटिंग स्टार चुनें",
+    gStep1Sub: "Google Maps पर अपना स्टार चुनें",
+    gStep2Title: "रिव्यू पेस्ट करें",
+    gStep2Sub: "बॉक्स में Long-press या Ctrl+V दबाएं",
+    gStep3Title: "पोस्ट (Submit) करें",
+    gStep3Sub: "आपका रिव्यू तुरंत लाइव हो जाएगा",
+    modalBtnText: "Google Maps पर आगे बढ़ें",
+    back: "वापस",
+    continue: "आगे बढ़ें"
+  },
+  hinglish: {
+    langName: "Hinglish",
+    s2Title: "Aapne kaunsi service li?",
+    s2Sub: "Apni service aur rating select karein.",
+    s2Rating: "Aapki rating:",
+    sentiments: {
+      5: "⭐⭐⭐⭐⭐ Super Experience (5.0)",
+      4: "⭐⭐⭐⭐ Very Good (4.0)",
+      3: "⭐⭐⭐ Average (3.0)",
+      2: "⭐⭐ Needs Improvement (2.0)",
+      1: "⭐ Not Satisfied (1.0)"
+    },
+    services: [
+      { id: "Personal Loan", title: "Personal Loan", iconKey: "personal", iconClass: "icon-personal", desc: "Instant personal loan" },
+      { id: "Business Loan", title: "Business Loan", iconKey: "business", iconClass: "icon-business", desc: "Business & MSME growth" },
+      { id: "Micro Loan", title: "Micro Loan", iconKey: "micro", iconClass: "icon-micro", desc: "Quick emergency loan" },
+      { id: "Customer Support", title: "Customer Support", iconKey: "support", iconClass: "icon-support", desc: "Help & guidance" },
+      { id: "Loan Closure", title: "Loan Closure", iconKey: "closure", iconClass: "icon-closure", desc: "Settlement & NOC" },
+      { id: "Other Services", title: "Other Services", iconKey: "other", iconClass: "icon-other", desc: "General queries" }
+    ],
+    s3Title: "Apne experience ke baare me batayein",
+    s3Sub: "Jo sach me hua woh options select karein.",
+    s3Process: "Overall process kaisa tha?",
+    processList: ["Super smooth", "Easy & Fast", "Average", "Thoda time laga", "Could be better"],
+    s3Support: "Team ka support kaisa tha?",
+    supportList: ["Excellent", "Bahut helpful", "Good", "Normal", "Needs improvement"],
+    s3Mention: "Kya highlight karna chahenge?",
+    mentionList: ["Documentation", "Application process", "Clear communication", "Fast disbursement", "Staff behavior", "Transparency"],
+    s3Comment: "Kuch aur add karna chahenge? (optional):",
+    placeholder: "Apne words me kuch bhi likhein jo zaroori ho...",
+    generateBtn: "Mera Review Banayein",
+    spinnerText: "Natural Hinglish reviews generate ho rahe hain…",
+    s4Title: "Aapka review ready hai!",
+    s4Sub: "Apna favorite version select karein ya edit karein.",
+    tabBalanced: "Balanced",
+    tabShort: "Short & Crisp",
+    tabDetailed: "Detailed Story",
+    editHint: "Text par click karke edit karein",
+    heroGoogle: "Copy karein & Google Maps par jayein",
+    copyOnly: "Copy Review",
+    regen: "Naya Draft",
+    copiedToast: "✓ Review copy ho gaya! Google Maps open ho raha hai...",
+    copiedOnlyToast: "✓ Clipboard par copy ho gaya!",
+    modalTitle: "Review Copy Ho Gaya!",
+    modalSub: "Google par 3 simple steps me post karein:",
+    gStep1Title: "Star Rating Select Karein",
+    gStep1Sub: "Google Maps par star click karein",
+    gStep2Title: "Review Paste Karein",
+    gStep2Sub: "Box me Long-press ya Ctrl+V karein",
+    gStep3Title: "Post par Click Karein",
+    gStep3Sub: "Aapka review live ho jayega",
+    modalBtnText: "Google Maps Par Jayein",
+    back: "Back",
+    continue: "Aage Badhein"
+  }
+};
+
+// Navigation Handling
+function navigateToStep(n) {
+  document.querySelectorAll(".step-pane").forEach(p => p.classList.toggle("active", +p.dataset.stepPane === n));
+  
+  document.querySelectorAll("[data-step-indicator]").forEach(dot => {
+    const s = +dot.dataset.stepIndicator;
+    dot.classList.toggle("active", s === n);
+    dot.classList.toggle("completed", s < n);
+  });
+
+  const topBackBtn = document.getElementById("topBackBtn");
+  if (n > 1) {
+    topBackBtn.style.display = "inline-flex";
+    topBackBtn.textContent = `← ${dict[state.lang].back}`;
+  } else {
+    topBackBtn.style.display = "none";
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.getElementById("topBackBtn").onclick = () => {
+  const activePane = document.querySelector(".step-pane.active");
+  const current = activePane ? +activePane.dataset.stepPane : 1;
+  navigateToStep(Math.max(1, current - 1));
+};
+
+// Render UI according to current language
+function renderLanguageUI() {
+  const t = dict[state.lang];
+
+  document.getElementById("langBadge").style.display = "inline-flex";
+  document.getElementById("currentLangLabel").textContent = t.langName;
+
+  // Step 2
+  document.getElementById("s2Title").textContent = t.s2Title;
+  document.getElementById("s2Sub").textContent = t.s2Sub;
+  document.getElementById("s2RatingTitle").textContent = t.s2Rating;
+  document.getElementById("s2NextText").textContent = t.continue;
+  updateSentimentText();
+
+  // Step 3
+  document.getElementById("s3Title").textContent = t.s3Title;
+  document.getElementById("s3Sub").textContent = t.s3Sub;
+  document.getElementById("s3ProcessLabel").textContent = t.s3Process;
+  document.getElementById("s3SupportLabel").textContent = t.s3Support;
+  document.getElementById("s3MentionLabel").textContent = t.s3Mention;
+  document.getElementById("s3CommentLabel").textContent = t.s3Comment;
+  document.getElementById("customNotes").placeholder = t.placeholder;
+  document.getElementById("generateBtnText").textContent = t.generateBtn;
+  document.getElementById("spinnerText").textContent = t.spinnerText;
+
+  // Step 4
+  document.getElementById("s4Title").textContent = t.s4Title;
+  document.getElementById("s4Sub").textContent = t.s4Sub;
+  document.getElementById("tabBalanced").textContent = t.tabBalanced;
+  document.getElementById("tabShort").textContent = t.tabShort;
+  document.getElementById("tabDetailed").textContent = t.tabDetailed;
+  document.getElementById("editHint").textContent = t.editHint;
+  document.getElementById("heroGoogleText").textContent = t.heroGoogle;
+  document.getElementById("copyOnlyText").textContent = t.copyOnly;
+  document.getElementById("regenText").textContent = t.regen;
+
+  // Modal
+  document.getElementById("modalTitle").textContent = t.modalTitle;
+  document.getElementById("modalSub").textContent = t.modalSub;
+  document.getElementById("gStep1Title").textContent = t.gStep1Title;
+  document.getElementById("gStep1Sub").textContent = t.gStep1Sub;
+  document.getElementById("gStep2Title").textContent = t.gStep2Title;
+  document.getElementById("gStep2Sub").textContent = t.gStep2Sub;
+  document.getElementById("gStep3Title").textContent = t.gStep3Title;
+  document.getElementById("gStep3Sub").textContent = t.gStep3Sub;
+  document.getElementById("modalBtnText").textContent = t.modalBtnText;
+
+  renderServices(t.services);
+  renderSingleChips("processFlow", t.processList, "process");
+  renderSingleChips("supportFlow", t.supportList, "support");
+  renderMultiChips("mentionsFlow", t.mentionList);
+}
+
+function updateSentimentText() {
+  const t = dict[state.lang] || dict.en;
+  const badge = document.getElementById("sentimentBadge");
+  badge.textContent = t.sentiments[state.rating] || `${state.rating}.0 Stars`;
+}
+
+function renderServices(services) {
+  const container = document.getElementById("servicesGrid");
+  container.innerHTML = "";
+  services.forEach(s => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "service-card" + (state.service === s.id ? " selected" : "");
+    btn.innerHTML = `
+      <div class="service-card-main">
+        <div class="svc-icon-badge ${s.iconClass}">
+          ${SVGS[s.iconKey]}
+        </div>
+        <div class="svc-text-wrap">
+          <strong>${s.title}</strong>
+          <small>${s.desc}</small>
+        </div>
+      </div>
+      <div class="svc-radio"></div>
+    `;
+    btn.onclick = () => {
+      state.service = s.id;
+      [...container.children].forEach(c => c.classList.remove("selected"));
+      btn.classList.add("selected");
+      document.getElementById("s2NextBtn").disabled = false;
+    };
+    container.appendChild(btn);
+  });
+}
+
+function renderSingleChips(containerId, list, key) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  list.forEach(item => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip-item" + (state[key] === item ? " selected" : "");
+    chip.textContent = item;
+    chip.onclick = () => {
+      state[key] = item;
+      [...el.children].forEach(c => c.classList.remove("selected"));
+      chip.classList.add("selected");
+    };
+    el.appendChild(chip);
+  });
+}
+
+function renderMultiChips(containerId, list) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = "";
+  list.forEach(item => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip-item" + (state.mentions.includes(item) ? " selected" : "");
+    chip.textContent = item;
+    chip.onclick = () => {
+      const idx = state.mentions.indexOf(item);
+      if (idx >= 0) {
+        state.mentions.splice(idx, 1);
+        chip.classList.remove("selected");
+      } else {
+        state.mentions.push(item);
+        chip.classList.add("selected");
+      }
+    };
+    el.appendChild(chip);
+  });
+}
+
+// Star Rating in Step 2
+const starButtons = document.querySelectorAll("[data-star-val]");
+function updateStars(val) {
+  state.rating = val;
+  starButtons.forEach(btn => {
+    const num = +btn.dataset.starVal;
+    btn.classList.toggle("active", num <= val);
+  });
+
+  updateSentimentText();
+
+  const starIcons = "★".repeat(val) + "☆".repeat(5 - val);
+  document.getElementById("mockupStars").innerHTML = `${starIcons} <small>${val}.0</small>`;
+}
+starButtons.forEach(btn => {
+  btn.onclick = () => updateStars(+btn.dataset.starVal);
+});
+
+// Step 1: Language Card Click
+document.querySelectorAll("[data-lang]").forEach(btn => {
+  btn.onclick = () => {
+    const chosen = btn.dataset.lang;
+    if (state.lang !== chosen) {
+      state.lang = chosen;
+      state.service = '';
+      state.process = '';
+      state.support = '';
+      state.mentions = [];
+      document.getElementById("s2NextBtn").disabled = true;
+    }
+    renderLanguageUI();
+    navigateToStep(2);
+  };
+});
+
+// Step 2 Continue
+document.getElementById("s2NextBtn").onclick = () => navigateToStep(3);
+
+// Character Counter in Step 3
+const customNotes = document.getElementById("customNotes");
+const noteCounter = document.getElementById("noteCounter");
+customNotes.addEventListener("input", () => {
+  noteCounter.textContent = `${customNotes.value.length}/400`;
+});
+
+// Review Word Counter & Manual Edit Tracker in Step 4
+const reviewOutput = document.getElementById("reviewOutput");
+const reviewWordCount = document.getElementById("reviewWordCount");
+
+function updateReviewMeta() {
+  const text = reviewOutput.innerText.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  reviewWordCount.textContent = `${words} words • ${text.length} chars`;
+  
+  // Cache user edit for active tab
+  state.customEdits[state.activeDraftTab] = text;
+}
+
+reviewOutput.addEventListener("input", updateReviewMeta);
+
+// Draft Tabs Switcher
+document.querySelectorAll("[data-draft-type]").forEach(tab => {
+  tab.onclick = () => {
+    const type = tab.dataset.draftType;
+    state.activeDraftTab = type;
+    document.querySelectorAll("[data-draft-type]").forEach(t => t.classList.toggle("active", t.dataset.draftType === type));
+    
+    // Check if user has a custom manual edit for this tab, otherwise use AI draft
+    const text = (state.customEdits[type] !== null) ? state.customEdits[type] : (state.drafts[type] || state.drafts.balanced || '');
+    reviewOutput.textContent = text;
+    updateReviewMeta();
+  };
+});
+
+// Generate Review via AI Endpoint
+async function generateReview() {
+  state.comment = customNotes.value.trim();
+
+  const spinnerBar = document.getElementById("spinnerBar");
+  const generateBtn = document.getElementById("generateBtn");
+  const regenBtn = document.getElementById("regenBtn");
+
+  spinnerBar.classList.add("show");
+  generateBtn.disabled = true;
+  regenBtn.disabled = true;
+
+  try {
+    const res = await fetch(API_GENERATE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state)
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Generation failed");
+    }
+
+    if (data.drafts) {
+      state.drafts = data.drafts;
+    } else {
+      state.drafts = {
+        balanced: data.review,
+        short: data.review,
+        detailed: data.review
+      };
+    }
+
+    // Reset custom edits on fresh generation
+    state.customEdits = { short: null, balanced: null, detailed: null };
+
+    state.activeDraftTab = 'balanced';
+    document.querySelectorAll("[data-draft-type]").forEach(t => t.classList.toggle("active", t.dataset.draftType === 'balanced'));
+    reviewOutput.textContent = state.drafts.balanced;
+    updateReviewMeta();
+
+    navigateToStep(4);
+  } catch (err) {
+    alert((state.lang === "hi" ? "त्रुटि: " : "Error: ") + err.message);
+  } finally {
+    spinnerBar.classList.remove("show");
+    generateBtn.disabled = false;
+    regenBtn.disabled = false;
+  }
+}
+
+document.getElementById("generateBtn").onclick = generateReview;
+document.getElementById("regenBtn").onclick = generateReview;
+
+// Clipboard helper with toast
+async function copyCurrentReview() {
+  const text = reviewOutput.innerText.trim();
+  if (!text) return false;
+
+  let copied = false;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch (e) { copied = false; }
+  }
+
+  if (!copied) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand("copy");
+      copied = true;
+    } catch (e) { copied = false; }
+    ta.remove();
+  }
+
+  return copied;
+}
+
+function showToast(msg) {
+  const toast = document.getElementById("toastMsg");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+// Copy Review Only Button
+document.getElementById("copyOnlyBtn").onclick = async () => {
+  const ok = await copyCurrentReview();
+  if (ok) {
+    showToast(dict[state.lang].copiedOnlyToast);
+    const originalText = document.getElementById("copyOnlyText").textContent;
+    document.getElementById("copyOnlyText").textContent = (state.lang === 'hi' ? "कॉपी हो गया ✓" : "Copied ✓");
+    setTimeout(() => {
+      document.getElementById("copyOnlyText").textContent = originalText;
+    }, 2000);
+  }
+};
+
+// WhatsApp Sharing Button
+document.getElementById("shareWhatsAppBtn").onclick = async () => {
+  const text = reviewOutput.innerText.trim();
+  const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank");
+};
+
+// Trigger Confetti Celebration
+function triggerConfetti() {
+  if (typeof confetti === 'function') {
+    confetti({
+      particleCount: 70,
+      spread: 60,
+      origin: { y: 0.75 },
+      colors: ['#4285F4', '#34A853', '#FBBC05', '#EA4335']
+    });
+  }
+}
+
+// Hero Button: Copy & Open Google Maps
+document.getElementById("heroGoogleBtn").onclick = async () => {
+  await copyCurrentReview();
+  triggerConfetti();
+
+  const modal = document.getElementById("guideModal");
+  modal.classList.add("show");
+};
+
+// Modal Continue to Google Maps
+document.getElementById("modalGoGoogleBtn").onclick = () => {
+  document.getElementById("guideModal").classList.remove("show");
+  if (!GOOGLE_REVIEW_URL || GOOGLE_REVIEW_URL.includes("REPLACE_")) {
+    alert(state.lang === "hi" ? "कृपया सही Google Review link सेट करें।" : "Please configure your official Google Review link.");
+    return;
+  }
+  window.open(GOOGLE_REVIEW_URL, "_blank", "noopener,noreferrer");
+};
+
+document.getElementById("guideModal").onclick = (e) => {
+  if (e.target.id === "guideModal") {
+    document.getElementById("guideModal").classList.remove("show");
+  }
+};
+
+// Dynamic Config Fetch on Load
+async function initConfig() {
+  try {
+    const res = await fetch(API_CONFIG_URL);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.businessName) {
+        BUSINESS_NAME = data.businessName;
+        document.getElementById("brandName").textContent = data.businessName;
+        document.getElementById("mockupBrand").innerHTML = `
+          ${data.businessName}
+          <span class="verified-check" title="Verified Google Business">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#1a73e8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </span>
+        `;
+        document.title = `Share Your Genuine Experience | ${data.businessName}`;
+        const words = data.businessName.split(" ");
+        const initials = words.length > 1 ? (words[0][0] + words[1][0]) : data.businessName.slice(0, 2);
+        document.getElementById("brandLogo").textContent = initials.toUpperCase();
+      }
+      if (data.businessTagline) {
+        document.getElementById("brandTagline").textContent = data.businessTagline;
+      }
+      if (data.googleReviewUrl) {
+        GOOGLE_REVIEW_URL = data.googleReviewUrl;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not load dynamic config", e);
+  }
+}
+
+initConfig();
+</script>
+</body>
+</html>

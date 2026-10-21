@@ -1,0 +1,70 @@
+<?php
+declare(strict_types=1);
+
+return [
+    'delhi-ncr' => [
+        'name' => 'Delhi NCR',
+        'title' => 'Loan Options Across Delhi NCR',
+        'meta_title' => 'Loans in Delhi NCR | Explore Personal & Business Options',
+        'meta_description' => 'Explore personal, business, payday, EDI, vehicle and property-backed loan application options across Delhi NCR with clear eligibility-led processing.',
+        'type' => 'region',
+        'areas' => ['Delhi', 'Noida', 'Greater Noida', 'Gurugram', 'Ghaziabad', 'Faridabad'],
+        'intro' => 'Compare digital loan journeys available to eligible applicants across Delhi NCR. Final amount, pricing and tenure depend on verification and credit assessment.',
+        'local_note' => 'Delhi NCR applications are supported digitally. Our verified Noida support location serves as the regional operating point; contact support before planning an in-person visit.',
+        'scenarios' => [
+            ['Salaried applicants', 'Explore personal or short-term options based on income and repayment capacity.'],
+            ['Businesses and retailers', 'Compare working-capital, shopkeeper and EDI application journeys.'],
+            ['Asset-backed needs', 'Consider vehicle finance or loan against property where suitable.'],
+        ],
+        'nearby' => ['delhi' => 'Delhi', 'noida' => 'Noida & Greater Noida', 'gurugram' => 'Gurugram'],
+    ],
+    'noida' => [
+        'name' => 'Noida & Greater Noida',
+        'title' => 'Loan Options in Noida & Greater Noida',
+        'meta_title' => 'Loans in Noida & Greater Noida | Waqt Finance',
+        'meta_description' => 'Explore loan application options in Noida and Greater Noida and find verified Waqt Finance support information for Sector 63.',
+        'type' => 'office',
+        'areas' => ['Sector 18', 'Sector 62', 'Sector 63', 'Noida Extension', 'Greater Noida West', 'Pari Chowk'],
+        'intro' => 'Explore personal, business and secured loan journeys with digital application support for eligible applicants across Noida and Greater Noida.',
+        'local_note' => 'Waqt Finance lists its corporate support location at BSI Business Park, Sector 63, Noida, Uttar Pradesh 201301. Please call before visiting to confirm availability and the service you need.',
+        'address' => 'BSI Business Park, Sector 63, Noida, Uttar Pradesh 201301',
+        'scenarios' => [
+            ['IT and salaried professionals', 'Use income and existing obligations to assess an affordable application route.'],
+            ['Retailers and MSMEs', 'Keep banking, ITR, GST or business-continuity records ready where applicable.'],
+            ['Property and vehicle applicants', 'Asset documents and additional legal or valuation checks may be required.'],
+        ],
+        'nearby' => ['delhi-ncr' => 'Delhi NCR', 'delhi' => 'Delhi', 'gurugram' => 'Gurugram'],
+    ],
+    'delhi' => [
+        'name' => 'Delhi',
+        'title' => 'Loan Options for Delhi Applicants',
+        'meta_title' => 'Loans in Delhi | Explore Online Loan Options',
+        'meta_description' => 'Explore online personal, business, payday, EDI, vehicle and loan-against-property application routes available to eligible Delhi applicants.',
+        'type' => 'service-area',
+        'areas' => ['Dwarka', 'Rohini', 'Karol Bagh', 'Lajpat Nagar', 'Janakpuri', 'Pitampura'],
+        'intro' => 'Compare online loan application journeys available to eligible Delhi residents and businesses, with clear document and assessment requirements.',
+        'local_note' => 'Delhi is served through the online application and support process. This page does not represent a Waqt Finance branch in Delhi; contact support for verified assistance.',
+        'scenarios' => [
+            ['Salaried residents', 'PAN, KYC, income and banking records may be requested based on the product.'],
+            ['Self-employed applicants', 'Business proof, ITR and bank statements may support assessment.'],
+            ['Applicants in rented homes', 'Keep a current accepted address proof ready for verification.'],
+        ],
+        'nearby' => ['delhi-ncr' => 'Delhi NCR', 'noida' => 'Noida & Greater Noida', 'gurugram' => 'Gurugram'],
+    ],
+    'gurugram' => [
+        'name' => 'Gurugram',
+        'title' => 'Loan Options for Gurugram Applicants',
+        'meta_title' => 'Loans in Gurugram | Explore Online Loan Options',
+        'meta_description' => 'Explore online personal, business, payday, EDI, vehicle and property-backed loan application routes for eligible Gurugram applicants.',
+        'type' => 'service-area',
+        'areas' => ['DLF Cyber City', 'Golf Course Road', 'Sohna Road', 'Udyog Vihar', 'Sector 44', 'Sector 57'],
+        'intro' => 'Explore online loan application journeys for eligible salaried, self-employed and business applicants across Gurugram.',
+        'local_note' => 'Gurugram is served through the online application and support process. This page does not represent a Waqt Finance branch in Gurugram; contact support for verified assistance.',
+        'scenarios' => [
+            ['Corporate employees', 'Income credits, KYC and existing obligations form part of product assessment.'],
+            ['Businesses and professionals', 'Keep business-continuity, banking and tax records ready where applicable.'],
+            ['Secured-loan applicants', 'Property or vehicle documentation requires additional verification.'],
+        ],
+        'nearby' => ['delhi-ncr' => 'Delhi NCR', 'delhi' => 'Delhi', 'noida' => 'Noida & Greater Noida'],
+    ],
+];

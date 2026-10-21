@@ -1,0 +1,71 @@
+<?php
+$page_title = "Loan FAQs: Eligibility & Application Guide | Waqt Finance";
+$meta_description = "Find answers to common questions regarding loan eligibility, documentation, interest rates, approval speed & repayment terms at Waqt Finance. Explore now!";
+$canonical_url = "https://waqtfinance.com/faqs";
+$breadcrumb_label = "Loan FAQs";
+
+$faq_categories = [
+    'getting-started' => 'Getting started',
+    'eligibility' => 'Eligibility & documents',
+    'credit' => 'Credit reports',
+    'costs' => 'Rates, fees & KFS',
+    'repayment' => 'Repayment',
+    'security' => 'Safety & support',
+];
+
+$faq_items = [
+    ['category' => 'getting-started', 'question' => 'Which loan products can I enquire about?', 'answer' => 'Waqt Finance provides information and application journeys for personal, business, payday, EDI, vehicle, shopkeeper business and loan-against-property products. Product availability, amount and terms depend on your profile and the final credit assessment.'],
+    ['category' => 'getting-started', 'question' => 'How can I apply for a loan?', 'answer' => 'Select the relevant product, complete the secure online application and provide the requested information. Submission is not a guarantee of approval. Review the sanction terms and Key Facts Statement before accepting any offer.', 'links' => [['label' => 'Explore loan products', 'url' => 'products']]],
+    ['category' => 'getting-started', 'question' => 'How long do approval and disbursal take?', 'answer' => 'Timelines vary by product, document completeness, verification, credit assessment and banking processes. Approval and disbursal are separate stages. We will communicate the status of your application through the contact details you provide.'],
+    ['category' => 'eligibility', 'question' => 'What determines loan eligibility?', 'answer' => 'Eligibility may consider age, residence, income, employment or business stability, existing obligations, credit history, requested amount and repayment capacity. The applicable criteria and final decision depend on the selected product and assessment.'],
+    ['category' => 'eligibility', 'question' => 'What documents may be required?', 'answer' => 'Depending on the product and applicant profile, we may request PAN, Aadhaar or another valid KYC document, address proof, bank statements, salary slips, ITR, business proof, property or vehicle documents and any additional verification records. Share documents only through official Waqt Finance channels.'],
+    ['category' => 'eligibility', 'question' => 'Is a minimum credit score mandatory?', 'answer' => 'There is no single score that guarantees approval. A stronger credit profile may improve eligibility or pricing, but income, repayment capacity, existing obligations and the selected product are also considered.'],
+    ['category' => 'eligibility', 'question' => 'Can self-employed applicants apply?', 'answer' => 'Yes, subject to the criteria of the selected product. Self-employed applicants may be asked for ITR, bank statements, business registration or continuity proof and other income documents.'],
+    ['category' => 'eligibility', 'question' => 'Is collateral required?', 'answer' => 'Personal loans are generally unsecured, while secured products such as a loan against property require acceptable security and verification. The application page and sanction documents will state whether collateral is required.'],
+    ['category' => 'costs', 'question' => 'How is the interest rate decided?', 'answer' => 'The applicable rate may depend on the product, amount, tenure, credit profile, income, repayment capacity, security and risk assessment. Your sanction communication and Key Facts Statement will show the applicable rate and Annual Percentage Rate (APR).', 'links' => [['label' => 'Read our interest rate policy', 'url' => 'interest-rate-policy']]],
+    ['category' => 'costs', 'question' => 'What is a Key Facts Statement (KFS)?', 'answer' => 'The KFS is a concise summary of important loan terms. It includes the Annual Percentage Rate, repayment schedule and applicable fees or charges so that you can review the total cost before signing the loan agreement.'],
+    ['category' => 'costs', 'question' => 'Is there a processing fee or GST?', 'answer' => 'Processing, documentation or other charges may apply depending on the product. Applicable charges and taxes will be disclosed before acceptance in the sanction terms, KFS or loan agreement. Do not make a payment to an unverified personal account or contact.'],
+    ['category' => 'costs', 'question' => 'What loan amount and tenure can I receive?', 'answer' => 'The available amount and tenure vary by product and are subject to eligibility, repayment capacity, verification and final sanction. The offer and KFS provided to you are authoritative for your application.'],
+    ['category' => 'repayment', 'question' => 'Can I prepay or foreclose my loan?', 'answer' => 'Prepayment or foreclosure is subject to the product, interest-rate type, applicable regulation and your loan agreement. Any applicable charge or condition will be disclosed in the KFS or agreement. Contact support for a current foreclosure statement before paying.'],
+    ['category' => 'repayment', 'question' => 'What happens if an EMI is delayed?', 'answer' => 'A delayed payment may attract disclosed penal charges and may affect your credit history. If you expect difficulty, contact customer support promptly. Refer to your KFS and loan agreement for the exact due date, charge and repayment instructions.', 'links' => [['label' => 'Make a repayment', 'url' => 'repay']]],
+    ['category' => 'repayment', 'question' => 'How should I make a repayment?', 'answer' => 'Use only the repayment methods and verified account details shown on the official website or in your loan communication. Keep the receipt or transaction reference. Never share an OTP, PIN, CVV or internet-banking password with anyone.', 'links' => [['label' => 'View repayment options', 'url' => 'repay']]],
+    ['category' => 'security', 'question' => 'Is Waqt Finance an RBI-registered NBFC?', 'answer' => 'Waqt Finance identifies itself on this website as an RBI-registered NBFC and publishes NBFC Registration No. B.10.00143 and its corporate identification details in the website footer. Customers may independently verify regulated-entity details through official RBI records and should contact us if any detail appears inconsistent.'],
+    ['category' => 'security', 'question' => 'How can I recognise an official Waqt Finance communication?', 'answer' => 'Use the phone number, email address and website links published on this website. We will never ask for your OTP, card PIN, CVV or account password. Avoid unknown links, screen-sharing apps and payments to personal accounts.'],
+    ['category' => 'security', 'question' => 'How are my data and consent used?', 'answer' => 'Application data may be used for eligibility, KYC, credit assessment, lender or service processing and required communication, subject to the consent and privacy terms shown during the journey. Review the Privacy Policy for details and available contact options.', 'links' => [['label' => 'Read the Privacy Policy', 'url' => 'privacy-policy']]],
+    ['category' => 'security', 'question' => 'How can I raise a complaint or get help?', 'answer' => 'Contact customer support using the verified details on this website and include your application or loan reference without sharing passwords or OTPs. For unresolved concerns, follow the escalation process in the Grievance Redressal Policy.', 'links' => [['label' => 'Grievance Redressal Policy', 'url' => 'grievance-redressal-policy'], ['label' => 'Contact us', 'url' => 'contact-us']]],
+    ['category' => 'costs', 'question' => 'What is the difference between the interest rate and APR?', 'answer' => 'The interest rate is the rate charged on the loan principal. Annual Percentage Rate (APR) represents the annualised cost of credit and includes the interest rate plus applicable charges that form part of the cost of the loan. Use the APR in your KFS to compare offers more meaningfully.'],
+    ['category' => 'costs', 'question' => 'What is the difference between a fixed and floating interest rate?', 'answer' => 'A fixed rate generally remains unchanged for the agreed period, subject to the loan terms. A floating rate can change when its reference or benchmark rate changes, which may affect the EMI, tenure or both. Your sanction terms and KFS will identify the applicable rate type and reset terms.'],
+    ['category' => 'getting-started', 'question' => 'Does a sanction message guarantee disbursal?', 'answer' => 'No. A sanction or conditional offer may remain subject to document verification, agreement execution, mandate setup, final checks and satisfaction of stated conditions. Disbursal occurs only after the required process is completed and should be confirmed through an official transaction or communication.'],
+    ['category' => 'getting-started', 'question' => 'Can I exit a digital loan during a cooling-off period?', 'answer' => 'Where a cooling-off or look-up period applies to your digital loan, its duration and exit terms should be disclosed in the KFS or loan documents. During that period, you may exit in accordance with those terms by paying the principal and proportionate APR without a separate prepayment penalty; a disclosed one-time processing fee, if any, may be retained as permitted.'],
+    ['category' => 'credit', 'question' => 'Will a loan application create a credit enquiry?', 'answer' => 'A lender may access your credit report after obtaining the required authorisation for assessment. Such lender access is generally recorded as a credit enquiry. Multiple applications in a short period may be considered during credit assessment, so apply only where the product is suitable for you.'],
+    ['category' => 'credit', 'question' => 'Does checking my own credit score reduce it?', 'answer' => 'Checking your own credit report or score is generally treated as a consumer or soft enquiry and does not reduce the score. A lender enquiry made for a credit application is recorded separately in the report.'],
+    ['category' => 'credit', 'question' => 'What should I do if my credit report contains an error or unknown enquiry?', 'answer' => 'Review the lender name, enquiry date and account details. Contact the concerned credit institution and raise a dispute with the relevant credit information company. The bureau generally cannot change lender-reported data without confirmation from that credit institution. Keep your dispute reference and supporting records.'],
+    ['category' => 'credit', 'question' => 'Why can an application be declined even with a good credit score?', 'answer' => 'A credit score is only one part of underwriting. An application may not meet requirements relating to income, repayment capacity, existing obligations, employment or business stability, age, geography, documentation, verification, product policy or requested amount. Approval is based on the overall assessment.'],
+    ['category' => 'repayment', 'question' => 'What if an auto-debit or NACH payment fails?', 'answer' => 'Arrange payment through an approved channel promptly and contact support to avoid duplicate payment. Bank return charges, disclosed penal charges or overdue interest may apply according to your KFS and loan agreement. A failed mandate does not cancel the repayment obligation.'],
+    ['category' => 'repayment', 'question' => 'Can penal charges be added to the interest rate?', 'answer' => 'A penalty for non-compliance or repayment default, where applicable, should be levied as a disclosed penal charge rather than being added as penal interest to the contracted rate. The amount, reason and trigger should be stated in the KFS or loan agreement, and further interest should not be computed on the penal charge itself.'],
+    ['category' => 'repayment', 'question' => 'When will secured-loan property documents be returned?', 'answer' => 'After full repayment or settlement of a covered secured personal loan, original movable or immovable property documents and registered charges should be released within the applicable regulatory timeline, subject to any lawful lien or claim. Ask for a closure statement, no-dues confirmation and a document handover record.'],
+    ['category' => 'security', 'question' => 'What conduct can I expect from recovery representatives?', 'answer' => 'Recovery communication must follow applicable law, regulatory guidance and the Fair Practices Code. Representatives should not threaten, abuse, publicly shame, mislead or harass relatives, friends or colleagues. Ask for identification and authorisation, keep records, and report inappropriate conduct through the grievance process.', 'links' => [['label' => 'Read the Fair Practices Code', 'url' => 'fair-practice-code']]],
+    ['category' => 'security', 'question' => 'When can I approach the RBI Ombudsman?', 'answer' => 'First submit the complaint through Waqt Finance’s grievance process. If the complaint concerns a regulated service covered by the Reserve Bank Integrated Ombudsman Scheme and is not resolved within 30 days, is rejected, or the response is unsatisfactory, you may be eligible to complain through RBI’s Complaint Management System. Check the scheme conditions before filing.', 'links' => [['label' => 'View our grievance process', 'url' => 'grievance-redressal-policy'], ['label' => 'RBI Complaint Management System', 'url' => 'https://cms.rbi.org.in']]],
+];
+
+$seo_schema = [
+    '@type' => 'FAQPage',
+    '@id' => $canonical_url . '#faq',
+    'url' => $canonical_url,
+    'inLanguage' => 'en-IN',
+    'mainEntity' => array_map(static function (array $item): array {
+        return [
+            '@type' => 'Question',
+            'name' => $item['question'],
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => $item['answer']],
+        ];
+    }, $faq_items),
+];
+
+$extra_head = '<link rel="stylesheet" href="assets/css/faq-page.css?v=' . (file_exists(__DIR__ . '/assets/css/faq-page.css') ? filemtime(__DIR__ . '/assets/css/faq-page.css') : time()) . '">';
+
+include 'includes/header.php';
+include 'includes/main-header.php';
+include 'faq.php';
+include 'includes/footer.php';
+?>
