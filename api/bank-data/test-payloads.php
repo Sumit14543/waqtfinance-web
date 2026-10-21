@@ -12,71 +12,50 @@ $apiUrl = 'https://svc.digitap.ai/bank-data/generateurl';
 
 $tests = [];
 
-// Test A: destination statementupload
-$tests['A_statementupload'] = [
-    'client_ref_num' => 'WF_ST_' . time(),
+// Test 1: Exact Page 59 Consent Request with dash-only client_ref_num
+$tests['Page59_Exact'] = [
+    'client_ref_num' => 'WF-AA-' . time() . '-101',
+    'destination' => 'accountaggregator',
+    'mobile_num' => '9876543210',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s',
+    'consent_request' => [
+        [
+            'consent' => [
+                'expiry' => date('Y-m-d\TH:i:s', strtotime('+30 days')),
+                'mode' => 'VIEW',
+                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
+            ],
+            'fetch_type' => 'ONETIME',
+            'purpose' => [
+                'code' => '103',
+                'text' => 'Aggregated statement'
+            ],
+            'fi_date_range' => [
+                'start_date' => date('Y-m-d', strtotime('-6 months')),
+                'end_date' => date('Y-m-d')
+            ],
+            'data_life' => [
+                'unit' => 'MONTH',
+                'value' => 4
+            ],
+            'frequency' => [
+                'unit' => 'DAY',
+                'value' => 1
+            ]
+        ]
+    ]
+];
+
+// Test 2: Destination statementupload with clean client_ref_num
+$tests['StatementUpload_Clean'] = [
+    'client_ref_num' => 'WF-ST-' . time() . '-102',
     'destination' => 'statementupload',
     'start_month' => date('Y-m', strtotime('-6 months')),
     'end_month' => date('Y-m'),
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s',
     'acceptance_policy' => 'atLeastOneTransactionInRange'
-];
-
-// Test B: multi_aa = "true"
-$tests['B_multi_aa'] = [
-    'client_ref_num' => 'WF_MAA_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'multi_aa' => 'true',
-    'aa_vendor' => 'anumati',
-    'aa_fetch_type' => 'ONETIME',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
-];
-
-// Test C: aa_vendor = setu
-$tests['C_setu'] = [
-    'client_ref_num' => 'WF_SETU_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'aa_vendor' => 'setu',
-    'aa_fetch_type' => 'ONETIME',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
-];
-
-// Test D: aa_vendor = finvu
-$tests['D_finvu'] = [
-    'client_ref_num' => 'WF_FINVU_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'aa_vendor' => 'finvu',
-    'aa_fetch_type' => 'ONETIME',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
-];
-
-// Test E: aa_vendor = onemoney
-$tests['E_onemoney'] = [
-    'client_ref_num' => 'WF_ONE_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'aa_vendor' => 'onemoney',
-    'aa_fetch_type' => 'ONETIME',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
-];
-
-// Test F: SAAFE dashboard-aa-preprod (from note i)
-$tests['F_saafe_preprod'] = [
-    'client_ref_num' => 'WF_SAAFE_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'aa_vendor' => 'dashboard-aa-preprod',
-    'aa_fetch_type' => 'ONETIME',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
 ];
 
 $results = [];
