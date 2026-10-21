@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/config/db.php';
-require_once dirname(__DIR__, 2) . '/includes/DigitapBankDataUIService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -13,72 +12,68 @@ $apiUrl = 'https://svc.digitap.ai/bank-data/generateurl';
 
 $tests = [];
 
-// Variation 1: Strict ONETIME with consent_request (Page 60-61)
-$tests['V1_consent_request_short'] = [
-    'client_ref_num' => 'WF_T1_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'aa_vendor' => 'anumati',
-    'consent_request' => [
-        [
-            'fi_types' => ['DEPOSIT'],
-            'fetch_type' => 'ONETIME'
-        ]
-    ],
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
-];
-
-// Variation 2: Full consent_request (Page 18 & 59)
-$tests['V2_consent_request_full'] = [
-    'client_ref_num' => 'WF_T2_' . time(),
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'aa_vendor' => 'anumati',
-    'consent_request' => [
-        [
-            'consent' => [
-                'expiry' => date('Y-m-d', strtotime('+30 days')),
-                'mode' => 'VIEW',
-                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
-            ],
-            'fetch_type' => 'ONETIME',
-            'purpose' => [
-                'code' => '103',
-                'text' => 'Loan Underwriting'
-            ],
-            'fi_types' => ['DEPOSIT']
-        ]
-    ],
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
-];
-
-// Variation 3: Destination = 'choice' (Shows NetBanking, Statement Upload, and AA together)
-$tests['V3_destination_choice'] = [
-    'client_ref_num' => 'WF_T3_' . time(),
-    'destination' => 'choice',
-    'mobile_num' => '9876543210',
+// Test A: destination statementupload
+$tests['A_statementupload'] = [
+    'client_ref_num' => 'WF_ST_' . time(),
+    'destination' => 'statementupload',
+    'start_month' => date('Y-m', strtotime('-6 months')),
+    'end_month' => date('Y-m'),
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s',
     'acceptance_policy' => 'atLeastOneTransactionInRange'
 ];
 
-// Variation 4: Destination = 'accountaggregator' without aa_vendor or aa_fetch_type
-$tests['V4_aa_minimal'] = [
-    'client_ref_num' => 'WF_T4_' . time(),
+// Test B: multi_aa = "true"
+$tests['B_multi_aa'] = [
+    'client_ref_num' => 'WF_MAA_' . time(),
     'destination' => 'accountaggregator',
     'mobile_num' => '9876543210',
+    'multi_aa' => 'true',
+    'aa_vendor' => 'anumati',
+    'aa_fetch_type' => 'ONETIME',
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
 ];
 
-// Variation 5: aa_fetch_type = 'ONETIME' (Uppercase)
-$tests['V5_aa_fetch_type_ONETIME'] = [
-    'client_ref_num' => 'WF_T5_' . time(),
+// Test C: aa_vendor = setu
+$tests['C_setu'] = [
+    'client_ref_num' => 'WF_SETU_' . time(),
     'destination' => 'accountaggregator',
     'mobile_num' => '9876543210',
-    'aa_vendor' => 'anumati',
+    'aa_vendor' => 'setu',
+    'aa_fetch_type' => 'ONETIME',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
+];
+
+// Test D: aa_vendor = finvu
+$tests['D_finvu'] = [
+    'client_ref_num' => 'WF_FINVU_' . time(),
+    'destination' => 'accountaggregator',
+    'mobile_num' => '9876543210',
+    'aa_vendor' => 'finvu',
+    'aa_fetch_type' => 'ONETIME',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
+];
+
+// Test E: aa_vendor = onemoney
+$tests['E_onemoney'] = [
+    'client_ref_num' => 'WF_ONE_' . time(),
+    'destination' => 'accountaggregator',
+    'mobile_num' => '9876543210',
+    'aa_vendor' => 'onemoney',
+    'aa_fetch_type' => 'ONETIME',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
+];
+
+// Test F: SAAFE dashboard-aa-preprod (from note i)
+$tests['F_saafe_preprod'] = [
+    'client_ref_num' => 'WF_SAAFE_' . time(),
+    'destination' => 'accountaggregator',
+    'mobile_num' => '9876543210',
+    'aa_vendor' => 'dashboard-aa-preprod',
     'aa_fetch_type' => 'ONETIME',
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s'
