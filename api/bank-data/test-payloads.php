@@ -11,44 +11,37 @@ $apiUrl = 'https://svc.digitap.ai/bank-data/generateurl';
 
 $tests = [];
 
-// 1. No destination specified
-$tests['No_Destination'] = [
-    'client_ref_num' => 'WF-ND-' . time(),
+// 1. Choice without institution_id
+$tests['Choice'] = [
+    'client_ref_num' => 'WF-CH-' . time(),
+    'destination' => 'choice',
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s'
 ];
 
-// 2. destination: statementupload
-$tests['StatementUpload'] = [
-    'client_ref_num' => 'WF-SU-' . time(),
-    'destination' => 'statementupload',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s'
-];
-
-// 3. AA with multi_aa: "true" (page 12: ii) For Multi AA Feature One more key is added in the payload i.e "multi_aa":"true")
-$tests['AA_With_Multi_AA'] = [
-    'client_ref_num' => 'WF-MAA-' . time(),
+// 2. What about AA with different vendors: "finvu", "setu", "onemoney", "nadl", "cookie"?
+// What if aa_vendor is specified WITH mobile_num and aa_fetch_type, but with start_month & end_month?
+$tests['AA_With_Months'] = [
+    'client_ref_num' => 'WF-AAM-' . time(),
     'destination' => 'accountaggregator',
-    'multi_aa' => 'true',
+    'mobile_num' => '9876543210',
+    'aa_vendor' => 'finvu',
+    'aa_fetch_type' => 'onetime',
+    'start_month' => date('Y-m', strtotime('-6 months')),
+    'end_month' => date('Y-m'),
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s'
 ];
 
-// 4. AA with institution_id specified (e.g. HDFC = 1, SBI = 2)
-$tests['AA_With_Institution_1'] = [
-    'client_ref_num' => 'WF-AAI-' . time(),
+// 3. What if aa_fetch_type is UPPERCASE ONETIME?
+$tests['AA_With_Months_Upper'] = [
+    'client_ref_num' => 'WF-AAMU-' . time(),
     'destination' => 'accountaggregator',
-    'institution_id' => '1',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s'
-];
-
-// 5. AA with aa_vendor: dashboard-aa-preprod (Page 12: i) For SAAFE environment access, set the value of aa_vendor to "dashboard-aa-preprod")
-$tests['AA_Saafe_Preprod'] = [
-    'client_ref_num' => 'WF-SAF-' . time(),
-    'destination' => 'accountaggregator',
-    'aa_vendor' => 'dashboard-aa-preprod',
+    'mobile_num' => '9876543210',
+    'aa_vendor' => 'finvu',
+    'aa_fetch_type' => 'ONETIME',
+    'start_month' => date('Y-m', strtotime('-6 months')),
+    'end_month' => date('Y-m'),
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s'
 ];
