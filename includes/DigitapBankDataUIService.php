@@ -16,15 +16,12 @@ class DigitapBankDataUIService
     private string $clientName;
     private string $baseUrl;
     private string $envMode;
-    private string $authMethod; // 'header' or 'signature'
-    private ?string $privateKeyPem = null;
 
     public function __construct()
     {
         $this->clientId = env_value('DIGITAP_CLIENT_ID', '53205998');
         $this->clientSecret = env_value('DIGITAP_CLIENT_SECRET', '4lBQRBHkJms0jLy7oTtnEuhEgofOGnwu');
         $this->clientName = env_value('DIGITAP_AA_CLIENT_NAME', $this->clientId);
-        $this->authMethod = strtolower(env_value('DIGITAP_AA_AUTH_METHOD', 'header'));
 
         $this->envMode = strtolower(env_value('DIGITAP_AA_ENV', 'prod'));
         if ($this->envMode === 'prod' || $this->envMode === 'production') {
@@ -50,43 +47,80 @@ class DigitapBankDataUIService
     {
         $url = $this->baseUrl . '/generateurl';
 
-        // Prepare standard parameters
-        $clientRefNum = $params['client_ref_num'] ?? ('WF_AA_' . time() . '_' . substr(md5((string)mt_rand()), 0, 6));
-        $destination = $params['destination'] ?? 'accountaggregator'; // 'accountaggregator' | 'statementupload' | 'netbanking' | 'choice'
+        // Digitap client_ref_num: Alpha-numeric or dash (-), max 50 chars (NO underscores)
+        $cleanRef = preg_replace('/[^A-Za-z0-9\-]/', '-', (string)($params['client_ref_num'] ?? ''));
+        if (empty($cleanRef)) {
+            $cleanRef = 'WF-AA-' . time() . '-' . substr(md5((string)mt_rand()), 0, 6);
+        }
+        $clientRefNum = substr($cleanRef, 0, 50);
+
+        $requestedDest = strtolower(trim((string)($params['destination'] ?? 'accountaggregator')));
         $mobileNum = preg_replace('/\D/', '', (string)($params['mobile_num'] ?? ''));
 
         $defaultCallback = env_value('DIGITAP_AA_WEBHOOK_URL', 'https://waqtfinance.com/api/bank-data/callback.php');
         $callbackUrl = $params['txn_completed_cburl'] ?? $defaultCallback;
 
         $host = $_SERVER['HTTP_HOST'] ?? 'waqtfinance.com';
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-        $defaultReturn = $scheme . $host . '/create_lead?step=5&aa_txn_id=%s&aa_status=%s';
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'https://';
+        $defaultReturn = $scheme . $host . '/create-lead-form.php?step=5&aa_txn_id=%s&aa_status=%s';
         $returnUrl = $params['return_url'] ?? $defaultReturn;
 
+        $startMonth = $params['start_month'] ?? date('Y-m', strtotime('-6 months'));
+        $endMonth = $params['end_month'] ?? date('Y-m');
+
+        // Build Primary Payload
         $payload = [
-            'client_ref_num' => substr($clientRefNum, 0, 50),
-            'destination' => $destination,
+            'client_ref_num' => $clientRefNum,
+            'destination' => $requestedDest,
             'txn_completed_cburl' => $callbackUrl,
             'return_url' => $returnUrl,
-            'acceptance_policy' => $params['acceptance_policy'] ?? 'atLeastOneTransactionInRange'
+            'start_month' => $startMonth,
+            'end_month' => $endMonth
         ];
+
+        if ($requestedDest === 'statementupload') {
+            $payload['acceptance_policy'] = $params['acceptance_policy'] ?? 'atLeastOneTransactionInRange';
+        }
 
         if (!empty($mobileNum)) {
             $payload['mobile_num'] = $mobileNum;
-            $payload['aa_vendor'] = $params['aa_vendor'] ?? 'anumati';
-            $payload['aa_fetch_type'] = $params['aa_fetch_type'] ?? 'onetime';
         }
 
         if (!empty($params['institution_id'])) {
             $payload['institution_id'] = (string)$params['institution_id'];
         }
 
-        if (!empty($params['start_month']) && !empty($params['end_month'])) {
-            $payload['start_month'] = (string)$params['start_month'];
-            $payload['end_month'] = (string)$params['end_month'];
+        $res = $this->sendRequest($url, $payload, 'POST');
+
+        // If accountaggregator returns an error (e.g. InvalidAAConsentRequestError due to missing template on Digitap backend),
+        // seamlessly fall back to statementupload which is fully active and verified on this account.
+        if (
+            $requestedDest === 'accountaggregator' &&
+            (!empty($res['code']) && in_array($res['code'], ['InvalidAAConsentRequestError', 'AccessDenied', 'InstitutionDestinationError'], true))
+        ) {
+            $fallbackPayload = [
+                'client_ref_num' => 'WF-STMT-' . time() . '-' . substr(md5((string)mt_rand()), 0, 6),
+                'destination' => 'statementupload',
+                'txn_completed_cburl' => $callbackUrl,
+                'return_url' => $returnUrl,
+                'start_month' => $startMonth,
+                'end_month' => $endMonth,
+                'acceptance_policy' => 'atLeastOneTransactionInRange'
+            ];
+
+            if (!empty($params['institution_id'])) {
+                $fallbackPayload['institution_id'] = (string)$params['institution_id'];
+            }
+
+            $fallbackRes = $this->sendRequest($url, $fallbackPayload, 'POST');
+            if (!empty($fallbackRes['status']) && $fallbackRes['status'] === 'success') {
+                $fallbackRes['mode'] = 'statementupload';
+                $fallbackRes['notice'] = 'Generated via Digitap Bank Statement gateway';
+                return $fallbackRes;
+            }
         }
 
-        return $this->sendRequest($url, $payload, 'POST');
+        return $res;
     }
 
     /**
@@ -120,7 +154,7 @@ class DigitapBankDataUIService
      * 4. Institution List API (Doc Section 7)
      * GET /bank-data/institutions?type=NetBanking|Statement
      */
-    public function getInstitutions(string $type = 'NetBanking'): array
+    public function getInstitutions(string $type = 'Statement'): array
     {
         $url = $this->baseUrl . '/institutions?type=' . urlencode($type);
         return $this->sendRequest($url, [], 'GET');

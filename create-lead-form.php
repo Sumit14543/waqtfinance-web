@@ -2856,7 +2856,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             </div>
 
             <button type="button" class="btn-card btn-card-primary" style="width:100%;" id="aaRequestOtpBtn" onclick="requestAaOtp()">
-                <i class="fa-solid fa-paper-plane"></i> Send Consent OTP
+                <i class="fa-solid fa-bolt"></i> Proceed to Bank Verification
             </button>
         </div>
 
@@ -4525,13 +4525,24 @@ function openAaConsentModal() {
     document.getElementById('aaOtpPhoneDisplay').innerText = '+91 ' + mob;
     
     document.getElementById('aaScreen1').style.display = 'block';
-    document.getElementById('aaScreen2').style.display = 'none';
-    document.getElementById('aaScreen3').style.display = 'none';
+    if (document.getElementById('aaScreen2')) document.getElementById('aaScreen2').style.display = 'none';
+    if (document.getElementById('aaScreen3')) document.getElementById('aaScreen3').style.display = 'none';
+    if (document.getElementById('aaScreenIframe')) document.getElementById('aaScreenIframe').style.display = 'none';
+    const iframe = document.getElementById('aaDigitapIframe');
+    if (iframe) iframe.src = '';
+    const modalBox = document.querySelector('#aaConsentModal .otp-modal-content');
+    if (modalBox) modalBox.style.maxWidth = '420px';
     
     document.getElementById('aaConsentModal').style.display = 'flex';
 }
 
 function closeAaConsentModal() {
+    if (digitapAaPollTimer) {
+        clearInterval(digitapAaPollTimer);
+        digitapAaPollTimer = null;
+    }
+    const iframe = document.getElementById('aaDigitapIframe');
+    if (iframe) iframe.src = '';
     document.getElementById('aaConsentModal').style.display = 'none';
 }
 
@@ -4568,7 +4579,7 @@ function requestAaOtp() {
 
     const btn = document.getElementById('aaRequestOtpBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Requesting Digitap AA...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Connecting to Digitap...';
 
     // 1. Call Digitap Generate URL API (as per documentation)
     fetch('api/bank-data/generate-url.php', {
@@ -4580,15 +4591,13 @@ function requestAaOtp() {
         body: JSON.stringify({
             mobile_num: enteredMob,
             destination: 'accountaggregator',
-            aa_vendor: 'anumati',
-            aa_fetch_type: 'onetime',
             csrf_token: CSRF
         })
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(res => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Consent OTP';
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
 
         if (res.status === 'success' && res.url) {
             // Live Digitap Session Generated!
@@ -4599,8 +4608,8 @@ function requestAaOtp() {
             const iframeScreen = document.getElementById('aaScreenIframe');
             if (iframe && iframeScreen) {
                 document.getElementById('aaScreen1').style.display = 'none';
-                document.getElementById('aaScreen2').style.display = 'none';
-                document.getElementById('aaScreen3').style.display = 'none';
+                if (document.getElementById('aaScreen2')) document.getElementById('aaScreen2').style.display = 'none';
+                if (document.getElementById('aaScreen3')) document.getElementById('aaScreen3').style.display = 'none';
                 iframe.src = res.url;
                 iframeScreen.style.display = 'block';
 
@@ -4612,24 +4621,21 @@ function requestAaOtp() {
                 window.open(res.url, '_blank');
             }
         } else {
-            // If Digitap returns AccessDenied (awaiting permission activation by support for 53205998)
-            console.warn('Digitap AA generateurl notice:', res);
-            document.getElementById('aaScreen1').style.display = 'none';
-            document.getElementById('aaScreen2').style.display = 'block';
-            clearAaOtpBoxes();
-            const firstBox = document.getElementById('aaOtp1');
-            if (firstBox) firstBox.focus();
+            console.error('Digitap Bank Data generateurl error:', res);
+            const errAlert = document.getElementById('aaMobileErrorAlert');
+            if (errAlert) {
+                showErr(errAlert, res.msg || res.message || 'Unable to connect to Digitap Bank Service. Please try again.');
+            }
         }
     })
     .catch(err => {
-        console.error('Digitap AA API error:', err);
+        console.error('Digitap Bank Data API error:', err);
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Consent OTP';
-        document.getElementById('aaScreen1').style.display = 'none';
-        document.getElementById('aaScreen2').style.display = 'block';
-        clearAaOtpBoxes();
-        const firstBox = document.getElementById('aaOtp1');
-        if (firstBox) firstBox.focus();
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
+        const errAlert = document.getElementById('aaMobileErrorAlert');
+        if (errAlert) {
+            showErr(errAlert, 'Network error communicating with Bank Data API.');
+        }
     });
 }
 
@@ -4657,18 +4663,23 @@ function fetchAndApplyAaReport(txnId) {
     fetch('api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
         .then(r => r.json().catch(() => ({})))
         .then(data => {
-            applyAaVerifiedReport(data, txnId);
+            if (data && (data.status === 'success' || data.model || data.transactions || data.bank_name || data.data)) {
+                applyAaVerifiedReport(data, txnId);
+            } else {
+                console.warn('Bank report not ready or empty:', data);
+            }
         })
-        .catch(() => {
-            completeAaAggregation();
+        .catch(err => {
+            console.error('Error retrieving Digitap bank report:', err);
         });
 }
 
 function applyAaVerifiedReport(data, txnId) {
-    const bankName = data?.model?.bank_name || data?.bank_name || selectedBankName || 'HDFC Bank';
-    const accNum = data?.model?.account_number || data?.account_number || ('50100' + Math.floor(10000000 + Math.random() * 90000000));
-    const inflow = parseFloat(data?.model?.monthly_inflow || data?.monthly_inflow) || 320000;
-    const amb = parseFloat(data?.model?.amb || data?.amb) || 48500;
+    const model = data?.model || data?.data || data || {};
+    const bankName = model?.bank_name || model?.bank || selectedBankName || 'Bank Account';
+    const accNum = model?.account_number || model?.acc_num || model?.account_num || '';
+    const inflow = parseFloat(model?.monthly_inflow || model?.inflow || model?.total_credits || model?.summary?.total_credit) || 0;
+    const amb = parseFloat(model?.amb || model?.average_balance || model?.avg_balance || model?.summary?.average_balance) || 0;
 
     state.aaVerified = true;
     state.aaTxnId = txnId;
@@ -4677,15 +4688,17 @@ function applyAaVerifiedReport(data, txnId) {
         accountNumber: accNum,
         monthlyInflow: inflow,
         amb: amb,
-        dailyEodBalance: 2500,
+        dailyEodBalance: amb > 0 ? Math.min(amb, 5000) : 2500,
         upiCredits: Math.round(inflow * 0.8),
         healthScore: 860
     };
 
-    document.getElementById('bankName').value = bankName;
-    document.getElementById('accountNumber').value = accNum;
-    document.getElementById('confirmAccountNumber').value = accNum;
-    document.getElementById('aaDisplayBankName').innerText = `${bankName} (A/C ****${accNum.slice(-4)})`;
+    if (bankName) document.getElementById('bankName').value = bankName;
+    if (accNum) {
+        document.getElementById('accountNumber').value = accNum;
+        document.getElementById('confirmAccountNumber').value = accNum;
+    }
+    document.getElementById('aaDisplayBankName').innerText = `${bankName}${accNum ? ' (A/C ****' + accNum.slice(-4) + ')' : ''}`;
     document.getElementById('aaDisplayInflow').innerText = '₹' + inflow.toLocaleString('en-IN');
     document.getElementById('aaDisplayAmb').innerText = '₹' + amb.toLocaleString('en-IN');
 
@@ -4693,7 +4706,9 @@ function applyAaVerifiedReport(data, txnId) {
     document.getElementById('aaVerifiedCard').style.display = 'block';
 
     closeAaConsentModal();
-    calculateApprovedOffer(inflow);
+    if (inflow > 0) {
+        calculateApprovedOffer(inflow);
+    }
 }
 
 // Ensure aaModalMobileInput auto-sanitizes digits

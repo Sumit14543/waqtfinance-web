@@ -34,7 +34,7 @@ $destination = trim((string)($data['destination'] ?? 'accountaggregator'));
 $vendor = trim((string)($data['aa_vendor'] ?? 'anumati'));
 $fetchType = trim((string)($data['aa_fetch_type'] ?? 'onetime'));
 
-$clientRefNum = 'WF_AA_' . time() . '_' . substr(md5($mobile . mt_rand()), 0, 6);
+$clientRefNum = 'WF-AA-' . time() . '-' . substr(md5($mobile . mt_rand()), 0, 6);
 
 $service = new DigitapBankDataUIService();
 $res = $service->generateUrl([
