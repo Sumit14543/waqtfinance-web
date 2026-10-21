@@ -12,45 +12,10 @@ $apiUrl = 'https://svc.digitap.ai/bank-data/generateurl';
 
 $tests = [];
 
-// Test 1: Exact Page 59 Consent Request with dash-only client_ref_num
-$tests['Page59_Exact'] = [
-    'client_ref_num' => 'WF-AA-' . time() . '-101',
-    'destination' => 'accountaggregator',
-    'mobile_num' => '9876543210',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&aa_txn_id=%s&aa_status=%s',
-    'consent_request' => [
-        [
-            'consent' => [
-                'expiry' => date('Y-m-d\TH:i:s', strtotime('+30 days')),
-                'mode' => 'VIEW',
-                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
-            ],
-            'fetch_type' => 'ONETIME',
-            'purpose' => [
-                'code' => '103',
-                'text' => 'Aggregated statement'
-            ],
-            'fi_date_range' => [
-                'start_date' => date('Y-m-d', strtotime('-6 months')),
-                'end_date' => date('Y-m-d')
-            ],
-            'data_life' => [
-                'unit' => 'MONTH',
-                'value' => 4
-            ],
-            'frequency' => [
-                'unit' => 'DAY',
-                'value' => 1
-            ]
-        ]
-    ]
-];
-
-// Test 2: Destination statementupload with clean client_ref_num
-$tests['StatementUpload_Clean'] = [
-    'client_ref_num' => 'WF-ST-' . time() . '-102',
-    'destination' => 'statementupload',
+// Test Netbanking
+$tests['NetBanking'] = [
+    'client_ref_num' => 'WF-NB-' . time() . '-101',
+    'destination' => 'netbanking',
     'start_month' => date('Y-m', strtotime('-6 months')),
     'end_month' => date('Y-m'),
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
