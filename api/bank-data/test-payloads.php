@@ -7,122 +7,193 @@ header('Content-Type: application/json; charset=utf-8');
 $clientId = env_value('DIGITAP_CLIENT_ID', '53205998');
 $clientSecret = env_value('DIGITAP_CLIENT_SECRET', '4lBQRBHkJms0jLy7oTtnEuhEgofOGnwu');
 $authHeader = 'Authorization: Basic ' . base64_encode($clientId . ':' . $clientSecret);
+$apiUrl = 'https://svc.digitap.ai/bank-data/generateurl';
 
-$results = [];
+$tests = [];
 
-// 1. Institution list for Statement
-$ch = curl_init('https://svc.digitap.ai/bank-data/institutions');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['type' => 'Statement']));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [$authHeader, 'Content-Type: application/json']);
-$res = curl_exec($ch);
-$results['Institutions_Statement'] = [
-    'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'response' => json_decode((string)$res, true) ?: $res
-];
-curl_close($ch);
+$today = date('Y-m-d');
+$expiry15 = date('Y-m-d', strtotime('+15 days'));
+$start6m = date('Y-m-d', strtotime('-6 months'));
 
-// 2. Institution list for NetBanking
-$ch = curl_init('https://svc.digitap.ai/bank-data/institutions');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['type' => 'NetBanking']));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [$authHeader, 'Content-Type: application/json']);
-$res = curl_exec($ch);
-$results['Institutions_NetBanking'] = [
-    'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'response' => json_decode((string)$res, true) ?: $res
-];
-curl_close($ch);
-
-// 3. Test statementupload generateurl
-$ch = curl_init('https://svc.digitap.ai/bank-data/generateurl');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-    'client_ref_num' => 'WF-STMT-' . time(),
-    'destination' => 'statementupload',
-    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
-    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
-    'start_month' => date('Y-m', strtotime('-3 months')),
-    'end_month' => date('Y-m')
-]));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [$authHeader, 'Content-Type: application/json']);
-$res = curl_exec($ch);
-$results['GenerateUrl_StatementUpload'] = [
-    'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'response' => json_decode((string)$res, true) ?: $res
-];
-curl_close($ch);
-
-// 4. Exact Page 59 consent_request structure with NO extra keys
-$now = time();
-$exactPage59 = [
-    'client_ref_num' => 'WF-AA-' . $now,
+// Test A1: STORE mode, purpose 103, data_life 1 month, no filters
+$tests['A1_Store_103'] = [
+    'client_ref_num' => 'WF-A1-' . time(),
     'destination' => 'accountaggregator',
     'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
     'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
     'consent_request' => [
         [
             'consent' => [
-                'expiry' => date('Y-m-d\TH:i:s', $now + 86400 * 30),
+                'expiry' => $expiry15,
+                'mode' => 'STORE',
+                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
+            ],
+            'fetch_type' => 'ONETIME',
+            'purpose' => [
+                'code' => '103',
+                'text' => "To process borrower's (loan / credit card / credit line) application"
+            ],
+            'fi_types' => ['DEPOSIT'],
+            'fi_date_range' => [
+                'start_date' => $start6m,
+                'end_date' => $today
+            ],
+            'data_life' => ['unit' => 'MONTH', 'value' => 1],
+            'frequency' => ['unit' => 'DAY', 'value' => 1]
+        ]
+    ]
+];
+
+// Test A2: VIEW mode, data_life INF/0
+$tests['A2_View_103'] = [
+    'client_ref_num' => 'WF-A2-' . time(),
+    'destination' => 'accountaggregator',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
+    'consent_request' => [
+        [
+            'consent' => [
+                'expiry' => $expiry15,
                 'mode' => 'VIEW',
                 'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
             ],
             'fetch_type' => 'ONETIME',
             'purpose' => [
                 'code' => '103',
-                'text' => 'Aggregated statement'
+                'text' => "To process borrower's (loan / credit card / credit line) application"
             ],
+            'fi_types' => ['DEPOSIT'],
             'fi_date_range' => [
-                'start_date' => date('Y-m-d', $now - 86400 * 180),
-                'end_date' => date('Y-m-d', $now)
+                'start_date' => $start6m,
+                'end_date' => $today
             ],
-            'data_life' => [
-                'unit' => 'MONTH',
-                'value' => 4
-            ],
-            'frequency' => [
-                'unit' => 'DAY',
-                'value' => 1
-            ],
-            'data_filters' => [
-                [
-                    'operator' => '>',
-                    'type' => 'TRANSACTIONAMOUNT',
-                    'value' => '1'
-                ]
-            ]
+            'data_life' => ['unit' => 'DAY', 'value' => 0],
+            'frequency' => ['unit' => 'DAY', 'value' => 1]
         ]
     ]
 ];
 
-$ch = curl_init('https://svc.digitap.ai/bank-data/generateurl');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($exactPage59));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [$authHeader, 'Content-Type: application/json']);
-$res = curl_exec($ch);
-$results['Exact_Page_59'] = [
-    'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'response' => json_decode((string)$res, true) ?: $res
+// Test A3: purpose code ONLY (no text)
+$tests['A3_PurposeCodeOnly'] = [
+    'client_ref_num' => 'WF-A3-' . time(),
+    'destination' => 'accountaggregator',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
+    'consent_request' => [
+        [
+            'consent' => [
+                'expiry' => $expiry15,
+                'mode' => 'STORE',
+                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
+            ],
+            'fetch_type' => 'ONETIME',
+            'purpose' => ['code' => '103'],
+            'fi_types' => ['DEPOSIT'],
+            'fi_date_range' => [
+                'start_date' => $start6m,
+                'end_date' => $today
+            ],
+            'data_life' => ['unit' => 'MONTH', 'value' => 1],
+            'frequency' => ['unit' => 'DAY', 'value' => 1]
+        ]
+    ]
 ];
-curl_close($ch);
 
-// 5. What if consent_request is a JSON string instead of an array?
-$page59String = $exactPage59;
-$page59String['consent_request'] = json_encode($exactPage59['consent_request']);
-$ch = curl_init('https://svc.digitap.ai/bank-data/generateurl');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($page59String));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [$authHeader, 'Content-Type: application/json']);
-$res = curl_exec($ch);
-$results['Consent_Request_As_JSON_String'] = [
-    'http_code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
-    'response' => json_decode((string)$res, true) ?: $res
+// Test A4: Using start_month and end_month inside fi_date_range
+$tests['A4_MonthRange'] = [
+    'client_ref_num' => 'WF-A4-' . time(),
+    'destination' => 'accountaggregator',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
+    'consent_request' => [
+        [
+            'consent' => [
+                'expiry' => $expiry15,
+                'mode' => 'STORE',
+                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
+            ],
+            'fetch_type' => 'ONETIME',
+            'purpose' => ['code' => '103'],
+            'fi_types' => ['DEPOSIT'],
+            'fi_date_range' => [
+                'start_month' => date('Y-m', strtotime('-6 months')),
+                'end_month' => date('Y-m')
+            ],
+            'data_life' => ['unit' => 'MONTH', 'value' => 1],
+            'frequency' => ['unit' => 'DAY', 'value' => 1]
+        ]
+    ]
 ];
-curl_close($ch);
+
+// Test A5: Sahamati CT001 specification format
+$tests['A5_Sahamati_103'] = [
+    'client_ref_num' => 'WF-A5-' . time(),
+    'destination' => 'accountaggregator',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
+    'consent_request' => [
+        [
+            'consent' => [
+                'expiry' => date('Y-m-d\TH:i:s\Z', strtotime('+30 days')),
+                'mode' => 'STORE',
+                'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY']
+            ],
+            'fetch_type' => 'ONETIME',
+            'purpose' => [
+                'code' => '103',
+                'text' => "To process borrower's (loan / credit card / credit line) application"
+            ],
+            'fi_types' => ['DEPOSIT'],
+            'fi_date_range' => [
+                'start_date' => date('Y-m-d\TH:i:s\Z', strtotime('-6 months')),
+                'end_date' => date('Y-m-d\TH:i:s\Z')
+            ],
+            'data_life' => ['unit' => 'MONTH', 'value' => 1],
+            'frequency' => ['unit' => 'DAY', 'value' => 1]
+        ]
+    ]
+];
+
+// Test A6: Without 'consent' wrapper (flat fields)
+$tests['A6_Flat_Fields'] = [
+    'client_ref_num' => 'WF-A6-' . time(),
+    'destination' => 'accountaggregator',
+    'txn_completed_cburl' => 'https://waqtfinance.com/api/bank-data/callback.php',
+    'return_url' => 'https://waqtfinance.com/create_lead?step=5&txn=%s&st=%s',
+    'consent_request' => [
+        [
+            'expiry' => $expiry15,
+            'mode' => 'STORE',
+            'types' => ['TRANSACTIONS', 'PROFILE', 'SUMMARY'],
+            'fetch_type' => 'ONETIME',
+            'purpose_code' => '103',
+            'fi_types' => ['DEPOSIT'],
+            'start_date' => $start6m,
+            'end_date' => $today
+        ]
+    ]
+];
+
+$results = [];
+foreach ($tests as $key => $payload) {
+    $ch = curl_init($apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_SLASHES));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        $authHeader,
+        'Content-Type: application/json',
+        'Accept: application/json'
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $res = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $results[$key] = [
+        'http_code' => $code,
+        'response' => json_decode((string)$res, true) ?: $res
+    ];
+}
 
 echo json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
