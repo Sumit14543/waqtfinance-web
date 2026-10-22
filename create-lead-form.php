@@ -3219,10 +3219,7 @@ function applyAccountAggregatorReturnData() {
 }
 
 // Auto-jump to step if specified in URL query (?step=3) or hash (#step3)
-(function initDirectStepFromUrl() {
-    restoreFormDraftFromSession();
-    applyAadhaarKycData();
-    applyAccountAggregatorReturnData();
+function checkDirectStepFromUrl() {
     const params = new URLSearchParams(window.location.search);
     let target = parseInt(params.get('step'), 10);
     if (!target && window.location.hash) {
@@ -3232,7 +3229,17 @@ function applyAccountAggregatorReturnData() {
     if (target && target >= 1 && target <= totalSteps) {
         goToStep(target);
     }
+}
+
+(function initDirectStepFromUrl() {
+    restoreFormDraftFromSession();
+    applyAadhaarKycData();
+    applyAccountAggregatorReturnData();
+    checkDirectStepFromUrl();
 })();
+
+window.addEventListener('DOMContentLoaded', checkDirectStepFromUrl);
+window.addEventListener('load', checkDirectStepFromUrl);
 
 // ==========================================
 // 2. STEP 1 & OTP POPUP LOGIC
@@ -4922,8 +4929,6 @@ function handleStep5Continue() {
 
 function handleStep4Continue() {
     handleStep5Continue();
-}
-
 }
 
 // ==========================================
