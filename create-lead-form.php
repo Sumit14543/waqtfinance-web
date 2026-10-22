@@ -2536,44 +2536,13 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     </div>
                 </div>
 
-                <!-- Bank Manual Details Section -->
-                <div style="margin-top:16px;">
-                    <div style="font-size:12.5px; font-weight:800; color:var(--slate-700); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-                        <i class="fa-solid fa-money-check"></i> Bank Account Information
-                    </div>
-
-                    <div class="f-group">
-                        <label class="f-label">Bank Name <span class="req">*</span></label>
-                        <input type="text" id="bankName" class="f-input" placeholder="e.g. HDFC Bank" value="HDFC Bank">
-                    </div>
-
-                    <div class="f-group">
-                        <label class="f-label">Account Number <span class="req">*</span></label>
-                        <input type="password" id="accountNumber" class="f-input" placeholder="e.g. 50100234567890" autocomplete="off">
-                    </div>
-
-                    <div class="f-group">
-                        <label class="f-label">Confirm Account Number <span class="req">*</span></label>
-                        <input type="text" id="confirmAccountNumber" class="f-input" placeholder="Re-enter Account Number" autocomplete="off">
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                        <div class="f-group">
-                            <label class="f-label">IFSC Code <span class="req">*</span></label>
-                            <input type="text" id="ifscCode" class="f-input" placeholder="HDFC0001234" maxlength="11" style="text-transform:uppercase;">
-                            <small id="ifscBranchText" class="text-success font-weight-bold" style="font-size:11px;"></small>
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label">Account Type</label>
-                            <select id="accountType" class="f-select">
-                                <option value="Current" selected>Current Account</option>
-                                <option value="Savings">Savings Account</option>
-                                <option value="Overdraft / CC">Cash Credit / OD</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="bankErrorAlert" class="f-error-alert"></div>
-                </div>
+                <!-- Bank Hidden Fields for Form Compatibility -->
+                <input type="hidden" id="bankName" value="">
+                <input type="hidden" id="accountNumber" value="">
+                <input type="hidden" id="confirmAccountNumber" value="">
+                <input type="hidden" id="ifscCode" value="">
+                <input type="hidden" id="accountType" value="Current">
+                <div id="bankErrorAlert" class="f-error-alert" style="margin-top:14px; display:none;"></div>
 
                 <!-- Action Buttons Inside Step 5 Card -->
                 <div class="card-actions-row">
@@ -4934,27 +4903,14 @@ function completeAaAggregation() {
 }
 
 function handleStep5Continue() {
-    const acc = document.getElementById('accountNumber').value.trim();
-    const confAcc = document.getElementById('confirmAccountNumber').value.trim();
-    const ifsc = document.getElementById('ifscCode').value.trim().toUpperCase();
     const err = document.getElementById('bankErrorAlert');
-    err.style.display = 'none';
+    if (err) err.style.display = 'none';
 
-    if (!acc) {
-        showErr(err, 'Please enter Bank Account Number.');
-        document.getElementById('accountNumber').focus();
-        return;
-    }
-
-    if (acc !== confAcc) {
-        showErr(err, 'Account Number and Confirm Account Number do not match.');
-        document.getElementById('confirmAccountNumber').focus();
-        return;
-    }
-
-    if (!ifsc || ifsc.length !== 11) {
-        showErr(err, 'Please enter a valid 11-character IFSC Code.');
-        document.getElementById('ifscCode').focus();
+    if (!state.aaVerified) {
+        if (err) {
+            showErr(err, 'Account Aggregator verification is compulsory. Please click "Connect via Account Aggregator" to verify your bank account.');
+        }
+        openAaConsentModal();
         return;
     }
 
@@ -4968,25 +4924,6 @@ function handleStep4Continue() {
     handleStep5Continue();
 }
 
-// IFSC auto lookup
-const ifscEl = document.getElementById('ifscCode');
-if (ifscEl) {
-    ifscEl.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
-        const ifsc = this.value.trim();
-        if (ifsc.length === 11) {
-            fetch(`https://ifsc.razorpay.com/${ifsc}`)
-            .then(r => r.json())
-            .then(d => {
-                if (d && d.BANK) {
-                    document.getElementById('ifscBranchText').innerText = `✓ ${d.BANK}, ${d.BRANCH || ''}`;
-                    if (!document.getElementById('bankName').value) {
-                        document.getElementById('bankName').value = d.BANK;
-                    }
-                }
-            }).catch(() => {});
-        }
-    });
 }
 
 // ==========================================
