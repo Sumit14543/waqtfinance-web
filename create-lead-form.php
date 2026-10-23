@@ -4613,8 +4613,8 @@ function requestAaOtp() {
             'X-CSRF-Token': CSRF
         },
         body: JSON.stringify({
-            mobile_num: enteredMob,
             destination: 'accountaggregator',
+            pass_mobile: false,
             csrf_token: CSRF
         })
     })
