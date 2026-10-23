@@ -21,23 +21,20 @@ $jsonBody = json_decode((string)$rawInput, true) ?: [];
 $data = !empty($jsonBody) ? $jsonBody : $_POST;
 
 $mobile = preg_replace('/\D/', '', (string)($data['mobile'] ?? $data['mobile_num'] ?? ''));
-if (empty($mobile) || strlen($mobile) !== 10) {
-    http_response_code(400);
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Please provide a valid 10-digit mobile number'
-    ]);
-    exit;
-}
-
 $destination = trim((string)($data['destination'] ?? 'accountaggregator'));
-$clientRefNum = 'WF-AA-' . time() . '-' . substr(md5($mobile . mt_rand()), 0, 6);
+$clientRefNum = 'WF-AA-' . time() . '-' . substr(md5(($mobile ?: 'AA') . mt_rand()), 0, 6);
 
 $genParams = [
     'client_ref_num' => $clientRefNum,
-    'destination' => $destination,
-    'mobile_num' => $mobile
+    'destination' => $destination
 ];
+
+// Per Doc Page 16: mobile_num is Optional.
+// If explicitly requested or non-empty and pass_mobile is not false:
+$passMobile = isset($data['pass_mobile']) ? (bool)$data['pass_mobile'] : (!empty($mobile) && strlen($mobile) === 10);
+if ($passMobile && !empty($mobile) && strlen($mobile) === 10) {
+    $genParams['mobile_num'] = $mobile;
+}
 
 if (!empty($data['aa_vendor'])) {
     $genParams['aa_vendor'] = trim((string)$data['aa_vendor']);
