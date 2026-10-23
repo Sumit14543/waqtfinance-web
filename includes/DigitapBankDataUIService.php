@@ -82,6 +82,17 @@ class DigitapBankDataUIService
             $payload['acceptance_policy'] = $params['acceptance_policy'] ?? 'atLeastOneTransactionInRange';
         }
 
+        if ($requestedDest === 'accountaggregator') {
+            // Per Documentation Section 4.3.3 & Page 12/16
+            $payload['aa_vendor'] = !empty($params['aa_vendor']) ? (string)$params['aa_vendor'] : 'anumati';
+            $payload['aa_fetch_type'] = !empty($params['aa_fetch_type']) ? (string)$params['aa_fetch_type'] : 'onetime';
+            $payload['multi_aa'] = !empty($params['multi_aa']) ? (string)$params['multi_aa'] : 'true';
+
+            if (!empty($params['consent_request']) && is_array($params['consent_request'])) {
+                $payload['consent_request'] = $params['consent_request'];
+            }
+        }
+
         if (!empty($mobileNum)) {
             $payload['mobile_num'] = $mobileNum;
         }

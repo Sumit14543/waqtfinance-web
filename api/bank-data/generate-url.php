@@ -33,6 +33,7 @@ if (empty($mobile) || strlen($mobile) !== 10) {
 $destination = trim((string)($data['destination'] ?? 'accountaggregator'));
 $vendor = trim((string)($data['aa_vendor'] ?? 'anumati'));
 $fetchType = trim((string)($data['aa_fetch_type'] ?? 'onetime'));
+$multiAa = isset($data['multi_aa']) ? (string)$data['multi_aa'] : 'true';
 
 $clientRefNum = 'WF-AA-' . time() . '-' . substr(md5($mobile . mt_rand()), 0, 6);
 
@@ -42,7 +43,9 @@ $res = $service->generateUrl([
     'destination' => $destination,
     'mobile_num' => $mobile,
     'aa_vendor' => $vendor,
-    'aa_fetch_type' => $fetchType
+    'aa_fetch_type' => $fetchType,
+    'multi_aa' => $multiAa,
+    'consent_request' => $data['consent_request'] ?? null
 ]);
 
 // If successful, save in session for verification on return
