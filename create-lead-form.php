@@ -2829,53 +2829,20 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             </button>
         </div>
 
-        <!-- AA Screen 2: OTP Verification & Auto Discovery -->
-        <div id="aaScreen2" style="display:none; text-align:center;">
-            <p style="font-size:12.5px; color:var(--slate-600); margin-bottom:12px;">
-                Enter 6-digit AA consent code sent to <strong id="aaOtpPhoneDisplay">+91 ----------</strong>
-            </p>
-
-            <!-- Test OTP helper -->
-            <div style="margin-bottom:12px;">
-                <span class="dev-otp-pill" onclick="autoFillAaTestOtp()">
-                    <i class="fa-solid fa-flask"></i> Test AA OTP: <strong>889900</strong> (Click to fill)
-                </span>
-            </div>
-
-            <div class="otp-box-row" id="aaOtpBoxRow">
-                <input type="tel" maxlength="1" class="otp-digit" id="aaOtp1" autofocus>
-                <input type="tel" maxlength="1" class="otp-digit" id="aaOtp2">
-                <input type="tel" maxlength="1" class="otp-digit" id="aaOtp3">
-                <input type="tel" maxlength="1" class="otp-digit" id="aaOtp4">
-                <input type="tel" maxlength="1" class="otp-digit" id="aaOtp5">
-                <input type="tel" maxlength="1" class="otp-digit" id="aaOtp6">
-            </div>
-
-            <div id="aaOtpErrorAlert" class="f-error-alert" style="margin-bottom:12px;"></div>
-
-            <button type="button" id="aaVerifyOtpBtn" class="btn-card btn-card-success" style="width:100%;" onclick="submitAaConsentOtp()">
-                <i class="fa-solid fa-circle-check"></i> Authorize &amp; Fetch Statement
-            </button>
-        </div>
-
-        <!-- AA Screen 3: Fetching & Analyzing Animation -->
-        <div id="aaScreen3" style="display:none; text-align:center; padding:20px 0;">
-            <div style="font-size:36px; color:#0284c7; margin-bottom:12px;">
+        <!-- AA Screen 2: Redirecting to Official Digitap AA Portal -->
+        <div id="aaScreenRedirecting" style="display:none; text-align:center; padding:30px 10px;">
+            <div style="font-size:42px; color:var(--brand-primary); margin-bottom:14px;">
                 <i class="fa-solid fa-circle-notch fa-spin"></i>
             </div>
-            <h4 style="font-size:16px; font-weight:800; color:var(--slate-900); margin:0 0 4px 0;">Analyzing Financial Statements</h4>
-            <p style="font-size:12px; color:var(--slate-500); margin:0;" id="aaStatusStepText">Fetching 6-month bank statement via NBFC-AA...</p>
-        </div>
-
-        <!-- AA Screen 4: Live Digitap Hosted Journey (iFrame / Direct URL) -->
-        <div id="aaScreenIframe" style="display:none; text-align:center;">
-            <div style="font-size:12px; color:var(--slate-500); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                <span><i class="fa-solid fa-lock text-success"></i> RBI Certified Account Aggregator</span>
-                <a href="javascript:void(0)" onclick="openDigitapUrlInNewTab()" style="color:var(--brand-primary); font-weight:700; text-decoration:none;">Open in New Tab <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
-            </div>
-            <div style="width:100%; height:480px; border-radius:12px; overflow:hidden; border:1px solid var(--slate-200); position:relative; background:#f8fafc;">
-                <iframe id="aaDigitapIframe" src="" style="width:100%; height:100%; border:none;" allow="camera; microphone; geolocation"></iframe>
-            </div>
+            <h3 style="font-size:16.5px; font-weight:800; color:var(--slate-900); margin-bottom:6px;">
+                Opening Account Aggregator...
+            </h3>
+            <p style="font-size:12.5px; color:var(--slate-500); line-height:1.5; margin-bottom:18px;">
+                Redirecting to the official RBI Account Aggregator portal to link your bank account via OTP.
+            </p>
+            <a href="javascript:void(0)" id="aaManualRedirectLink" style="display:inline-block; padding:10px 18px; background:var(--brand-primary); color:#fff; font-size:13px; font-weight:700; border-radius:var(--radius-md); text-decoration:none;">
+                Continue to Bank Verification <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
         </div>
     </div>
 </div>
@@ -3769,7 +3736,23 @@ function saveFormDraftToSession() {
         panVerified: state.panVerified,
         panData: state.panData,
         mobileVerified: state.mobileVerified,
-        verifiedMobile: state.verifiedMobile
+        verifiedMobile: state.verifiedMobile,
+        cibilScore: state.cibilScore,
+        cibilVerified: state.cibilVerified,
+        cibilPdfUrl: state.cibilPdfUrl,
+        breCreditCheck: state.breCreditCheck,
+        breStatus: state.breStatus,
+        aadhaarVerified: state.aadhaarVerified,
+        aadhaarData: state.aadhaarData,
+        gst: document.getElementById('gstInput')?.value || '',
+        gstVerified: state.gstVerified,
+        gstData: state.gstData,
+        udyam: document.getElementById('udyamInput')?.value || '',
+        udyamVerified: state.udyamVerified,
+        udyamData: state.udyamData,
+        businessType: document.getElementById('businessType')?.value || '',
+        monthlyIncome: document.getElementById('monthlyIncome')?.value || '',
+        shopPhotos: state.shopPhotos || []
     };
     try {
         sessionStorage.setItem('waqt_lead_draft', JSON.stringify(draft));
@@ -3806,6 +3789,40 @@ function restoreFormDraftFromSession() {
         if (draft.mobileVerified) {
             state.mobileVerified = true;
             state.verifiedMobile = draft.verifiedMobile || draft.mobile;
+        }
+        if (draft.gst) {
+            const g = document.getElementById('gstInput');
+            if (g && !g.value) g.value = draft.gst;
+        }
+        if (draft.gstVerified) {
+            state.gstVerified = true;
+            state.gstData = draft.gstData;
+        }
+        if (draft.udyam) {
+            const u = document.getElementById('udyamInput');
+            if (u && !u.value) u.value = draft.udyam;
+        }
+        if (draft.udyamVerified) {
+            state.udyamVerified = true;
+            state.udyamData = draft.udyamData;
+        }
+        if (draft.businessType) {
+            const bt = document.getElementById('businessType');
+            if (bt) bt.value = draft.businessType;
+        }
+        if (draft.monthlyIncome) {
+            const mi = document.getElementById('monthlyIncome');
+            if (mi) mi.value = draft.monthlyIncome;
+        }
+        if (draft.cibilScore) {
+            state.cibilScore = draft.cibilScore;
+            state.cibilVerified = draft.cibilVerified;
+            state.cibilPdfUrl = draft.cibilPdfUrl;
+            state.breCreditCheck = draft.breCreditCheck;
+            state.breStatus = draft.breStatus;
+        }
+        if (draft.shopPhotos && draft.shopPhotos.length > 0) {
+            state.shopPhotos = draft.shopPhotos;
         }
     } catch(e) {}
 }
@@ -4501,13 +4518,15 @@ function openAaConsentModal() {
     document.getElementById('aaOtpPhoneDisplay').innerText = '+91 ' + mob;
     
     document.getElementById('aaScreen1').style.display = 'block';
-    if (document.getElementById('aaScreen2')) document.getElementById('aaScreen2').style.display = 'none';
-    if (document.getElementById('aaScreen3')) document.getElementById('aaScreen3').style.display = 'none';
-    if (document.getElementById('aaScreenIframe')) document.getElementById('aaScreenIframe').style.display = 'none';
-    const iframe = document.getElementById('aaDigitapIframe');
-    if (iframe) iframe.src = '';
+    if (document.getElementById('aaScreenRedirecting')) document.getElementById('aaScreenRedirecting').style.display = 'none';
     const modalBox = document.querySelector('#aaConsentModal .otp-modal-content');
     if (modalBox) modalBox.style.maxWidth = '420px';
+
+    const btn = document.getElementById('aaRequestOtpBtn');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
+    }
     
     document.getElementById('aaConsentModal').style.display = 'flex';
 }
@@ -4517,8 +4536,6 @@ function closeAaConsentModal() {
         clearInterval(digitapAaPollTimer);
         digitapAaPollTimer = null;
     }
-    const iframe = document.getElementById('aaDigitapIframe');
-    if (iframe) iframe.src = '';
     document.getElementById('aaConsentModal').style.display = 'none';
 }
 
@@ -4572,31 +4589,30 @@ function requestAaOtp() {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(res => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
-
         if (res.status === 'success' && res.url) {
             // Live Digitap Session Generated!
             currentDigitapAaUrl = res.url;
             state.digitapRequestId = res.request_id || '';
 
-            const iframe = document.getElementById('aaDigitapIframe');
-            const iframeScreen = document.getElementById('aaScreenIframe');
-            if (iframe && iframeScreen) {
-                document.getElementById('aaScreen1').style.display = 'none';
-                if (document.getElementById('aaScreen2')) document.getElementById('aaScreen2').style.display = 'none';
-                if (document.getElementById('aaScreen3')) document.getElementById('aaScreen3').style.display = 'none';
-                iframe.src = res.url;
-                iframeScreen.style.display = 'block';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected! Opening AA Portal...';
 
-                const modalBox = document.querySelector('#aaConsentModal .otp-modal-content');
-                if (modalBox) modalBox.style.maxWidth = '540px';
+            saveFormDraftToSession();
 
-                startDigitapStatusPolling(res.request_id);
-            } else {
-                window.open(res.url, '_blank');
-            }
+            // Show clean redirecting screen in modal
+            document.getElementById('aaScreen1').style.display = 'none';
+            const redirScreen = document.getElementById('aaScreenRedirecting');
+            if (redirScreen) redirScreen.style.display = 'block';
+            const manualLink = document.getElementById('aaManualRedirectLink');
+            if (manualLink) manualLink.href = res.url;
+
+            // Direct redirect to Digitap's official AA portal (RBI AA strictly disallows iframes via X-Frame-Options: DENY)
+            setTimeout(() => {
+                window.location.href = res.url;
+            }, 600);
         } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
             console.error('Digitap Bank Data generateurl error:', res);
             const errAlert = document.getElementById('aaMobileErrorAlert');
             if (errAlert) {
@@ -4605,9 +4621,9 @@ function requestAaOtp() {
         }
     })
     .catch(err => {
-        console.error('Digitap Bank Data API error:', err);
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
+        console.error('Digitap Bank Data API error:', err);
         const errAlert = document.getElementById('aaMobileErrorAlert');
         if (errAlert) {
             showErr(errAlert, 'Network error communicating with Bank Data API.');
