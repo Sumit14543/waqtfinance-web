@@ -4,7 +4,11 @@ require_once __DIR__ . '/config/db.php';
 header('Content-Type: text/plain');
 
 $url = 'https://svcprod.digitap.work/bank-data/generateurl';
-$auth = base64_encode('53205998:fX79w610sHh78663U3610996zM1X9wG2');
+$service = new DigitapBankDataUIService();
+$reflector = new ReflectionClass($service);
+$method = $reflector->getMethod('getBasicAuthHeader');
+$method->setAccessible(true);
+$authHeader = $method->invoke($service);
 
 $tests = [
     'Test A: Doc Section 4.3.3 Exact Payload' => [
@@ -48,7 +52,7 @@ foreach ($tests as $name => $payload) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Basic ' . $auth,
+        $authHeader,
         'Content-Type: application/json',
         'Accept: application/json'
     ]);
