@@ -55,6 +55,9 @@ if (!empty($data['consent_request']) && is_array($data['consent_request'])) {
 $service = new DigitapBankDataUIService();
 $res = $service->generateUrl($genParams);
 
+// Log for debugging
+@file_put_contents(__DIR__ . '/aa_debug.log', date('Y-m-d H:i:s') . ' | ' . json_encode($genParams) . ' | ' . json_encode($res) . "\n", FILE_APPEND);
+
 // If successful, save in session for verification on return
 if (!empty($res['status']) && $res['status'] === 'success') {
     $_SESSION['digitap_aa_request_id'] = $res['request_id'] ?? '';
