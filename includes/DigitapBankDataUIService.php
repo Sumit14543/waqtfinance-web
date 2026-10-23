@@ -62,7 +62,7 @@ class DigitapBankDataUIService
 
         $host = $_SERVER['HTTP_HOST'] ?? 'waqtfinance.com';
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'https://';
-        $defaultReturn = $scheme . $host . '/create-lead-form.php?step=5&aa_txn_id=%s&aa_status=%s';
+        $defaultReturn = $scheme . $host . '/create-lead-form?step=5&aa_txn_id=%s&aa_status=%s';
         $returnUrl = $params['return_url'] ?? $defaultReturn;
 
         $startMonth = $params['start_month'] ?? date('Y-m', strtotime('-6 months'));

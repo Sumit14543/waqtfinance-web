@@ -27,6 +27,16 @@ if (empty($txnId)) {
     exit;
 }
 
+$localReportFile = dirname(__DIR__, 2) . '/storage/reports/report_' . $txnId . '.json';
+if (file_exists($localReportFile) && empty($_GET['force_refresh'])) {
+    $cached = json_decode((string)file_get_contents($localReportFile), true);
+    if (!empty($cached)) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($cached, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+}
+
 $service = new DigitapBankDataUIService();
 $res = $service->retrieveReport($txnId, $reportType, $reportSubtype);
 
