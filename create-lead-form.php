@@ -4500,13 +4500,23 @@ function selectBankChip(el, bankName) {
 }
 
 function openAaConsentModal() {
-    const mob = state.verifiedMobile || document.getElementById('mobileInput').value.trim() || '9876543210';
-    const bankEl = document.getElementById('aaModalSelectedBank');
-    if (bankEl) bankEl.innerText = selectedBankName || 'Bank Account';
+    let mob = state.verifiedMobile || '';
+    if (!mob && document.getElementById('mobileInput')) {
+        mob = document.getElementById('mobileInput').value.trim();
+    }
+    if (!mob) {
+        try {
+            const raw = sessionStorage.getItem('waqt_lead_draft');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                mob = parsed.verifiedMobile || parsed.mobile || '';
+            }
+        } catch(e) {}
+    }
 
     const mobInp = document.getElementById('aaModalMobileInput');
     if (mobInp) {
-        mobInp.value = mob;
+        if (mob) mobInp.value = mob;
         mobInp.style.borderColor = '';
     }
     const mobVal = document.getElementById('aaModalMobileVal');
@@ -4515,10 +4525,15 @@ function openAaConsentModal() {
     const errAlert = document.getElementById('aaMobileErrorAlert');
     if (errAlert) errAlert.style.display = 'none';
 
-    document.getElementById('aaOtpPhoneDisplay').innerText = '+91 ' + mob;
+    const phoneDisp = document.getElementById('aaOtpPhoneDisplay');
+    if (phoneDisp) phoneDisp.innerText = mob ? ('+91 ' + mob) : '';
     
-    document.getElementById('aaScreen1').style.display = 'block';
-    if (document.getElementById('aaScreenRedirecting')) document.getElementById('aaScreenRedirecting').style.display = 'none';
+    const s1 = document.getElementById('aaScreen1');
+    if (s1) s1.style.display = 'block';
+
+    const sRedir = document.getElementById('aaScreenRedirecting');
+    if (sRedir) sRedir.style.display = 'none';
+
     const modalBox = document.querySelector('#aaConsentModal .otp-modal-content');
     if (modalBox) modalBox.style.maxWidth = '420px';
 
@@ -4528,7 +4543,8 @@ function openAaConsentModal() {
         btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
     }
     
-    document.getElementById('aaConsentModal').style.display = 'flex';
+    const modal = document.getElementById('aaConsentModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeAaConsentModal() {
@@ -4568,11 +4584,14 @@ function requestAaOtp() {
     if (errAlert) errAlert.style.display = 'none';
     if (mobInp) mobInp.style.borderColor = '';
 
-    document.getElementById('aaOtpPhoneDisplay').innerText = '+91 ' + enteredMob;
+    const phoneDisp = document.getElementById('aaOtpPhoneDisplay');
+    if (phoneDisp) phoneDisp.innerText = '+91 ' + enteredMob;
 
     const btn = document.getElementById('aaRequestOtpBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Connecting to Digitap...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Connecting to Digitap...';
+    }
 
     // 1. Call Digitap Generate URL API (as per documentation)
     fetch('api/bank-data/generate-url.php', {
@@ -4729,7 +4748,8 @@ function autoFillAaTestOtp() {
         const el = document.getElementById('aaOtp' + i);
         if (el) el.value = testDigits[i - 1];
     }
-    document.getElementById('aaVerifyOtpBtn').focus();
+    const vBtn = document.getElementById('aaVerifyOtpBtn');
+    if (vBtn) vBtn.focus();
 }
 
 // 6 Segmented AA OTP Boxes listeners
@@ -4779,19 +4799,21 @@ function submitAaConsentOtp() {
         code += (document.getElementById('aaOtp' + i)?.value || '').trim();
     }
     const err = document.getElementById('aaOtpErrorAlert');
-    err.style.display = 'none';
+    if (err) err.style.display = 'none';
 
     if (code.length !== 6) {
-        showErr(err, 'Please enter all 6 digits of the AA consent code.');
+        if (err) showErr(err, 'Please enter all 6 digits of the AA consent code.');
         return;
     }
 
     // Move to Screen 3: Fetching & Analyzing
-    document.getElementById('aaScreen2').style.display = 'none';
-    document.getElementById('aaScreen3').style.display = 'block';
+    const s2 = document.getElementById('aaScreen2');
+    if (s2) s2.style.display = 'none';
+    const s3 = document.getElementById('aaScreen3');
+    if (s3) s3.style.display = 'block';
 
     const statusText = document.getElementById('aaStatusStepText');
-    statusText.innerText = 'Connecting to ' + selectedBankName + ' via RBI Account Aggregator...';
+    if (statusText) statusText.innerText = 'Connecting to ' + selectedBankName + ' via RBI Account Aggregator...';
 
     setTimeout(() => {
         statusText.innerText = 'Fetching 6-month transaction statements...';
@@ -4903,12 +4925,12 @@ function completeAaAggregation() {
         healthScore: healthScore
     };
 
-    // Auto-fill bank form fields
-    document.getElementById('bankName').value = selectedBankName;
-    document.getElementById('accountNumber').value = state.aaData.accountNumber;
-    document.getElementById('confirmAccountNumber').value = state.aaData.accountNumber;
-    document.getElementById('ifscCode').value = state.aaData.ifsc;
-    document.getElementById('ifscBranchText').innerText = `✓ Verified ${selectedBankName} Branch`;
+    // Auto-fill bank form fields if present
+    if (document.getElementById('bankName')) document.getElementById('bankName').value = selectedBankName;
+    if (document.getElementById('accountNumber')) document.getElementById('accountNumber').value = state.aaData.accountNumber;
+    if (document.getElementById('confirmAccountNumber')) document.getElementById('confirmAccountNumber').value = state.aaData.accountNumber;
+    if (document.getElementById('ifscCode')) document.getElementById('ifscCode').value = state.aaData.ifsc;
+    if (document.getElementById('ifscBranchText')) document.getElementById('ifscBranchText').innerText = `✓ Verified ${selectedBankName} Branch`;
 
     // Populate Verified AA Card
     document.getElementById('aaDisplayBankName').innerText = `${selectedBankName} (Current A/C ****${state.aaData.accountNumber.slice(-4)})`;
