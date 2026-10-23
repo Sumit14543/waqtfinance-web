@@ -83,11 +83,15 @@ class DigitapBankDataUIService
         }
 
         if ($requestedDest === 'accountaggregator') {
-            // Per Documentation Section 4.3.3 & Page 12/16
-            $payload['aa_vendor'] = !empty($params['aa_vendor']) ? (string)$params['aa_vendor'] : 'anumati';
-            $payload['aa_fetch_type'] = !empty($params['aa_fetch_type']) ? (string)$params['aa_fetch_type'] : 'onetime';
-            $payload['multi_aa'] = !empty($params['multi_aa']) ? (string)$params['multi_aa'] : 'true';
-
+            if (!empty($params['aa_vendor'])) {
+                $payload['aa_vendor'] = (string)$params['aa_vendor'];
+            }
+            if (!empty($params['aa_fetch_type'])) {
+                $payload['aa_fetch_type'] = (string)$params['aa_fetch_type'];
+            }
+            if (!empty($params['multi_aa']) && $params['multi_aa'] === 'true') {
+                $payload['multi_aa'] = 'true';
+            }
             if (!empty($params['consent_request']) && is_array($params['consent_request'])) {
                 $payload['consent_request'] = $params['consent_request'];
             }

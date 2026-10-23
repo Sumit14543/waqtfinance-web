@@ -31,22 +31,29 @@ if (empty($mobile) || strlen($mobile) !== 10) {
 }
 
 $destination = trim((string)($data['destination'] ?? 'accountaggregator'));
-$vendor = trim((string)($data['aa_vendor'] ?? 'anumati'));
-$fetchType = trim((string)($data['aa_fetch_type'] ?? 'onetime'));
-$multiAa = isset($data['multi_aa']) ? (string)$data['multi_aa'] : 'true';
-
 $clientRefNum = 'WF-AA-' . time() . '-' . substr(md5($mobile . mt_rand()), 0, 6);
 
-$service = new DigitapBankDataUIService();
-$res = $service->generateUrl([
+$genParams = [
     'client_ref_num' => $clientRefNum,
     'destination' => $destination,
-    'mobile_num' => $mobile,
-    'aa_vendor' => $vendor,
-    'aa_fetch_type' => $fetchType,
-    'multi_aa' => $multiAa,
-    'consent_request' => $data['consent_request'] ?? null
-]);
+    'mobile_num' => $mobile
+];
+
+if (!empty($data['aa_vendor'])) {
+    $genParams['aa_vendor'] = trim((string)$data['aa_vendor']);
+}
+if (!empty($data['aa_fetch_type'])) {
+    $genParams['aa_fetch_type'] = trim((string)$data['aa_fetch_type']);
+}
+if (!empty($data['multi_aa'])) {
+    $genParams['multi_aa'] = trim((string)$data['multi_aa']);
+}
+if (!empty($data['consent_request']) && is_array($data['consent_request'])) {
+    $genParams['consent_request'] = $data['consent_request'];
+}
+
+$service = new DigitapBankDataUIService();
+$res = $service->generateUrl($genParams);
 
 // If successful, save in session for verification on return
 if (!empty($res['status']) && $res['status'] === 'success') {
