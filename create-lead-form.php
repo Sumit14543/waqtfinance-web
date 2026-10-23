@@ -2814,7 +2814,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </label>
                 <div class="f-input-wrap" style="position:relative; display:flex; align-items:center;">
                     <span style="position:absolute; left:14px; font-weight:800; color:var(--slate-700); font-size:14.5px; pointer-events:none; z-index:2;">+91</span>
-                    <input type="tel" id="aaModalMobileInput" class="f-input" style="padding-left:48px; font-weight:800; font-size:15px; letter-spacing:0.5px;" placeholder="9876543210" maxlength="10" inputmode="numeric" autocomplete="tel">
+                    <input type="tel" id="aaModalMobileInput" class="f-input" style="padding-left:48px; font-weight:800; font-size:15px; letter-spacing:0.5px;" placeholder="Enter bank linked mobile" maxlength="10" inputmode="numeric" autocomplete="tel">
                     <span id="aaModalMobileVal" style="display:none;"></span>
                 </div>
                 <div id="aaMobileErrorAlert" class="f-error-alert" style="margin-top:6px; display:none;"></div>
@@ -4572,6 +4572,18 @@ function requestAaOtp() {
     if (!enteredMob || enteredMob.length !== 10 || !/^[6-9]/.test(enteredMob)) {
         if (errAlert) {
             errAlert.innerText = 'Please enter a valid 10-digit Indian mobile number.';
+            errAlert.style.display = 'block';
+        }
+        if (mobInp) {
+            mobInp.focus();
+            mobInp.style.borderColor = 'var(--danger)';
+        }
+        return;
+    }
+
+    if (enteredMob === '9876543210' || /^(\d)\1{9}$/.test(enteredMob)) {
+        if (errAlert) {
+            errAlert.innerText = 'Please enter your actual bank-linked mobile number (dummy test numbers fail with RBI AA).';
             errAlert.style.display = 'block';
         }
         if (mobInp) {
