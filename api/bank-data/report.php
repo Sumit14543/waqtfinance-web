@@ -15,7 +15,7 @@ $jsonBody = json_decode((string)$rawInput, true) ?: [];
 
 $txnId = trim((string)($_GET['txn_id'] ?? $jsonBody['txn_id'] ?? $_POST['txn_id'] ?? ''));
 $reportType = strtolower(trim((string)($_GET['format'] ?? $jsonBody['report_type'] ?? 'json')));
-$reportSubtype = trim((string)($_GET['subtype'] ?? $jsonBody['report_subtype'] ?? 'type1'));
+$reportSubtype = trim((string)($_GET['subtype'] ?? $jsonBody['report_subtype'] ?? 'type3'));
 
 if (empty($txnId)) {
     header('Content-Type: application/json; charset=utf-8');

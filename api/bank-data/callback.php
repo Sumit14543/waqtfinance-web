@@ -49,7 +49,7 @@ $clientRef = (string)($json['client_ref_num'] ?? '');
 if ($status === 'Success') {
     try {
         $service = new DigitapBankDataUIService();
-        $report = $service->retrieveReport($txnId, 'json', 'type1');
+        $report = $service->retrieveReport($txnId, 'json', 'type3');
 
         $reportPath = $storageDir . '/reports/report_' . $txnId . '.json';
         @file_put_contents($reportPath, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
