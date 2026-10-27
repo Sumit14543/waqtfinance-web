@@ -83,18 +83,24 @@ class DigitapBankDataUIService
         }
 
         if ($requestedDest === 'accountaggregator') {
-            if (!empty($params['aa_vendor'])) {
-                $payload['aa_vendor'] = (string)$params['aa_vendor'];
-            }
-            if (!empty($params['aa_fetch_type'])) {
-                $payload['aa_fetch_type'] = (string)$params['aa_fetch_type'];
-            }
-            if (!empty($params['multi_aa']) && $params['multi_aa'] === 'true') {
-                $payload['multi_aa'] = 'true';
-            }
-            if (!empty($params['consent_request']) && is_array($params['consent_request'])) {
-                $payload['consent_request'] = $params['consent_request'];
-            }
+            // Updated per Digitap Team Official Spec
+            $payload['multi_aa'] = isset($params['multi_aa']) ? (int)$params['multi_aa'] : 0;
+            $payload['aa_vendor'] = !empty($params['aa_vendor']) ? (string)$params['aa_vendor'] : 'anumati';
+            $payload['aa_fetch_type'] = !empty($params['aa_fetch_type']) ? (string)$params['aa_fetch_type'] : 'ONETIME';
+
+            $startDate = $params['start_date'] ?? date('Y-m-d', strtotime('-6 months'));
+            $endDate = $params['end_date'] ?? date('Y-m-d');
+
+            $payload['consent_request'] = $params['consent_request'] ?? [
+                [
+                    'fetch_type' => 'ONETIME',
+                    'fi_types' => ['DEPOSIT'],
+                    'fi_date_range' => [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate
+                    ]
+                ]
+            ];
         }
 
         if (!empty($mobileNum)) {
@@ -153,7 +159,7 @@ class DigitapBankDataUIService
      * 3. Retrieve Report API (Doc Section 6)
      * POST /bank-data/retrievereport
      */
-    public function retrieveReport(string $txnId, string $reportType = 'json', string $reportSubtype = 'type1'): array
+    public function retrieveReport(string $txnId, string $reportType = 'json', string $reportSubtype = 'type3'): array
     {
         $url = $this->baseUrl . '/retrievereport';
         $payload = [
@@ -167,12 +173,12 @@ class DigitapBankDataUIService
 
     /**
      * 4. Institution List API (Doc Section 7)
-     * GET /bank-data/institutions?type=NetBanking|Statement
+     * POST /bank-data/institutions
      */
-    public function getInstitutions(string $type = 'Statement'): array
+    public function getInstitutions(string $type = 'accountaggregator'): array
     {
-        $url = $this->baseUrl . '/institutions?type=' . urlencode($type);
-        return $this->sendRequest($url, [], 'GET');
+        $url = $this->baseUrl . '/institutions';
+        return $this->sendRequest($url, ['type' => $type], 'POST');
     }
 
     /**
