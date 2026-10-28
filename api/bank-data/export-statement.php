@@ -112,6 +112,29 @@ if ($viewMode === 'daily') {
     }
     krsort($daily);
 
+    // Calculate 90-day metrics
+    $maxDate = null;
+    foreach ($daily as $d => $r) {
+        if ($maxDate === null || $d > $maxDate) $maxDate = $d;
+    }
+    $cutoff90Ts = $maxDate ? (strtotime($maxDate) - (90 * 86400)) : (time() - (90 * 86400));
+    $days1000 = 0; $days2000 = 0; $days5000 = 0; $total90CrDays = 0;
+    foreach ($daily as $d => $r) {
+        if (strtotime($d) >= $cutoff90Ts) {
+            if ($r['credit_total'] > 0) $total90CrDays++;
+            if ($r['credit_total'] >= 1000) $days1000++;
+            if ($r['credit_total'] >= 2000) $days2000++;
+            if ($r['credit_total'] >= 5000) $days5000++;
+        }
+    }
+    fputcsv($out, ['--- 90-DAY CREDIT FREQUENCY ANALYSIS ---']);
+    fputcsv($out, ['90-Day Period Range', date('Y-m-d', $cutoff90Ts) . ' to ' . $maxDate]);
+    fputcsv($out, ['Days with Actual Credit >= INR 1,000 (90 Days)', $days1000 . ' Days']);
+    fputcsv($out, ['Days with Actual Credit >= INR 2,000 (90 Days)', $days2000 . ' Days']);
+    fputcsv($out, ['Days with Actual Credit >= INR 5,000 (90 Days)', $days5000 . ' Days']);
+    fputcsv($out, ['Total Days with Any Credit (90 Days)', $total90CrDays . ' Days']);
+    fputcsv($out, []);
+
     fputcsv($out, ['#', 'Date (Tarikh)', 'Actual Amount Credited (INR)', 'Number of Credit Txns', 'Debited on Day (INR)', 'Net Balance Change (INR)']);
     $idx = 1;
     foreach ($daily as $row) {

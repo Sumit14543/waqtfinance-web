@@ -2198,6 +2198,26 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                         const dailyList = Object.values(dailyMap).sort((a,b) => b.date.localeCompare(a.date));
                         const creditDays = dailyList.filter(row => row.cr > 0);
 
+                        // 90-Day Credit Frequency Analysis
+                        let maxDateStr = '';
+                        txns.forEach(t => {
+                            const d = (t.date || '').slice(0, 10);
+                            if (d && (!maxDateStr || d > maxDateStr)) maxDateStr = d;
+                        });
+                        const maxTs = maxDateStr ? new Date(maxDateStr + 'T23:59:59').getTime() : Date.now();
+                        const cutoff90 = maxTs - (90 * 24 * 60 * 60 * 1000);
+                        const cutoffDateStr = new Date(cutoff90).toISOString().slice(0, 10);
+
+                        let count90d1000 = 0, count90d2000 = 0, count90d5000 = 0;
+                        dailyList.forEach(row => {
+                            const rowTs = new Date(row.date + 'T00:00:00').getTime();
+                            if (rowTs >= cutoff90) {
+                                if (row.cr >= 1000) count90d1000++;
+                                if (row.cr >= 2000) count90d2000++;
+                                if (row.cr >= 5000) count90d5000++;
+                            }
+                        });
+
                         let dailyRows = '';
                         creditDays.forEach((row, i) => {
                             const net = row.cr - row.dr;
@@ -2257,7 +2277,7 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                         </div>
                                     </div>
 
-                                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px;">
+                                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:10px;">
                                         <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px; text-align:center;">
                                             <div style="font-size:10px; font-weight:700; color:#1e40af; text-transform:uppercase;">Total Credited (Sum)</div>
                                             <div style="font-size:14px; font-weight:800; color:#1d4ed8;">₹${totalCr.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
@@ -2269,6 +2289,35 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                         <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px; text-align:center;">
                                             <div style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase;">Days with Credits</div>
                                             <div style="font-size:14px; font-weight:800; color:#15803d;">${creditDays.length} Days Credited</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 90-Day Credit Frequency Analysis -->
+                                    <div style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border:1.5px solid #86efac; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
+                                            <div style="font-size:11px; font-weight:800; color:#166534; text-transform:uppercase; display:flex; align-items:center; gap:5px;">
+                                                <i class="fa-solid fa-chart-line" style="color:#16a34a;"></i> 90-Day Credit Frequency Analysis (Actual Inflow)
+                                            </div>
+                                            <div style="font-size:10px; font-weight:700; color:#15803d; background:#fff; border:1px solid #bbf7d0; padding:1px 6px; border-radius:10px;">
+                                                ${cutoffDateStr} to ${maxDateStr}
+                                            </div>
+                                        </div>
+                                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+                                            <div style="background:#fff; border:1px solid #bae6fd; border-radius:6px; padding:6px; text-align:center;">
+                                                <div style="font-size:10px; font-weight:700; color:#0284c7; text-transform:uppercase;">₹1,000+ Days</div>
+                                                <div style="font-size:16px; font-weight:800; color:#0284c7;">${count90d1000} Days</div>
+                                                <div style="font-size:9.5px; color:#64748b;">in last 90 days</div>
+                                            </div>
+                                            <div style="background:#fff; border:1px solid #a7f3d0; border-radius:6px; padding:6px; text-align:center;">
+                                                <div style="font-size:10px; font-weight:700; color:#059669; text-transform:uppercase;">₹2,000+ Days</div>
+                                                <div style="font-size:16px; font-weight:800; color:#059669;">${count90d2000} Days</div>
+                                                <div style="font-size:9.5px; color:#64748b;">in last 90 days</div>
+                                            </div>
+                                            <div style="background:#fff; border:1px solid #ddd6fe; border-radius:6px; padding:6px; text-align:center;">
+                                                <div style="font-size:10px; font-weight:700; color:#7c3aed; text-transform:uppercase;">₹5,000+ Days</div>
+                                                <div style="font-size:16px; font-weight:800; color:#7c3aed;">${count90d5000} Days</div>
+                                                <div style="font-size:9.5px; color:#64748b;">in last 90 days</div>
+                                            </div>
                                         </div>
                                     </div>
 

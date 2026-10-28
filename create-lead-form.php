@@ -3165,6 +3165,41 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
             </div>
 
+            <!-- 90-Day Inflow Frequency Analysis Cards -->
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #86efac; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <div style="font-size: 11.5px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-chart-line" style="color: #16a34a;"></i> 90-Day Credit Frequency Analysis (Actual Daily Inflow)
+                    </div>
+                    <div style="font-size: 10.5px; font-weight: 700; color: #15803d; background: #ffffff; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 12px;" id="stmt90dRangeLbl">
+                        Last 90 Days
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div style="background: #ffffff; border: 1.5px solid #bae6fd; border-radius: 8px; padding: 9px 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                        <div style="font-size: 11px; font-weight: 700; color: #0284c7; text-transform: uppercase; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="fa-solid fa-arrow-trend-up"></i> ₹1,000+ Days
+                        </div>
+                        <div style="font-size: 19px; font-weight: 800; color: #0284c7;" id="stmtKpi90d1000">0 Days</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 600;">90 din me ₹1000+ inflow</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1.5px solid #a7f3d0; border-radius: 8px; padding: 9px 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                        <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="fa-solid fa-arrow-trend-up"></i> ₹2,000+ Days
+                        </div>
+                        <div style="font-size: 19px; font-weight: 800; color: #059669;" id="stmtKpi90d2000">0 Days</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 600;">90 din me ₹2000+ inflow</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1.5px solid #ddd6fe; border-radius: 8px; padding: 9px 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                        <div style="font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                            <i class="fa-solid fa-arrow-trend-up"></i> ₹5,000+ Days
+                        </div>
+                        <div style="font-size: 19px; font-weight: 800; color: #7c3aed;" id="stmtKpi90d5000">0 Days</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 600;">90 din me ₹5000+ inflow</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- View Mode Switch: Per-Day Actual Credit vs All Transactions -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; border-bottom:1.5px solid #f1f5f9; padding-bottom:10px;">
                 <div style="display:flex; gap:8px;">
@@ -5396,6 +5431,51 @@ function populateStatementModal() {
 
     const kpiInflow = document.getElementById('stmtKpiInflow');
     if (kpiInflow) kpiInflow.innerText = `${creditDaysCount} Days Credited`;
+
+    // 90-Day Credit Frequency Analysis (Days with ₹1000+, ₹2000+, ₹5000+ credits)
+    let maxDateStr = '';
+    (txns || []).forEach(t => {
+        const d = (t.date || '').slice(0, 10);
+        if (d && (!maxDateStr || d > maxDateStr)) {
+            maxDateStr = d;
+        }
+    });
+
+    let cutoff90Ms = 0;
+    if (maxDateStr) {
+        const maxDateObj = new Date(maxDateStr + 'T23:59:59');
+        cutoff90Ms = maxDateObj.getTime() - (90 * 24 * 60 * 60 * 1000);
+    } else {
+        cutoff90Ms = Date.now() - (90 * 24 * 60 * 60 * 1000);
+    }
+
+    let count90d1000 = 0;
+    let count90d2000 = 0;
+    let count90d5000 = 0;
+
+    dailyList.forEach(row => {
+        const rowDateObj = new Date(row.date + 'T00:00:00');
+        if (rowDateObj.getTime() >= cutoff90Ms) {
+            if (row.creditTotal >= 1000) count90d1000++;
+            if (row.creditTotal >= 2000) count90d2000++;
+            if (row.creditTotal >= 5000) count90d5000++;
+        }
+    });
+
+    const el90d1000 = document.getElementById('stmtKpi90d1000');
+    if (el90d1000) el90d1000.innerText = `${count90d1000} Days`;
+
+    const el90d2000 = document.getElementById('stmtKpi90d2000');
+    if (el90d2000) el90d2000.innerText = `${count90d2000} Days`;
+
+    const el90d5000 = document.getElementById('stmtKpi90d5000');
+    if (el90d5000) el90d5000.innerText = `${count90d5000} Days`;
+
+    const el90dLbl = document.getElementById('stmt90dRangeLbl');
+    if (el90dLbl && maxDateStr) {
+        const cutoffDateStr = new Date(cutoff90Ms).toISOString().slice(0, 10);
+        el90dLbl.innerText = `${cutoffDateStr} to ${maxDateStr}`;
+    }
 
     const countAllEl = document.getElementById('stmtCountAll');
     if (countAllEl) countAllEl.innerText = txns.length;
