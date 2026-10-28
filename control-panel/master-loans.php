@@ -1194,7 +1194,7 @@ if ($totalPages < 1) $totalPages = 1;
                                 <td><?php echo htmlspecialchars($lead['mobile_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
                                 <td><span style="font-family: monospace; font-weight: 700; font-size:13.5px;"><?php echo htmlspecialchars($lead['pancard_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
                                 <td><?php echo htmlspecialchars($lead['city'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><strong style="color: var(--text-main);">₹<?php echo number_format((float)($lead['loan_amount'] ?? 0), 2); ?></strong></td>
+                                <td><strong style="color: var(--text-main);">â‚¹<?php echo number_format((float)($lead['loan_amount'] ?? 0), 2); ?></strong></td>
                                 <td><span style="text-transform: uppercase; background: rgba(24,82,156,0.08); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: var(--primary);"><?php echo htmlspecialchars($lead['loan_type'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
                                 <td style="color: var(--text-muted); font-size: 12.5px;"><?php echo date('d M Y, h:i A', strtotime($lead['created_at'])); ?></td>
                                 <td style="white-space: nowrap;">
@@ -1250,7 +1250,7 @@ if ($totalPages < 1) $totalPages = 1;
                                 <td><?php echo htmlspecialchars($lead['mobile_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
                                 <td><span style="font-family: monospace; font-weight: 700; font-size:13.5px;"><?php echo htmlspecialchars($lead['pan_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
                                 <td><?php echo htmlspecialchars($lead['shop_business_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><strong style="color: var(--text-main);">₹<?php echo number_format((float)($lead['loan_amount'] ?? 0), 2); ?></strong></td>
+                                <td><strong style="color: var(--text-main);">â‚¹<?php echo number_format((float)($lead['loan_amount'] ?? 0), 2); ?></strong></td>
                                 <td><?php echo htmlspecialchars($lead['pincode'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
                                 <td><span class="badge-status badge-<?php echo htmlspecialchars($lead['status'] ?? 'pending', ENT_QUOTES, 'UTF-8'); ?>" id="badge-<?php echo $lead['id']; ?>"><?php echo htmlspecialchars($lead['status'] ?? 'pending', ENT_QUOTES, 'UTF-8'); ?></span></td>
                                 <td style="white-space: nowrap;">
@@ -1911,8 +1911,46 @@ if ($totalPages < 1) $totalPages = 1;
         let mainInfoHtml = '';
         if (type === 'general') {
             let parsedDetails = '';
+            let aaCardHtml = '';
             try {
                 const details = JSON.parse(lead.loan_details || '{}');
+                const aaTxnId = details.account_aggregator_txn_id || details.aa_txn_id || '';
+                const isAa = details.account_aggregator_verified || aaTxnId;
+                if (isAa) {
+                    const bName = details.bank_name || 'Bank Account';
+                    const aNum = details.account_number || '';
+                    const ifsc = details.ifsc_code || '';
+                    const inflow = parseFloat(details.monthly_inflow || 0);
+                    const amb = parseFloat(details.average_monthly_balance || 0);
+
+                    aaCardHtml = `
+                        <div class="info-card" style="border-left: 4px solid #16a34a; background: #f0fdf4;">
+                            <h3 class="card-title" style="color: #166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <span><i class="fa-solid fa-building-columns"></i> Verified Bank Statement (RBI NBFC-AA)</span>
+                                <span class="badge" style="background:#16a34a; color:#fff; font-size:11px; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> Aggregated</span>
+                            </h3>
+                            <div class="grid-fields">
+                                <div class="field-item"><div class="field-label">Bank Name</div><div class="field-value" style="font-weight:700;">${bName}</div></div>
+                                <div class="field-item"><div class="field-label">Account Number</div><div class="field-value" style="font-family:monospace; font-weight:700;">${aNum}</div></div>
+                                <div class="field-item"><div class="field-label">IFSC Code</div><div class="field-value" style="font-family:monospace; color:var(--primary); font-weight:700;">${ifsc}</div></div>
+                                <div class="field-item"><div class="field-label">Monthly Inflow</div><div class="field-value" style="color:#16a34a; font-weight:800;">₹${inflow.toLocaleString('en-IN')}</div></div>
+                                <div class="field-item"><div class="field-label">Avg Balance (AMB)</div><div class="field-value" style="font-weight:700;">₹${amb.toLocaleString('en-IN')}</div></div>
+                                <div class="field-item"><div class="field-label">Aggregator Txn ID</div><div class="field-value" style="font-family:monospace; font-size:12px;">${aaTxnId || 'N/A'}</div></div>
+                            </div>
+                            ${aaTxnId ? `
+                            <div style="display:flex; gap:10px; margin-top:14px; padding-top:12px; border-top:1px dashed #86efac; flex-wrap:wrap;">
+                                <button type="button" class="btn-action" onclick="openMasterStatementModal('${aaTxnId}')" style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                                    <i class="fa-solid fa-file-invoice"></i> View Full Statement
+                                </button>
+                                <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                                    <i class="fa-solid fa-download"></i> Download Statement (CSV)
+                                </a>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
                 parsedDetails = Object.entries(details).map(([k, v]) => {
                     const label = k.replace(/_/g, ' ').toUpperCase();
                     if ((k === 'shop_photo_url' || k === 'shop_photo') && v && typeof v === 'string') {
@@ -1964,6 +2002,8 @@ if ($totalPages < 1) $totalPages = 1;
                     </div>
                 </div>
 
+                ${aaCardHtml}
+
                 <div class="info-card">
                     <h3 class="card-title"><i class="fa-solid fa-list"></i> Form Parameters</h3>
                     <div class="grid-fields">
@@ -1976,9 +2016,9 @@ if ($totalPages < 1) $totalPages = 1;
                 <div class="info-card">
                     <h3 class="card-title"><i class="fa-solid fa-indian-rupee-sign"></i> Loan Details</h3>
                     <div class="grid-fields">
-                        <div class="field-item"><div class="field-label">Loan Amount Required</div><div class="field-value" style="color: var(--primary); font-size: 15px; font-weight: 750;">₹${parseFloat(lead.loan_amount).toLocaleString('en-IN')}</div></div>
+                        <div class="field-item"><div class="field-label">Loan Amount Required</div><div class="field-value" style="color: var(--primary); font-size: 15px; font-weight: 750;">â‚¹${parseFloat(lead.loan_amount).toLocaleString('en-IN')}</div></div>
                         <div class="field-item"><div class="field-label">Loan Purpose</div><div class="field-value">${lead.loan_purpose}</div></div>
-                        <div class="field-item"><div class="field-label">Monthly Gross Income</div><div class="field-value" style="color: var(--success); font-weight: 700;">₹${parseFloat(lead.monthly_income).toLocaleString('en-IN')}</div></div>
+                        <div class="field-item"><div class="field-label">Monthly Gross Income</div><div class="field-value" style="color: var(--success); font-weight: 700;">â‚¹${parseFloat(lead.monthly_income).toLocaleString('en-IN')}</div></div>
                     </div>
                 </div>
 
@@ -2003,7 +2043,7 @@ if ($totalPages < 1) $totalPages = 1;
                         <div class="field-item"><div class="field-label">Registration Type</div><div class="field-value">${lead.registration_type}</div></div>
                         <div class="field-item"><div class="field-label">Business Age</div><div class="field-value">${lead.business_age}</div></div>
                         <div class="field-item"><div class="field-label">Business Type</div><div class="field-value">${lead.business_type}</div></div>
-                        <div class="field-item"><div class="field-label">Daily Sales</div><div class="field-value" style="color: var(--success); font-weight:700;">₹${parseFloat(lead.daily_sales).toLocaleString('en-IN')}</div></div>
+                        <div class="field-item"><div class="field-label">Daily Sales</div><div class="field-value" style="color: var(--success); font-weight:700;">â‚¹${parseFloat(lead.daily_sales).toLocaleString('en-IN')}</div></div>
                     </div>
                 </div>
 
@@ -2344,7 +2384,7 @@ if ($totalPages < 1) $totalPages = 1;
                                 <input type="text" name="city" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.city || ''}">
                             </div>
                             <div>
-                                <label class="field-label">Requested Loan Amount (₹)</label>
+                                <label class="field-label">Requested Loan Amount (â‚¹)</label>
                                 <input type="number" name="loan_amount" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.loan_amount}" required>
                             </div>
                             <div>
@@ -2430,15 +2470,15 @@ if ($totalPages < 1) $totalPages = 1;
                             <input type="text" name="business_age" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.business_age || ''}">
                         </div>
                         <div>
-                            <label class="field-label">Daily Sales (₹)</label>
+                            <label class="field-label">Daily Sales (â‚¹)</label>
                             <input type="number" name="daily_sales" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.daily_sales}" required>
                         </div>
                         <div>
-                            <label class="field-label">Monthly Income (₹)</label>
+                            <label class="field-label">Monthly Income (â‚¹)</label>
                             <input type="number" name="monthly_income" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.monthly_income}" required>
                         </div>
                         <div>
-                            <label class="field-label">Loan Amount Required (₹)</label>
+                            <label class="field-label">Loan Amount Required (â‚¹)</label>
                             <input type="number" name="loan_amount" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.loan_amount}" required>
                         </div>
                         <div>
@@ -2817,6 +2857,132 @@ if ($totalPages < 1) $totalPages = 1;
             }
         });
     });
+
+    // View Verified Bank Statement from Digitap Account Aggregator
+    window.openMasterStatementModal = function(txnId) {
+        Swal.fire({
+            title: 'Loading Bank Statement...',
+            html: '<div style="padding:20px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px; color:var(--primary);"></i><div style="margin-top:10px; font-weight:600;">Fetching live aggregated transactions...</div></div>',
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            didOpen: () => {
+                fetch('../api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data || !data.banks || data.banks.length === 0) {
+                            Swal.fire('Notice', 'No bank statement data available for this transaction.', 'info');
+                            return;
+                        }
+                        const bank = data.banks[0];
+                        const acc = (bank.accounts && bank.accounts[0]) ? bank.accounts[0] : {};
+                        const txns = acc.transactions || [];
+                        const holders = acc.customer_info?.holders || [];
+                        const holderName = holders[0]?.name || 'N/A';
+                        const balance = acc.current_balance ? parseFloat(acc.current_balance) : 0;
+
+                        let totalCr = 0;
+                        let totalDr = 0;
+                        let crCount = 0;
+                        let drCount = 0;
+                        txns.forEach(t => {
+                            const amt = parseFloat(t.amount) || 0;
+                            if (amt >= 0) { totalCr += amt; crCount++; }
+                            else { totalDr += Math.abs(amt); drCount++; }
+                        });
+
+                        let rows = '';
+                        txns.forEach((t, i) => {
+                            const rawAmt = parseFloat(t.amount) || 0;
+                            const isCr = rawAmt >= 0;
+                            const badge = isCr
+                                ? '<span style="background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px; font-weight:700; font-size:10px;">CREDIT</span>'
+                                : '<span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700; font-size:10px;">DEBIT</span>';
+                            const amtStr = (isCr ? '+₹' : '-₹') + Math.abs(rawAmt).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                            const amtColor = isCr ? '#15803d' : '#b91c1c';
+                            const balStr = (t.balance !== undefined && t.balance !== null && t.balance !== '') ? ('₹' + parseFloat(t.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})) : '-';
+
+                            rows += `
+                                <tr style="border-bottom:1px solid #e2e8f0; font-size:11.5px;">
+                                    <td style="padding:6px 8px; color:#64748b;">${i+1}</td>
+                                    <td style="padding:6px 8px; white-space:nowrap; font-weight:600;">${t.date || '-'}</td>
+                                    <td style="padding:6px 8px; max-width:260px; word-break:break-word; text-align:left;">${t.narration || '-'}</td>
+                                    <td style="padding:6px 8px; font-family:monospace; font-size:10.5px; color:#475569;">${t.reference || t.transaction_id || '-'}</td>
+                                    <td style="padding:6px 8px;">${badge}</td>
+                                    <td style="padding:6px 8px; text-align:right; font-weight:700; color:${amtColor}; white-space:nowrap;">${amtStr}</td>
+                                    <td style="padding:6px 8px; text-align:right; font-family:monospace;">${balStr}</td>
+                                </tr>
+                            `;
+                        });
+
+                        Swal.fire({
+                            title: `${bank.bank || 'Bank'} - Verified Statement`,
+                            width: '950px',
+                            html: `
+                                <div style="text-align:left; font-size:13px;">
+                                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                        <div>
+                                            <div style="font-weight:700; color:#0f172a; font-size:14px;">${holderName}</div>
+                                            <div style="font-size:11.5px; color:#64748b;">A/C: <span style="font-family:monospace; font-weight:700;">${acc.account_number || 'N/A'}</span> | IFSC: <span style="font-family:monospace; font-weight:700;">${acc.ifsc_code || 'N/A'}</span></div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div style="font-size:10.5px; color:#64748b; font-weight:700; text-transform:uppercase;">Current Balance</div>
+                                            <div style="font-size:16px; font-weight:800; color:#059669;">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px;">
+                                        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px; text-align:center;">
+                                            <div style="font-size:10px; font-weight:700; color:#1e40af; text-transform:uppercase;">Total Inflow (Credits)</div>
+                                            <div style="font-size:14px; font-weight:800; color:#1d4ed8;">₹${totalCr.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${crCount})</div>
+                                        </div>
+                                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px; text-align:center;">
+                                            <div style="font-size:10px; font-weight:700; color:#991b1b; text-transform:uppercase;">Total Outflow (Debits)</div>
+                                            <div style="font-size:14px; font-weight:800; color:#b91c1c;">₹${totalDr.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${drCount})</div>
+                                        </div>
+                                        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px; text-align:center;">
+                                            <div style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase;">Total Transactions</div>
+                                            <div style="font-size:14px; font-weight:800; color:#15803d;">${txns.length} Verified Txns</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                        <span style="font-weight:700; font-size:13px; color:#334155;"><i class="fa-solid fa-list-check"></i> Transactions History</span>
+                                        <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 14px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                            <i class="fa-solid fa-download"></i> Download CSV
+                                        </a>
+                                    </div>
+
+                                    <div style="max-height:360px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px;">
+                                        <table style="width:100%; border-collapse:collapse; text-align:left;">
+                                            <thead>
+                                                <tr style="background:#f1f5f9; font-size:11px; color:#475569; position:sticky; top:0; z-index:1;">
+                                                    <th style="padding:8px;">#</th>
+                                                    <th style="padding:8px;">Date</th>
+                                                    <th style="padding:8px;">Narration</th>
+                                                    <th style="padding:8px;">Ref / Txn ID</th>
+                                                    <th style="padding:8px;">Type</th>
+                                                    <th style="padding:8px; text-align:right;">Amount</th>
+                                                    <th style="padding:8px; text-align:right;">Balance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${rows}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `,
+                            showCloseButton: true,
+                            confirmButtonText: 'Close',
+                            confirmButtonColor: '#475569'
+                        });
+                    })
+                    .catch(err => {
+                        Swal.fire('Error', 'Failed to retrieve statement: ' + err.message, 'error');
+                    });
+            }
+        });
+    };
 </script>
 
 <?php include 'footer.php'; ?>

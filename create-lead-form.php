@@ -1061,6 +1061,248 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             margin-top: 2px;
         }
 
+        .statement-actions-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-statement-view {
+            flex: 1;
+            min-width: 170px;
+            height: 38px;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .btn-statement-view:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        .btn-statement-download {
+            height: 38px;
+            padding: 0 14px;
+            background: #ffffff;
+            color: #065f46;
+            border: 1.5px solid #a7f3d0;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-statement-download:hover {
+            background: #ecfdf5;
+            border-color: #059669;
+        }
+
+        /* Full Bank Statement Modal */
+        .statement-modal-content {
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 960px;
+            width: 96%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.45);
+            animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .statement-modal-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .statement-modal-header .bank-title {
+            font-size: 15px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .statement-modal-body {
+            padding: 16px 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .statement-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        @media (max-width: 640px) {
+            .statement-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .statement-kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .statement-kpi-lbl {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 3px;
+        }
+
+        .statement-kpi-val {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .statement-filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .statement-search-input {
+            flex: 1;
+            min-width: 200px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .statement-search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .statement-filter-tabs {
+            display: flex;
+            gap: 6px;
+        }
+
+        .statement-tab-btn {
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .statement-tab-btn.active {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+        }
+
+        .statement-table-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: auto;
+            max-height: 420px;
+        }
+
+        .statement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+            text-align: left;
+        }
+
+        .statement-table th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            padding: 9px 12px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            border-bottom: 1px solid #cbd5e1;
+            white-space: nowrap;
+        }
+
+        .statement-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+
+        .statement-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .txn-type-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .txn-type-credit {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .txn-type-debit {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .statement-modal-footer {
+            padding: 12px 20px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         /* ======================================================== */
         /* PRE-APPROVED OFFER CARD (STEP 5 HIGHLIGHT)              */
         /* ======================================================== */
@@ -2111,7 +2353,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div id="mobileErrorAlert" class="f-error-alert"></div>
                     <div id="mobileVerifiedPill" class="verified-badge-row">
                         <span><i class="fa-solid fa-circle-check"></i> Phone Verified (+91 <span id="verifiedMobileText"></span>)</span>
-                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE âœ“</span>
                     </div>
                 </div>
 
@@ -2380,7 +2622,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div id="gstErrorAlert" class="f-error-alert"></div>
                     <div id="gstVerifiedPill" class="verified-badge-row">
                         <div><i class="fa-solid fa-circle-check"></i> <strong id="gstBizName">-</strong></div>
-                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE âœ“</span>
                     </div>
                 </div>
 
@@ -2397,7 +2639,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div id="udyamErrorAlert" class="f-error-alert"></div>
                     <div id="udyamVerifiedPill" class="verified-badge-row">
                         <div><i class="fa-solid fa-circle-check"></i> <strong id="udyamBizName">-</strong></div>
-                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE âœ“</span>
                     </div>
                 </div>
 
@@ -2415,7 +2657,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                         </select>
                     </div>
                     <div class="f-group">
-                        <label class="f-label">Monthly Turnover (₹)</label>
+                        <label class="f-label">Monthly Turnover (â‚¹)</label>
                         <input type="number" id="monthlyIncome" class="f-input" placeholder="75,000" inputmode="numeric">
                     </div>
                 </div>
@@ -2511,28 +2753,37 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                         <div class="aa-verified-title">
                             <i class="fa-solid fa-circle-check text-success" style="font-size:18px;"></i>
                             <div>
-                                <strong id="aaDisplayBankName">HDFC Bank (Current A/C)</strong>
-                                <div style="font-size:11px; color:#15803d; font-weight:600;">Statement Aggregated via RBI NBFC-AA</div>
+                                <strong id="aaDisplayBankName">Bank Account Verified</strong>
+                                <div id="aaDisplayHolderSub" style="font-size:11px; color:#15803d; font-weight:600;">Statement Aggregated via RBI NBFC-AA</div>
                             </div>
                         </div>
                         <button type="button" class="btn-card btn-card-secondary" style="height:32px; font-size:11.5px; padding:0 10px; width:auto;" onclick="openAaConsentModal()">
-                            Reconnect
+                            <i class="fa-solid fa-rotate"></i> Reconnect
                         </button>
                     </div>
 
                     <div class="aa-stats-grid">
                         <div class="aa-stat-item">
                             <div class="aa-stat-lbl">Monthly Inflow</div>
-                            <div class="aa-stat-val" id="aaDisplayInflow">₹3,20,000</div>
+                            <div class="aa-stat-val" id="aaDisplayInflow">₹0</div>
                         </div>
                         <div class="aa-stat-item">
                             <div class="aa-stat-lbl">Avg Balance</div>
-                            <div class="aa-stat-val" id="aaDisplayAmb">₹48,500</div>
+                            <div class="aa-stat-val" id="aaDisplayAmb">₹0</div>
                         </div>
                         <div class="aa-stat-item">
-                            <div class="aa-stat-lbl">Bank Health</div>
-                            <div class="aa-stat-val" style="color:var(--success);" id="aaDisplayHealth">860 (High)</div>
+                            <div class="aa-stat-lbl">Transactions</div>
+                            <div class="aa-stat-val" style="color:var(--brand-primary);" id="aaDisplayTxnCount">0 Txns</div>
                         </div>
+                    </div>
+
+                    <div class="statement-actions-row">
+                        <button type="button" class="btn-statement-view" onclick="openFullStatementModal()">
+                            <i class="fa-solid fa-file-invoice"></i> View Full Bank Statement
+                        </button>
+                        <a id="aaDownloadCsvBtn" href="#" class="btn-statement-download" target="_blank">
+                            <i class="fa-solid fa-file-arrow-down"></i> Download Statement (CSV)
+                        </a>
                     </div>
                 </div>
 
@@ -2580,15 +2831,15 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">Amount Required (₹) <span class="req">*</span></label>
+                    <label class="f-label">Amount Required (â‚¹) <span class="req">*</span></label>
                     <input type="number" id="loanAmount" class="f-input" placeholder="2,00,000" min="20000" step="10000" inputmode="numeric" required value="200000">
                     
                     <!-- Quick Amount Chips -->
                     <div class="quick-chips-wrap">
-                        <span class="amt-chip" onclick="setQuickAmt(100000)">₹1 Lakh</span>
-                        <span class="amt-chip active" onclick="setQuickAmt(200000)">₹2 Lakh</span>
-                        <span class="amt-chip" onclick="setQuickAmt(500000)">₹5 Lakh</span>
-                        <span class="amt-chip" onclick="setQuickAmt(1000000)">₹10 Lakh</span>
+                        <span class="amt-chip" onclick="setQuickAmt(100000)">â‚¹1 Lakh</span>
+                        <span class="amt-chip active" onclick="setQuickAmt(200000)">â‚¹2 Lakh</span>
+                        <span class="amt-chip" onclick="setQuickAmt(500000)">â‚¹5 Lakh</span>
+                        <span class="amt-chip" onclick="setQuickAmt(1000000)">â‚¹10 Lakh</span>
                     </div>
                 </div>
 
@@ -2707,20 +2958,20 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                         <path d="M12 2c1.1 0 2 .9 2 2v2c1.7.3 3 1.8 3 3.6v1.4c1.2.6 2 1.8 2 3.2v2.8c0 1.7-1.3 3-3 3v2h2c.6 0 1 .4 1 1s-.4 1-1 1h-6v4h4c.6 0 1 .4 1 1s-.4 1-1 1H8c-.6 0-1-.4-1-1s.4-1 1-1h4v-4H6c-.6 0-1-.4-1-1s.4-1 1-1h2v-2c-1.7 0-3-1.3-3-3v-2.8c0-1.4.8-2.6 2-3.2V11c0-1.8 1.3-3.3 3-3.6V4c0-1.1.9-2 2-2zm0 4a1.5 1.5 0 0 1 1.5 1.5V9h-3V7.5A1.5 1.5 0 0 1 12 6z"/>
                     </svg>
                     <div class="pcr-gov-titles">
-                        <div class="pcr-gov-hi">भारत सरकार</div>
+                        <div class="pcr-gov-hi">à¤­à¤¾à¤°à¤¤ à¤¸à¤°à¤•à¤¾à¤°</div>
                         <div class="pcr-gov-en">GOVT. OF INDIA</div>
                     </div>
                 </div>
 
                 <div class="pcr-dept-right">
-                    <div class="pcr-dept-hi">आयकर विभाग</div>
+                    <div class="pcr-dept-hi">à¤†à¤¯à¤•à¤° à¤µà¤¿à¤­à¤¾à¤—</div>
                     <div class="pcr-dept-en">INCOME TAX DEPARTMENT</div>
                 </div>
             </div>
 
             <!-- Sub Banner -->
             <div class="pcr-sub-banner">
-                स्थायी लेखा संख्या कार्ड &bull; PERMANENT ACCOUNT NUMBER CARD
+                à¤¸à¥à¤¥à¤¾à¤¯à¥€ à¤²à¥‡à¤–à¤¾ à¤¸à¤‚à¤–à¥à¤¯à¤¾ à¤•à¤¾à¤°à¥à¤¡ &bull; PERMANENT ACCOUNT NUMBER CARD
             </div>
 
             <!-- Authentic Body (2 Columns: Real Details on Left, Hologram & QR on Right) -->
@@ -2728,13 +2979,13 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <div class="pcr-details-col">
                     <!-- Real Applicant Name from API -->
                     <div class="pcr-field-row">
-                        <div class="pcr-lbl-hi">नाम / <span class="pcr-lbl-en">Name</span></div>
+                        <div class="pcr-lbl-hi">à¤¨à¤¾à¤® / <span class="pcr-lbl-en">Name</span></div>
                         <div class="pcr-val-name" id="panCardNameVal">SUMIT KUMAR</div>
                     </div>
 
                     <!-- Real Date of Birth from API -->
                     <div class="pcr-field-row">
-                        <div class="pcr-lbl-hi">जन्म की तारीख / <span class="pcr-lbl-en">Date of Birth</span></div>
+                        <div class="pcr-lbl-hi">à¤œà¤¨à¥à¤® à¤•à¥€ à¤¤à¤¾à¤°à¥€à¤– / <span class="pcr-lbl-en">Date of Birth</span></div>
                         <div class="pcr-val-sub" id="panCardDobVal">10/07/2003</div>
                     </div>
 
@@ -2848,6 +3099,97 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 </div>
 
 <!-- ======================================================== -->
+<!-- MODAL: FULL VERIFIED BANK STATEMENT & TRANSACTIONS       -->
+<!-- ======================================================== -->
+<div class="modal-overlay" id="fullBankStatementModal" style="display:none; z-index:99999;">
+    <div class="statement-modal-content">
+        <div class="statement-modal-header">
+            <div class="bank-title">
+                <i class="fa-solid fa-building-columns" style="color:#38bdf8;"></i>
+                <div>
+                    <span id="stmtModalBankName">Bank Statement</span>
+                    <div id="stmtModalAccDetails" style="font-size:11px; color:#94a3b8; font-weight:500;">Aggregated via RBI NBFC-AA</div>
+                </div>
+            </div>
+            <button type="button" class="modal-close-icon" onclick="closeFullStatementModal()" style="position:static; background:rgba(255,255,255,0.1); color:#fff;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="statement-modal-body">
+            <!-- Statement KPI Cards -->
+            <div class="statement-kpi-grid">
+                <div class="statement-kpi-card">
+                    <div class="statement-kpi-lbl">Current Balance</div>
+                    <div class="statement-kpi-val" id="stmtKpiBalance" style="color:#059669;">₹0.00</div>
+                </div>
+                <div class="statement-kpi-card">
+                    <div class="statement-kpi-lbl">Total Inflow (Credits)</div>
+                    <div class="statement-kpi-val" id="stmtKpiCredits" style="color:#0284c7;">₹0.00</div>
+                </div>
+                <div class="statement-kpi-card">
+                    <div class="statement-kpi-lbl">Total Outflow (Debits)</div>
+                    <div class="statement-kpi-val" id="stmtKpiDebits" style="color:#dc2626;">₹0.00</div>
+                </div>
+                <div class="statement-kpi-card">
+                    <div class="statement-kpi-lbl">Monthly Average Inflow</div>
+                    <div class="statement-kpi-val" id="stmtKpiInflow">₹0.00</div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="statement-filter-bar">
+                <input type="text" id="stmtSearchInput" class="statement-search-input" placeholder="Search by narration, reference or amount..." oninput="filterStatementTransactions()">
+                <div class="statement-filter-tabs">
+                    <button type="button" class="statement-tab-btn active" id="tabStmtAll" onclick="setStatementFilter('ALL')">All (<span id="stmtCountAll">0</span>)</button>
+                    <button type="button" class="statement-tab-btn" id="tabStmtCredit" onclick="setStatementFilter('CREDIT')">Credits (<span id="stmtCountCredit">0</span>)</button>
+                    <button type="button" class="statement-tab-btn" id="tabStmtDebit" onclick="setStatementFilter('DEBIT')">Debits (<span id="stmtCountDebit">0</span>)</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Transactions Table -->
+            <div class="statement-table-wrap">
+                <table class="statement-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">#</th>
+                            <th style="width:95px;">Date</th>
+                            <th>Narration / Description</th>
+                            <th style="width:115px;">Ref / Txn ID</th>
+                            <th style="width:75px;">Type</th>
+                            <th style="width:95px; text-align:right;">Amount (₹)</th>
+                            <th style="width:95px; text-align:right;">Balance (₹)</th>
+                            <th style="width:70px;">Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stmtTableBody">
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:30px; color:#64748b;">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size:20px;"></i> Loading statement transactions...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="statement-modal-footer">
+            <div style="font-size:11px; color:#64748b;">
+                <i class="fa-solid fa-shield-halved text-success"></i> Tamper-proof bank data aggregated directly from financial institution.
+            </div>
+            <div style="display:flex; gap:8px;">
+                <a href="#" id="stmtModalDownloadBtn" class="btn-statement-download" target="_blank">
+                    <i class="fa-solid fa-file-arrow-down"></i> Download Statement (CSV)
+                </a>
+                <button type="button" class="btn-card btn-card-secondary" style="height:36px; padding:0 16px;" onclick="closeFullStatementModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
 <!-- MODAL: LIVE CAMERA VIEWFINDER (FOR SHOP / PREMISES PHOTO) -->
 <!-- ======================================================== -->
 <div class="modal-overlay" id="shopCameraModal" style="display:none; z-index:99999;">
@@ -2889,8 +3231,8 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
     <canvas id="partyBombCanvas"></canvas>
 
     <!-- Visual Corner Party Popper Cannons -->
-    <div class="party-popper-corner left-cannon" id="leftCannon">🎉</div>
-    <div class="party-popper-corner right-cannon" id="rightCannon">🎉</div>
+    <div class="party-popper-corner left-cannon" id="leftCannon">ðŸŽ‰</div>
+    <div class="party-popper-corner right-cannon" id="rightCannon">ðŸŽ‰</div>
 
     <div class="success-modal" style="max-width: 440px; padding: 26px 20px;">
         <div style="display:flex; flex-direction:column; align-items:center; margin: 0 auto 12px auto;">
@@ -2920,7 +3262,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
                 <div id="modalOfferLimitLabel" style="font-size: 10.5px; color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Pre-Approved Loan Limit</div>
                 <div style="font-size: 26px; font-weight: 900; color: #14532d; letter-spacing: -0.5px; margin: 2px 0 10px 0;" id="modalApprovedLimitVal">
-                    ₹ 75,000
+                    â‚¹ 75,000
                 </div>
 
                 <div id="modalOfferDetailsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-size: 11px;">
@@ -2963,11 +3305,11 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: var(--slate-500);">Credit Score:</span>
-                <strong style="color: #15803d;" id="modalCibilVal">768 ✓</strong>
+                <strong style="color: #15803d;" id="modalCibilVal">768 âœ“</strong>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span style="color: var(--slate-500);">Requested Amount:</span>
-                <strong style="color: var(--slate-900);" id="modalReqLoanVal">₹ 2,00,000</strong>
+                <strong style="color: var(--slate-900);" id="modalReqLoanVal">â‚¹ 2,00,000</strong>
             </div>
         </div>
 
@@ -3758,7 +4100,10 @@ function saveFormDraftToSession() {
         udyamData: state.udyamData,
         businessType: document.getElementById('businessType')?.value || '',
         monthlyIncome: document.getElementById('monthlyIncome')?.value || '',
-        shopPhotos: state.shopPhotos || []
+        shopPhotos: state.shopPhotos || [],
+        aaVerified: state.aaVerified,
+        aaTxnId: state.aaTxnId,
+        aaData: state.aaData
     };
     try {
         sessionStorage.setItem('waqt_lead_draft', JSON.stringify(draft));
@@ -3829,6 +4174,14 @@ function restoreFormDraftFromSession() {
         }
         if (draft.shopPhotos && draft.shopPhotos.length > 0) {
             state.shopPhotos = draft.shopPhotos;
+        }
+        if (draft.aaVerified && draft.aaData) {
+            state.aaVerified = true;
+            state.aaTxnId = draft.aaTxnId || '';
+            state.aaData = draft.aaData;
+            if (typeof renderAaVerifiedState === 'function') {
+                renderAaVerifiedState();
+            }
         }
     } catch(e) {}
 }
@@ -4044,17 +4397,17 @@ function fetchCibilScore() {
             const chip = document.getElementById('cibilHeaderChip');
             if (chip) {
                 if (isNtc) {
-                    chip.innerText = 'New to Credit (NTC) ✓';
+                    chip.innerText = 'New to Credit (NTC) âœ“';
                     chip.style.background = '#e0f2fe';
                     chip.style.color = '#0369a1';
                     chip.style.borderColor = '#bae6fd';
                 } else if (scoreVal) {
-                    chip.innerText = 'CIBIL ' + scoreVal + ' ✓';
+                    chip.innerText = 'CIBIL ' + scoreVal + ' âœ“';
                     chip.style.background = scoreVal >= 750 ? '#dcfce7' : (scoreVal >= 680 ? '#fef9c3' : '#fee2e2');
                     chip.style.color = scoreVal >= 750 ? '#15803d' : (scoreVal >= 680 ? '#854d0e' : '#b91c1c');
                     chip.style.borderColor = scoreVal >= 750 ? '#86efac' : (scoreVal >= 680 ? '#fef08a' : '#fca5a5');
                 } else {
-                    chip.innerText = 'Bureau Assessed ✓';
+                    chip.innerText = 'Bureau Assessed âœ“';
                     chip.style.background = '#f1f5f9';
                     chip.style.color = '#334155';
                     chip.style.borderColor = '#cbd5e1';
@@ -4096,7 +4449,7 @@ function bypassNtcBureau() {
     state.cibilPdfUrl = '';
     const chip = document.getElementById('cibilHeaderChip');
     if (chip) {
-        chip.innerText = 'New to Credit (NTC) ✓';
+        chip.innerText = 'New to Credit (NTC) âœ“';
         chip.style.background = '#e0f2fe';
         chip.style.color = '#0369a1';
         chip.style.borderColor = '#bae6fd';
@@ -4708,6 +5061,8 @@ function fetchAndApplyAaReport(txnId) {
         });
 }
 
+let currentStatementFilter = 'ALL';
+
 function applyAaVerifiedReport(data, txnId) {
     const model = data?.model || data?.data || data || {};
     
@@ -4717,6 +5072,8 @@ function applyAaVerifiedReport(data, txnId) {
     let ifsc = '';
     let balance = 0;
     let transactions = [];
+    let holderName = '';
+    let accType = 'SAVINGS';
     
     if (Array.isArray(data?.banks) && data.banks.length > 0) {
         const primaryBank = data.banks[0];
@@ -4727,19 +5084,35 @@ function applyAaVerifiedReport(data, txnId) {
             ifsc = primaryAcc.ifsc_code || '';
             balance = parseFloat(primaryAcc.current_balance) || 0;
             transactions = primaryAcc.transactions || [];
+            accType = primaryAcc.account_type || 'SAVINGS';
+            const holders = primaryAcc.customer_info?.holders || [];
+            if (holders.length > 0 && holders[0].name) {
+                holderName = holders[0].name;
+            }
         }
     }
     
     if (!bankName) bankName = model?.bank_name || model?.bank || selectedBankName || 'Bank Account';
     if (!accNum) accNum = model?.account_number || model?.acc_num || model?.account_num || '';
     if (!ifsc) ifsc = model?.ifsc || model?.ifsc_code || 'UBIN0535486';
+    if (!holderName) holderName = model?.holder_name || model?.customer_name || (state.panData?.full_name || document.getElementById('fullName')?.value || 'Applicant');
 
-    // Calculate real monthly inflows from transactions if available
+    // Calculate real monthly inflows and debits from transactions
     let totalCredits = 0;
+    let totalDebits = 0;
+    let creditCount = 0;
+    let debitCount = 0;
+
     if (transactions.length > 0) {
         transactions.forEach(t => {
             const amt = parseFloat(t.amount) || 0;
-            if (amt > 0) totalCredits += amt;
+            if (amt >= 0) {
+                totalCredits += amt;
+                creditCount++;
+            } else {
+                totalDebits += Math.abs(amt);
+                debitCount++;
+            }
         });
     }
     
@@ -4764,8 +5137,18 @@ function applyAaVerifiedReport(data, txnId) {
         bankName: bankName,
         accountNumber: accNum,
         ifsc: ifsc,
+        accountType: accType,
+        holderName: holderName,
+        balance: balance,
         monthlyInflow: monthlyInflow,
+        totalCredits: totalCredits,
+        totalDebits: totalDebits,
+        creditCount: creditCount,
+        debitCount: debitCount,
         amb: amb,
+        startDate: data?.start_date || '',
+        endDate: data?.end_date || '',
+        transactions: transactions,
         dailyEodBalance: amb > 0 ? Math.min(amb, 5000) : 2500,
         upiCredits: Math.round(monthlyInflow * 0.8),
         healthScore: 860
@@ -4778,26 +5161,218 @@ function applyAaVerifiedReport(data, txnId) {
     }
     if (ifsc && document.getElementById('ifscCode')) document.getElementById('ifscCode').value = ifsc;
 
-    const displayBank = document.getElementById('aaDisplayBankName');
-    if (displayBank) displayBank.innerText = `${bankName}${accNum ? ' (A/C ****' + accNum.slice(-4) + ')' : ''}`;
-    
-    const displayInflow = document.getElementById('aaDisplayInflow');
-    if (displayInflow) displayInflow.innerText = '₹' + monthlyInflow.toLocaleString('en-IN');
-
-    const displayAmb = document.getElementById('aaDisplayAmb');
-    if (displayAmb) displayAmb.innerText = '₹' + amb.toLocaleString('en-IN');
-
-    const heroCard = document.getElementById('aaHeroCard');
-    if (heroCard) heroCard.style.display = 'none';
-
-    const verifiedCard = document.getElementById('aaVerifiedCard');
-    if (verifiedCard) verifiedCard.style.display = 'block';
+    renderAaVerifiedState();
 
     closeAaConsentModal();
     if (monthlyInflow > 0) {
         calculateApprovedOffer(monthlyInflow);
     }
     saveFormDraftToSession();
+}
+
+function renderAaVerifiedState() {
+    if (!state.aaData) return;
+    const d = state.aaData;
+
+    const displayBank = document.getElementById('aaDisplayBankName');
+    if (displayBank) {
+        const masked = d.accountNumber ? ' (A/C ****' + String(d.accountNumber).slice(-4) + ')' : '';
+        displayBank.innerText = `${d.bankName}${masked}`;
+    }
+
+    const displayHolder = document.getElementById('aaDisplayHolderSub');
+    if (displayHolder) {
+        const holderText = d.holderName ? `${d.holderName} &bull; ` : '';
+        displayHolder.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${holderText}${d.accountType || 'SAVINGS'} &bull; RBI NBFC-AA Verified`;
+    }
+    
+    const displayInflow = document.getElementById('aaDisplayInflow');
+    if (displayInflow) displayInflow.innerText = '₹' + Number(d.monthlyInflow || 0).toLocaleString('en-IN');
+
+    const displayAmb = document.getElementById('aaDisplayAmb');
+    if (displayAmb) displayAmb.innerText = '₹' + Number(d.amb || 0).toLocaleString('en-IN');
+
+    const displayTxnCount = document.getElementById('aaDisplayTxnCount');
+    if (displayTxnCount) {
+        const count = Array.isArray(d.transactions) ? d.transactions.length : 0;
+        displayTxnCount.innerText = count > 0 ? `${count} Txns` : 'Verified';
+    }
+
+    const downloadCsvBtn = document.getElementById('aaDownloadCsvBtn');
+    if (downloadCsvBtn && state.aaTxnId) {
+        downloadCsvBtn.href = 'api/bank-data/export-statement.php?txn_id=' + encodeURIComponent(state.aaTxnId);
+    }
+
+    const heroCard = document.getElementById('aaHeroCard');
+    if (heroCard) heroCard.style.display = 'none';
+
+    const verifiedCard = document.getElementById('aaVerifiedCard');
+    if (verifiedCard) verifiedCard.style.display = 'block';
+}
+
+function openFullStatementModal() {
+    const modal = document.getElementById('fullBankStatementModal');
+    if (!modal) return;
+
+    if (!state.aaData || !Array.isArray(state.aaData.transactions) || state.aaData.transactions.length === 0) {
+        if (state.aaTxnId) {
+            // Retrieve fresh report
+            fetch('api/bank-data/report.php?txn_id=' + encodeURIComponent(state.aaTxnId))
+                .then(r => r.json().catch(() => ({})))
+                .then(data => {
+                    if (data && (data.banks || data.txn_id)) {
+                        applyAaVerifiedReport(data, state.aaTxnId);
+                        populateStatementModal();
+                    }
+                });
+        }
+    } else {
+        populateStatementModal();
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeFullStatementModal() {
+    const modal = document.getElementById('fullBankStatementModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function populateStatementModal() {
+    const d = state.aaData || {};
+    const txns = Array.isArray(d.transactions) ? d.transactions : [];
+
+    const bankEl = document.getElementById('stmtModalBankName');
+    if (bankEl) bankEl.innerText = (d.bankName || 'Bank') + ' Statement';
+
+    const accDetailsEl = document.getElementById('stmtModalAccDetails');
+    if (accDetailsEl) {
+        const masked = d.accountNumber ? ('A/C: ' + d.accountNumber) : '';
+        const ifscText = d.ifsc ? (' | IFSC: ' + d.ifsc) : '';
+        const holderText = d.holderName ? (d.holderName + ' | ') : '';
+        accDetailsEl.innerText = `${holderText}${masked}${ifscText}`;
+    }
+
+    const kpiBal = document.getElementById('stmtKpiBalance');
+    if (kpiBal) kpiBal.innerText = '₹' + Number(d.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+    const kpiCredits = document.getElementById('stmtKpiCredits');
+    if (kpiCredits) kpiCredits.innerText = '₹' + Number(d.totalCredits || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+    const kpiDebits = document.getElementById('stmtKpiDebits');
+    if (kpiDebits) kpiDebits.innerText = '₹' + Number(d.totalDebits || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+    const kpiInflow = document.getElementById('stmtKpiInflow');
+    if (kpiInflow) kpiInflow.innerText = '₹' + Number(d.monthlyInflow || 0).toLocaleString('en-IN');
+
+    const countAllEl = document.getElementById('stmtCountAll');
+    if (countAllEl) countAllEl.innerText = txns.length;
+
+    const countCreditEl = document.getElementById('stmtCountCredit');
+    if (countCreditEl) countCreditEl.innerText = d.creditCount || 0;
+
+    const countDebitEl = document.getElementById('stmtCountDebit');
+    if (countDebitEl) countDebitEl.innerText = d.debitCount || 0;
+
+    const dlBtn = document.getElementById('stmtModalDownloadBtn');
+    if (dlBtn && state.aaTxnId) {
+        dlBtn.href = 'api/bank-data/export-statement.php?txn_id=' + encodeURIComponent(state.aaTxnId);
+    }
+
+    renderStatementTable(txns);
+}
+
+function setStatementFilter(filter) {
+    currentStatementFilter = filter;
+    ['tabStmtAll', 'tabStmtCredit', 'tabStmtDebit'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('active');
+    });
+
+    if (filter === 'CREDIT') {
+        document.getElementById('tabStmtCredit')?.classList.add('active');
+    } else if (filter === 'DEBIT') {
+        document.getElementById('tabStmtDebit')?.classList.add('active');
+    } else {
+        document.getElementById('tabStmtAll')?.classList.add('active');
+    }
+
+    filterStatementTransactions();
+}
+
+function filterStatementTransactions() {
+    const d = state.aaData || {};
+    const txns = Array.isArray(d.transactions) ? d.transactions : [];
+    const searchVal = (document.getElementById('stmtSearchInput')?.value || '').toLowerCase().trim();
+
+    const filtered = txns.filter(t => {
+        const rawAmt = parseFloat(t.amount) || 0;
+        const isCredit = rawAmt >= 0;
+
+        if (currentStatementFilter === 'CREDIT' && !isCredit) return false;
+        if (currentStatementFilter === 'DEBIT' && isCredit) return false;
+
+        if (searchVal) {
+            const desc = (t.narration || '').toLowerCase();
+            const ref = (t.reference || t.transaction_id || '').toLowerCase();
+            const amtStr = Math.abs(rawAmt).toString();
+            const dateStr = (t.date || '').toLowerCase();
+            return desc.includes(searchVal) || ref.includes(searchVal) || amtStr.includes(searchVal) || dateStr.includes(searchVal);
+        }
+
+        return true;
+    });
+
+    renderStatementTable(filtered);
+}
+
+function renderStatementTable(txns) {
+    const tbody = document.getElementById('stmtTableBody');
+    if (!tbody) return;
+
+    if (!txns || txns.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center; padding:32px 16px; color:#64748b;">
+                    <i class="fa-solid fa-folder-open" style="font-size:24px; margin-bottom:8px; display:block; opacity:0.6;"></i>
+                    No transactions match the search / filter criteria.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let rowsHtml = '';
+    txns.forEach((t, i) => {
+        const rawAmt = parseFloat(t.amount) || 0;
+        const isCredit = rawAmt >= 0;
+        const typeBadge = isCredit
+            ? '<span class="txn-type-badge txn-type-credit"><i class="fa-solid fa-arrow-down-left"></i> CR</span>'
+            : '<span class="txn-type-badge txn-type-debit"><i class="fa-solid fa-arrow-up-right"></i> DR</span>';
+        
+        const amtDisplay = (isCredit ? '+₹' : '-₹') + Math.abs(rawAmt).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        const amtColor = isCredit ? '#15803d' : '#b91c1c';
+        const balDisplay = (t.balance !== undefined && t.balance !== null && t.balance !== '') ? ('₹' + Number(t.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })) : '-';
+        const dateDisplay = t.date ? t.date : '-';
+        const narration = t.narration ? t.narration : '-';
+        const ref = t.reference || t.transaction_id || '-';
+        const mode = t.mode_from_source || (isCredit ? 'UPI/NEFT' : 'DEBIT');
+
+        rowsHtml += `
+            <tr>
+                <td style="color:#94a3b8; font-weight:600;">${i + 1}</td>
+                <td style="font-weight:600; white-space:nowrap;">${dateDisplay}</td>
+                <td style="max-width:280px; word-break:break-word; font-weight:500;">${narration}</td>
+                <td style="font-family:monospace; font-size:11px; color:#475569; word-break:break-all;">${ref}</td>
+                <td>${typeBadge}</td>
+                <td style="text-align:right; font-weight:700; color:${amtColor}; white-space:nowrap;">${amtDisplay}</td>
+                <td style="text-align:right; font-family:monospace; font-weight:600; white-space:nowrap;">${balDisplay}</td>
+                <td style="font-size:10.5px; color:#64748b; text-transform:uppercase;">${mode}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = rowsHtml;
 }
 
 // Ensure aaModalMobileInput auto-sanitizes digits
@@ -4920,12 +5495,12 @@ function updateCibilBreBanner(bre) {
         header.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> BRE Step 1: Credit Bureau Criteria Satisfied';
         details.innerHTML = `
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px; margin-top:4px;">
-                <span>✓ CRIF Score: <strong>${bre.score}</strong> (≥600)</span>
-                <span>✓ Overdue: <strong>₹${Number(bre.overdue).toLocaleString('en-IN')}</strong> (≤₹10,000)</span>
-                <span>✓ Last 3M DPD: <strong>${bre.dpd_3m} Days</strong> (0 Allowed)</span>
-                <span>✓ Last 6M DPD: <strong>${bre.dpd_6m} Days</strong> (≤30 Allowed)</span>
-                <span>✓ 3Y Write-Offs: <strong>${bre.write_offs_count}</strong></span>
-                <span>✓ 3Y Settlements: <strong>${bre.settlements_count}</strong></span>
+                <span>âœ“ CRIF Score: <strong>${bre.score}</strong> (â‰¥600)</span>
+                <span>âœ“ Overdue: <strong>â‚¹${Number(bre.overdue).toLocaleString('en-IN')}</strong> (â‰¤â‚¹10,000)</span>
+                <span>âœ“ Last 3M DPD: <strong>${bre.dpd_3m} Days</strong> (0 Allowed)</span>
+                <span>âœ“ Last 6M DPD: <strong>${bre.dpd_6m} Days</strong> (â‰¤30 Allowed)</span>
+                <span>âœ“ 3Y Write-Offs: <strong>${bre.write_offs_count}</strong></span>
+                <span>âœ“ 3Y Settlements: <strong>${bre.settlements_count}</strong></span>
             </div>
         `;
     } else {
@@ -4957,12 +5532,12 @@ function handleEodBalanceChange(val) {
     // Update hint text
     const hintEl = document.getElementById('breMatrixTierHint');
     if (hintEl) {
-        if (eod >= 5000) hintEl.innerText = 'Eligible: ₹2,00,000 / 240 Days';
-        else if (eod >= 3000) hintEl.innerText = 'Eligible: ₹1,00,000 / 180 Days';
-        else if (eod >= 2500) hintEl.innerText = 'Eligible: ₹75,000 / 180 Days';
-        else if (eod >= 2000) hintEl.innerText = 'Eligible: ₹70,000 / 150 Days';
-        else if (eod >= 1500) hintEl.innerText = 'Eligible: ₹60,000 / 120 Days';
-        else hintEl.innerText = 'Decline: EOD < ₹1,500';
+        if (eod >= 5000) hintEl.innerText = 'Eligible: â‚¹2,00,000 / 240 Days';
+        else if (eod >= 3000) hintEl.innerText = 'Eligible: â‚¹1,00,000 / 180 Days';
+        else if (eod >= 2500) hintEl.innerText = 'Eligible: â‚¹75,000 / 180 Days';
+        else if (eod >= 2000) hintEl.innerText = 'Eligible: â‚¹70,000 / 150 Days';
+        else if (eod >= 1500) hintEl.innerText = 'Eligible: â‚¹60,000 / 120 Days';
+        else hintEl.innerText = 'Decline: EOD < â‚¹1,500';
         hintEl.style.color = eod >= 1500 ? '#15803d' : '#dc2626';
     }
 
@@ -5008,12 +5583,12 @@ function completeAaAggregation() {
     if (document.getElementById('accountNumber')) document.getElementById('accountNumber').value = state.aaData.accountNumber;
     if (document.getElementById('confirmAccountNumber')) document.getElementById('confirmAccountNumber').value = state.aaData.accountNumber;
     if (document.getElementById('ifscCode')) document.getElementById('ifscCode').value = state.aaData.ifsc;
-    if (document.getElementById('ifscBranchText')) document.getElementById('ifscBranchText').innerText = `✓ Verified ${selectedBankName} Branch`;
+    if (document.getElementById('ifscBranchText')) document.getElementById('ifscBranchText').innerText = `âœ“ Verified ${selectedBankName} Branch`;
 
     // Populate Verified AA Card
     document.getElementById('aaDisplayBankName').innerText = `${selectedBankName} (Current A/C ****${state.aaData.accountNumber.slice(-4)})`;
-    document.getElementById('aaDisplayInflow').innerText = '₹' + monthlyInflow.toLocaleString('en-IN');
-    document.getElementById('aaDisplayAmb').innerText = '₹' + amb.toLocaleString('en-IN');
+    document.getElementById('aaDisplayInflow').innerText = 'â‚¹' + monthlyInflow.toLocaleString('en-IN');
+    document.getElementById('aaDisplayAmb').innerText = 'â‚¹' + amb.toLocaleString('en-IN');
     document.getElementById('aaDisplayHealth').innerText = `${healthScore} (High)`;
 
     document.getElementById('aaHeroCard').style.display = 'none';
@@ -5057,8 +5632,8 @@ function calculateApprovedOffer(monthlyTurnover) {
     state.dailyEodBalance = eod;
     const declineReasons = [];
 
-    // Step 1 – CRIF Check:
-    // CRIF Score ≥ 600; Overdue ≤ ₹10,000; Last 3 Months – No DPD; Last 6 Months – Maximum 30 DPD; Last 3 Years – No Write-Off and No Settlement.
+    // Step 1 â€“ CRIF Check:
+    // CRIF Score â‰¥ 600; Overdue â‰¤ â‚¹10,000; Last 3 Months â€“ No DPD; Last 6 Months â€“ Maximum 30 DPD; Last 3 Years â€“ No Write-Off and No Settlement.
     let crifPassed = false;
     if (!crif) {
         if (state.cibilScore && state.cibilScore >= 600) {
@@ -5074,21 +5649,21 @@ function calculateApprovedOffer(monthlyTurnover) {
         }
     }
 
-    // Step 2 – Banking Check:
-    // Minimum Daily EOD Balance ≥ ₹1,500. Banking credits assessed based on UPI credits only.
+    // Step 2 â€“ Banking Check:
+    // Minimum Daily EOD Balance â‰¥ â‚¹1,500. Banking credits assessed based on UPI credits only.
     let bankingPassed = false;
     if (eod < 1500) {
-        declineReasons.push("Daily EOD Balance below ₹1,500 (Current: ₹" + eod.toLocaleString('en-IN') + ", Minimum ₹1,500 required under BRE policy)");
+        declineReasons.push("Daily EOD Balance below â‚¹1,500 (Current: â‚¹" + eod.toLocaleString('en-IN') + ", Minimum â‚¹1,500 required under BRE policy)");
     } else {
         bankingPassed = true;
     }
 
-    // Step 3 – Loan Amount & Tenure Matrix:
-    // Daily EOD >= 1,500 -> Max Loan: ₹60,000, Max Tenure: 120 Days
-    // Daily EOD >= 2,000 -> Max Loan: ₹70,000, Max Tenure: 150 Days
-    // Daily EOD >= 2,500 -> Max Loan: ₹75,000, Max Tenure: 180 Days
-    // Daily EOD >= 3,000 -> Max Loan: ₹1,00,000, Max Tenure: 180 Days
-    // Daily EOD >= 5,000 -> Max Loan: ₹2,00,000, Max Tenure: 240 Days
+    // Step 3 â€“ Loan Amount & Tenure Matrix:
+    // Daily EOD >= 1,500 -> Max Loan: â‚¹60,000, Max Tenure: 120 Days
+    // Daily EOD >= 2,000 -> Max Loan: â‚¹70,000, Max Tenure: 150 Days
+    // Daily EOD >= 2,500 -> Max Loan: â‚¹75,000, Max Tenure: 180 Days
+    // Daily EOD >= 3,000 -> Max Loan: â‚¹1,00,000, Max Tenure: 180 Days
+    // Daily EOD >= 5,000 -> Max Loan: â‚¹2,00,000, Max Tenure: 240 Days
     let maxLoan = 0;
     let maxTenureDays = 0;
     if (crifPassed && bankingPassed) {
@@ -5139,7 +5714,7 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
                 </div>
                 <div style="font-size:10.5px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Max Approved Loan Limit</div>
                 <div style="font-size:26px; font-weight:900; color:#14532d; letter-spacing:-0.5px; margin:2px 0 8px 0;" id="approvedLimitVal">
-                    ₹ ${maxLoan.toLocaleString('en-IN')}
+                    â‚¹ ${maxLoan.toLocaleString('en-IN')}
                 </div>
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; font-size:11px;">
                     <div>
@@ -5152,7 +5727,7 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
                     </div>
                     <div>
                         <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Assessed Daily EOD</span>
-                        <strong style="color:var(--slate-900);">₹ ${Number(eod).toLocaleString('en-IN')}</strong>
+                        <strong style="color:var(--slate-900);">â‚¹ ${Number(eod).toLocaleString('en-IN')}</strong>
                     </div>
                     <div>
                         <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Disbursal TAT</span>
@@ -5181,7 +5756,7 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
             else chips = [30000, 40000, 50000, 60000];
 
             chipsWrap.innerHTML = chips.map(amt => `
-                <span class="amt-chip ${amt === maxLoan ? 'active' : ''}" onclick="setQuickAmt(${amt})">₹${amt >= 100000 ? (amt/100000) + ' Lakh' : (amt/1000) + 'k'}</span>
+                <span class="amt-chip ${amt === maxLoan ? 'active' : ''}" onclick="setQuickAmt(${amt})">â‚¹${amt >= 100000 ? (amt/100000) + ' Lakh' : (amt/1000) + 'k'}</span>
             `).join('');
         }
     } else {
@@ -5225,10 +5800,10 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
 
         if (chipsWrap) {
             chipsWrap.innerHTML = `
-                <span class="amt-chip" onclick="setQuickAmt(50000)">₹50k</span>
-                <span class="amt-chip active" onclick="setQuickAmt(100000)">₹1 Lakh</span>
-                <span class="amt-chip" onclick="setQuickAmt(200000)">₹2 Lakh</span>
-                <span class="amt-chip" onclick="setQuickAmt(300000)">₹3 Lakh</span>
+                <span class="amt-chip" onclick="setQuickAmt(50000)">â‚¹50k</span>
+                <span class="amt-chip active" onclick="setQuickAmt(100000)">â‚¹1 Lakh</span>
+                <span class="amt-chip" onclick="setQuickAmt(200000)">â‚¹2 Lakh</span>
+                <span class="amt-chip" onclick="setQuickAmt(300000)">â‚¹3 Lakh</span>
             `;
         }
     }
@@ -5259,7 +5834,7 @@ function updateSuccessModalOfferCard(payload) {
         }
         if (limitValEl) {
             limitValEl.style.color = '#14532d';
-            limitValEl.innerText = '₹ ' + Number(state.breApprovedLimit).toLocaleString('en-IN');
+            limitValEl.innerText = 'â‚¹ ' + Number(state.breApprovedLimit).toLocaleString('en-IN');
         }
         if (roiValEl) roiValEl.innerText = '1.15% per month';
         if (tenureValEl) tenureValEl.innerText = `${state.breApprovedTenureDays} Days (~${Math.round(state.breApprovedTenureDays / 30)} Months)`;
@@ -5304,7 +5879,7 @@ function updateSuccessModalOfferCard(payload) {
 function handleLoanAmountChange(val) {
     const num = parseFloat(val) || 0;
     const txt = document.getElementById('sliderAmountText');
-    if (txt) txt.innerText = '₹ ' + num.toLocaleString('en-IN');
+    if (txt) txt.innerText = 'â‚¹ ' + num.toLocaleString('en-IN');
     updateEmiCalculation(num);
 }
 
@@ -5315,7 +5890,7 @@ function updateEmiCalculation(principal) {
     const emi = Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / (Math.pow(1 + monthlyRate, tenureMonths) - 1));
     
     const emiDisp = document.getElementById('displayEmiVal');
-    if (emiDisp) emiDisp.innerText = '₹ ' + emi.toLocaleString('en-IN') + ' / month';
+    if (emiDisp) emiDisp.innerText = 'â‚¹ ' + emi.toLocaleString('en-IN') + ' / month';
 }
 
 function setQuickAmtToMax() {
@@ -5342,7 +5917,7 @@ document.getElementById('pincode').addEventListener('input', function() {
                 const po = d[0].PostOffice[0];
                 document.getElementById('city').value = po.District || '';
                 document.getElementById('state').value = po.State || '';
-                document.getElementById('pincodeStatusText').innerText = `✓ ${po.District}, ${po.State}`;
+                document.getElementById('pincodeStatusText').innerText = `âœ“ ${po.District}, ${po.State}`;
             }
         }).catch(() => {});
     }
@@ -5429,24 +6004,24 @@ function submitFinalLead() {
             if (nameEl) nameEl.innerText = payload.full_name || '-';
             
             const mobileEl = document.getElementById('modalMobileVal');
-            if (mobileEl) mobileEl.innerText = (payload.mobile || '') + ' ✓';
+            if (mobileEl) mobileEl.innerText = (payload.mobile || '') + ' âœ“';
 
             const cibilEl = document.getElementById('modalCibilVal');
             if (cibilEl) {
                 const cibilText = (state.cibilScore === -1 || state.cibilScore === null) ? 'New to Credit (NTC)' : state.cibilScore;
-                cibilEl.innerText = cibilText + ' ✓';
+                cibilEl.innerText = cibilText + ' âœ“';
             }
 
             const bankDisplayEl = document.getElementById('modalBankDisplay');
             if (bankDisplayEl) {
                 const bName = payload.bank_name || 'Primary Bank';
-                const bAcc = payload.account_number ? ' (••••' + payload.account_number.slice(-4) + ')' : '';
+                const bAcc = payload.account_number ? ' (â€¢â€¢â€¢â€¢' + payload.account_number.slice(-4) + ')' : '';
                 bankDisplayEl.innerText = bName + bAcc;
             }
 
             const reqLoanEl = document.getElementById('modalReqLoanVal');
             if (reqLoanEl) {
-                reqLoanEl.innerText = '₹ ' + Number(payload.loan_amount || 200000).toLocaleString('en-IN');
+                reqLoanEl.innerText = 'â‚¹ ' + Number(payload.loan_amount || 200000).toLocaleString('en-IN');
             }
 
             // Update Dynamic Sanction / Referral Card in Modal
@@ -5565,7 +6140,7 @@ function startHighImpactPartyBomb(canvas) {
     ];
     const particles = [];
 
-    // 1. Center Party Bomb Blast (80 particles radiating 360°)
+    // 1. Center Party Bomb Blast (80 particles radiating 360Â°)
     const cx = canvas.width / 2;
     const cy = canvas.height * 0.5;
     for (let i = 0; i < 90; i++) {
@@ -5574,14 +6149,14 @@ function startHighImpactPartyBomb(canvas) {
         particles.push(createParticle(cx, cy, Math.cos(rad) * spd, Math.sin(rad) * spd - 6, colors));
     }
 
-    // 2. Left Cannon Blast (60 particles aiming top-right at 50-70°)
+    // 2. Left Cannon Blast (60 particles aiming top-right at 50-70Â°)
     for (let i = 0; i < 65; i++) {
         const rad = (Math.random() * 30 + 45) * (Math.PI / 180);
         const spd = Math.random() * 26 + 12;
         particles.push(createParticle(30, canvas.height - 40, Math.cos(rad) * spd, -Math.sin(rad) * spd, colors));
     }
 
-    // 3. Right Cannon Blast (60 particles aiming top-left at 110-130°)
+    // 3. Right Cannon Blast (60 particles aiming top-left at 110-130Â°)
     for (let i = 0; i < 65; i++) {
         const rad = (Math.random() * 30 + 105) * (Math.PI / 180);
         const spd = Math.random() * 26 + 12;

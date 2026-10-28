@@ -40,6 +40,14 @@ if (file_exists($localReportFile) && empty($_GET['force_refresh'])) {
 $service = new DigitapBankDataUIService();
 $res = $service->retrieveReport($txnId, $reportType, $reportSubtype);
 
+if (!empty($res) && !empty($res['banks'])) {
+    $storageDir = dirname(__DIR__, 2) . '/storage/reports';
+    if (!is_dir($storageDir)) {
+        @mkdir($storageDir, 0755, true);
+    }
+    @file_put_contents($localReportFile, json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
 if (!empty($res['format']) && $res['format'] === 'xlsx') {
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="bank_report_' . $txnId . '.xlsx"');
