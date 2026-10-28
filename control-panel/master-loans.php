@@ -2884,13 +2884,44 @@ if ($totalPages < 1) $totalPages = 1;
                         let totalDr = 0;
                         let crCount = 0;
                         let drCount = 0;
+                        const dailyMap = {};
+
                         txns.forEach(t => {
                             const amt = parseFloat(t.amount) || 0;
+                            const d = (t.date || '').slice(0, 10);
                             if (amt >= 0) { totalCr += amt; crCount++; }
                             else { totalDr += Math.abs(amt); drCount++; }
+
+                            if (d) {
+                                if (!dailyMap[d]) dailyMap[d] = { date: d, cr: 0, dr: 0, count: 0, txns: [] };
+                                if (amt >= 0) { dailyMap[d].cr += amt; dailyMap[d].count++; dailyMap[d].txns.push(t); }
+                                else { dailyMap[d].dr += Math.abs(amt); }
+                            }
                         });
 
-                        let rows = '';
+                        const dailyList = Object.values(dailyMap).sort((a,b) => b.date.localeCompare(a.date));
+                        const creditDays = dailyList.filter(row => row.cr > 0);
+
+                        let dailyRows = '';
+                        creditDays.forEach((row, i) => {
+                            const net = row.cr - row.dr;
+                            const netColor = net >= 0 ? '#15803d' : '#b91c1c';
+                            const senders = row.txns.map(t => `<div style="font-size:11px; color:#475569; margin-bottom:2px;"><strong style="color:#15803d;">+₹${parseFloat(t.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong> &bull; ${t.narration || 'Credit'}</div>`).join('');
+
+                            dailyRows += `
+                                <tr style="border-bottom:1px solid #e2e8f0; font-size:12px; background:#f0fdf4;">
+                                    <td style="padding:7px 8px; color:#64748b;">${i+1}</td>
+                                    <td style="padding:7px 8px; font-weight:700; color:#0f172a; white-space:nowrap;"><i class="fa-regular fa-calendar text-primary" style="margin-right:4px;"></i>${row.date}</td>
+                                    <td style="padding:7px 8px; text-align:right;"><span style="font-weight:800; color:#15803d; background:#dcfce7; padding:3px 7px; border-radius:4px; font-size:13px; border:1px solid #86efac;">+₹${row.cr.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></td>
+                                    <td style="padding:7px 8px; text-align:center;"><span style="background:#bbf7d0; color:#166534; font-weight:700; font-size:11px; padding:2px 6px; border-radius:4px;">${row.count} Credits</span></td>
+                                    <td style="padding:7px 8px; text-align:right; color:#b91c1c; font-weight:600;">-₹${row.dr.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                                    <td style="padding:7px 8px; text-align:right; color:${netColor}; font-weight:700;">${net >= 0 ? '+' : '-'}₹${Math.abs(net).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                                    <td style="padding:7px 8px; max-width:280px;">${senders}</td>
+                                </tr>
+                            `;
+                        });
+
+                        let txnRows = '';
                         txns.forEach((t, i) => {
                             const rawAmt = parseFloat(t.amount) || 0;
                             const isCr = rawAmt >= 0;
@@ -2901,7 +2932,7 @@ if ($totalPages < 1) $totalPages = 1;
                             const amtColor = isCr ? '#15803d' : '#b91c1c';
                             const balStr = (t.balance !== undefined && t.balance !== null && t.balance !== '') ? ('₹' + parseFloat(t.balance).toLocaleString('en-IN', {minimumFractionDigits: 2})) : '-';
 
-                            rows += `
+                            txnRows += `
                                 <tr style="border-bottom:1px solid #e2e8f0; font-size:11.5px;">
                                     <td style="padding:6px 8px; color:#64748b;">${i+1}</td>
                                     <td style="padding:6px 8px; white-space:nowrap; font-weight:600;">${t.date || '-'}</td>
@@ -2915,11 +2946,11 @@ if ($totalPages < 1) $totalPages = 1;
                         });
 
                         Swal.fire({
-                            title: `${bank.bank || 'Bank'} - Verified Statement`,
-                            width: '950px',
+                            title: `${bank.bank || 'Bank'} - Verified Bank Statement`,
+                            width: '1000px',
                             html: `
                                 <div style="text-align:left; font-size:13px;">
-                                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                                         <div>
                                             <div style="font-weight:700; color:#0f172a; font-size:14px;">${holderName}</div>
                                             <div style="font-size:11.5px; color:#64748b;">A/C: <span style="font-family:monospace; font-weight:700;">${acc.account_number || 'N/A'}</span> | IFSC: <span style="font-family:monospace; font-weight:700;">${acc.ifsc_code || 'N/A'}</span></div>
@@ -2932,27 +2963,61 @@ if ($totalPages < 1) $totalPages = 1;
 
                                     <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px;">
                                         <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px; text-align:center;">
-                                            <div style="font-size:10px; font-weight:700; color:#1e40af; text-transform:uppercase;">Total Inflow (Credits)</div>
-                                            <div style="font-size:14px; font-weight:800; color:#1d4ed8;">₹${totalCr.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${crCount})</div>
+                                            <div style="font-size:10px; font-weight:700; color:#1e40af; text-transform:uppercase;">Total Credited (Sum)</div>
+                                            <div style="font-size:14px; font-weight:800; color:#1d4ed8;">₹${totalCr.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
                                         </div>
                                         <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px; text-align:center;">
-                                            <div style="font-size:10px; font-weight:700; color:#991b1b; text-transform:uppercase;">Total Outflow (Debits)</div>
-                                            <div style="font-size:14px; font-weight:800; color:#b91c1c;">₹${totalDr.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${drCount})</div>
+                                            <div style="font-size:10px; font-weight:700; color:#991b1b; text-transform:uppercase;">Total Debited (Sum)</div>
+                                            <div style="font-size:14px; font-weight:800; color:#b91c1c;">₹${totalDr.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
                                         </div>
                                         <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px; text-align:center;">
-                                            <div style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase;">Total Transactions</div>
-                                            <div style="font-size:14px; font-weight:800; color:#15803d;">${txns.length} Verified Txns</div>
+                                            <div style="font-size:10px; font-weight:700; color:#166534; text-transform:uppercase;">Days with Credits</div>
+                                            <div style="font-size:14px; font-weight:800; color:#15803d;">${creditDays.length} Days Credited</div>
                                         </div>
                                     </div>
 
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                        <span style="font-weight:700; font-size:13px; color:#334155;"><i class="fa-solid fa-list-check"></i> Transactions History</span>
-                                        <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 14px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
-                                            <i class="fa-solid fa-download"></i> Download CSV
-                                        </a>
+                                    <!-- Mode Toggle Tabs -->
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+                                        <div style="display:flex; gap:6px;">
+                                            <button type="button" id="swalTabDaily" onclick="document.getElementById('swalDailyTableWrap').style.display='block'; document.getElementById('swalTxnTableWrap').style.display='none'; this.style.background='#0f172a'; this.style.color='#fff'; document.getElementById('swalTabTxns').style.background='#fff'; document.getElementById('swalTabTxns').style.color='#475569';" style="padding:6px 12px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid #0f172a; background:#0f172a; color:#fff; cursor:pointer;">
+                                                <i class="fa-solid fa-calendar-day" style="color:#22c55e;"></i> Per-Day Actual Credit (${creditDays.length} Days)
+                                            </button>
+                                            <button type="button" id="swalTabTxns" onclick="document.getElementById('swalTxnTableWrap').style.display='block'; document.getElementById('swalDailyTableWrap').style.display='none'; this.style.background='#0f172a'; this.style.color='#fff'; document.getElementById('swalTabDaily').style.background='#fff'; document.getElementById('swalTabDaily').style.color='#475569';" style="padding:6px 12px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid #cbd5e1; background:#fff; color:#475569; cursor:pointer;">
+                                                <i class="fa-solid fa-list-ul"></i> All Transactions (${txns.length})
+                                            </button>
+                                        </div>
+                                        <div style="display:flex; gap:6px;">
+                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}&view=daily" target="_blank" style="background:#15803d; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                                <i class="fa-solid fa-download"></i> Daily Credit CSV
+                                            </a>
+                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                                <i class="fa-solid fa-download"></i> All Txns CSV
+                                            </a>
+                                        </div>
                                     </div>
 
-                                    <div style="max-height:360px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px;">
+                                    <!-- Table 1: Per-Day Actual Credit Table -->
+                                    <div id="swalDailyTableWrap" style="max-height:360px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px;">
+                                        <table style="width:100%; border-collapse:collapse; text-align:left;">
+                                            <thead>
+                                                <tr style="background:#f1f5f9; font-size:11px; color:#475569; position:sticky; top:0; z-index:1;">
+                                                    <th style="padding:8px;">#</th>
+                                                    <th style="padding:8px;">Date (Tarikh)</th>
+                                                    <th style="padding:8px; text-align:right;">Actual Credit (₹)</th>
+                                                    <th style="padding:8px; text-align:center;">Credit Txns</th>
+                                                    <th style="padding:8px; text-align:right;">Debit on Day (₹)</th>
+                                                    <th style="padding:8px; text-align:right;">Net Flow (₹)</th>
+                                                    <th style="padding:8px;">Credit Details / Senders</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${dailyRows || '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">No credit activity recorded.</td></tr>'}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Table 2: All Individual Transactions Table -->
+                                    <div id="swalTxnTableWrap" style="display:none; max-height:360px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:6px;">
                                         <table style="width:100%; border-collapse:collapse; text-align:left;">
                                             <thead>
                                                 <tr style="background:#f1f5f9; font-size:11px; color:#475569; position:sticky; top:0; z-index:1;">
@@ -2966,7 +3031,7 @@ if ($totalPages < 1) $totalPages = 1;
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${rows}
+                                                ${txnRows}
                                             </tbody>
                                         </table>
                                     </div>

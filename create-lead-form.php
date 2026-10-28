@@ -1188,6 +1188,34 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             color: #0f172a;
         }
 
+        .view-mode-btn {
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 8px;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .view-mode-btn:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+
+        .view-mode-btn.active {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+
         .statement-filter-bar {
             display: flex;
             align-items: center;
@@ -3124,23 +3152,38 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div class="statement-kpi-val" id="stmtKpiBalance" style="color:#059669;">₹0.00</div>
                 </div>
                 <div class="statement-kpi-card">
-                    <div class="statement-kpi-lbl">Total Inflow (Credits)</div>
+                    <div class="statement-kpi-lbl">Total Money Credited</div>
                     <div class="statement-kpi-val" id="stmtKpiCredits" style="color:#0284c7;">₹0.00</div>
                 </div>
                 <div class="statement-kpi-card">
-                    <div class="statement-kpi-lbl">Total Outflow (Debits)</div>
+                    <div class="statement-kpi-lbl">Total Money Debited</div>
                     <div class="statement-kpi-val" id="stmtKpiDebits" style="color:#dc2626;">₹0.00</div>
                 </div>
                 <div class="statement-kpi-card">
-                    <div class="statement-kpi-lbl">Monthly Average Inflow</div>
-                    <div class="statement-kpi-val" id="stmtKpiInflow">₹0.00</div>
+                    <div class="statement-kpi-lbl">Days with Actual Credits</div>
+                    <div class="statement-kpi-val" id="stmtKpiInflow" style="color:#059669;">0 Days</div>
+                </div>
+            </div>
+
+            <!-- View Mode Switch: Per-Day Actual Credit vs All Transactions -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; border-bottom:1.5px solid #f1f5f9; padding-bottom:10px;">
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="view-mode-btn active" id="btnModeDaily" onclick="switchStatementViewMode('daily')">
+                        <i class="fa-solid fa-calendar-check" style="color:#059669;"></i> Per-Day Actual Credit (<span id="stmtDailyDaysCount">0</span> Days)
+                    </button>
+                    <button type="button" class="view-mode-btn" id="btnModeTxns" onclick="switchStatementViewMode('txns')">
+                        <i class="fa-solid fa-list-ul"></i> All Transactions (<span id="stmtAllTxnsCount">0</span>)
+                    </button>
+                </div>
+                <div style="font-size:11.5px; font-weight:700; color:#15803d; background:#ecfdf5; border:1px solid #a7f3d0; padding:5px 12px; border-radius:6px;">
+                    <i class="fa-solid fa-circle-check"></i> Actual Credit Received Per Day
                 </div>
             </div>
 
             <!-- Filter & Search Bar -->
             <div class="statement-filter-bar">
-                <input type="text" id="stmtSearchInput" class="statement-search-input" placeholder="Search by narration, reference or amount..." oninput="filterStatementTransactions()">
-                <div class="statement-filter-tabs">
+                <input type="text" id="stmtSearchInput" class="statement-search-input" placeholder="Search by date (YYYY-MM-DD), narration, or amount..." oninput="filterStatementTransactions()">
+                <div class="statement-filter-tabs" id="stmtTxnFilterTabs" style="display:none;">
                     <button type="button" class="statement-tab-btn active" id="tabStmtAll" onclick="setStatementFilter('ALL')">All (<span id="stmtCountAll">0</span>)</button>
                     <button type="button" class="statement-tab-btn" id="tabStmtCredit" onclick="setStatementFilter('CREDIT')">Credits (<span id="stmtCountCredit">0</span>)</button>
                     <button type="button" class="statement-tab-btn" id="tabStmtDebit" onclick="setStatementFilter('DEBIT')">Debits (<span id="stmtCountDebit">0</span>)</button>
@@ -3150,21 +3193,20 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             <!-- Scrollable Transactions Table -->
             <div class="statement-table-wrap">
                 <table class="statement-table">
-                    <thead>
+                    <thead id="stmtTableHead">
                         <tr>
                             <th style="width:40px;">#</th>
-                            <th style="width:95px;">Date</th>
-                            <th>Narration / Description</th>
-                            <th style="width:115px;">Ref / Txn ID</th>
-                            <th style="width:75px;">Type</th>
-                            <th style="width:95px; text-align:right;">Amount (₹)</th>
-                            <th style="width:95px; text-align:right;">Balance (₹)</th>
-                            <th style="width:70px;">Mode</th>
+                            <th style="width:110px;">Date (Tarikh)</th>
+                            <th style="width:150px; text-align:right;">Actual Credit (₹)</th>
+                            <th style="width:100px; text-align:center;">Credit Txns</th>
+                            <th style="width:140px; text-align:right;">Debit on Day (₹)</th>
+                            <th style="width:140px; text-align:right;">Net Day Flow (₹)</th>
+                            <th>Credit Details / Senders</th>
                         </tr>
                     </thead>
                     <tbody id="stmtTableBody">
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:30px; color:#64748b;">
+                            <td colspan="7" style="text-align:center; padding:30px; color:#64748b;">
                                 <i class="fa-solid fa-spinner fa-spin" style="font-size:20px;"></i> Loading statement transactions...
                             </td>
                         </tr>
@@ -5238,9 +5280,101 @@ function closeFullStatementModal() {
     if (modal) modal.style.display = 'none';
 }
 
+let currentStatementFilter = 'ALL';
+let statementViewMode = 'daily'; // Default to Per-Day Actual Credit
+
+function computeDailyCreditSummary(transactions) {
+    const dailyMap = {};
+    (transactions || []).forEach(t => {
+        const rawAmt = parseFloat(t.amount) || 0;
+        const d = (t.date || '').slice(0, 10);
+        if (!d) return;
+        if (!dailyMap[d]) {
+            dailyMap[d] = {
+                date: d,
+                creditTotal: 0,
+                creditCount: 0,
+                debitTotal: 0,
+                debitCount: 0,
+                txns: []
+            };
+        }
+        if (rawAmt >= 0) {
+            dailyMap[d].creditTotal += rawAmt;
+            dailyMap[d].creditCount++;
+            dailyMap[d].txns.push(t);
+        } else {
+            dailyMap[d].debitTotal += Math.abs(rawAmt);
+            dailyMap[d].debitCount++;
+        }
+    });
+
+    return Object.values(dailyMap).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function switchStatementViewMode(mode) {
+    statementViewMode = mode;
+    const btnDaily = document.getElementById('btnModeDaily');
+    const btnTxns = document.getElementById('btnModeTxns');
+    const filterTabs = document.getElementById('stmtTxnFilterTabs');
+    const searchInp = document.getElementById('stmtSearchInput');
+    const thead = document.getElementById('stmtTableHead');
+    const dlBtn = document.getElementById('stmtModalDownloadBtn');
+
+    if (dlBtn && state.aaTxnId) {
+        dlBtn.href = 'api/bank-data/export-statement.php?txn_id=' + encodeURIComponent(state.aaTxnId) + (mode === 'daily' ? '&view=daily' : '');
+        dlBtn.innerHTML = mode === 'daily' 
+            ? '<i class="fa-solid fa-file-arrow-down"></i> Download Daily Credit (CSV)' 
+            : '<i class="fa-solid fa-file-arrow-down"></i> Download All Statement (CSV)';
+    }
+
+    if (mode === 'daily') {
+        if (btnDaily) btnDaily.classList.add('active');
+        if (btnTxns) btnTxns.classList.remove('active');
+        if (filterTabs) filterTabs.style.display = 'none';
+        if (searchInp) searchInp.placeholder = 'Search by date (YYYY-MM-DD), amount or sender...';
+        if (thead) {
+            thead.innerHTML = `
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th style="width:115px;">Date (Tarikh)</th>
+                    <th style="width:160px; text-align:right;">Actual Credit (₹)</th>
+                    <th style="width:105px; text-align:center;">Credit Txns</th>
+                    <th style="width:130px; text-align:right;">Debit on Day (₹)</th>
+                    <th style="width:130px; text-align:right;">Net Day Flow (₹)</th>
+                    <th>Credit Details / Senders</th>
+                </tr>
+            `;
+        }
+    } else {
+        if (btnDaily) btnDaily.classList.remove('active');
+        if (btnTxns) btnTxns.classList.add('active');
+        if (filterTabs) filterTabs.style.display = 'flex';
+        if (searchInp) searchInp.placeholder = 'Search by narration, reference or amount...';
+        if (thead) {
+            thead.innerHTML = `
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th style="width:95px;">Date</th>
+                    <th>Narration / Description</th>
+                    <th style="width:115px;">Ref / Txn ID</th>
+                    <th style="width:75px;">Type</th>
+                    <th style="width:95px; text-align:right;">Amount (₹)</th>
+                    <th style="width:95px; text-align:right;">Balance (₹)</th>
+                    <th style="width:70px;">Mode</th>
+                </tr>
+            `;
+        }
+    }
+
+    filterStatementTransactions();
+}
+
 function populateStatementModal() {
     const d = state.aaData || {};
     const txns = Array.isArray(d.transactions) ? d.transactions : [];
+    const dailyList = computeDailyCreditSummary(txns);
+    const creditDaysCount = dailyList.filter(row => row.creditTotal > 0).length;
 
     const bankEl = document.getElementById('stmtModalBankName');
     if (bankEl) bankEl.innerText = (d.bankName || 'Bank') + ' Statement';
@@ -5263,7 +5397,7 @@ function populateStatementModal() {
     if (kpiDebits) kpiDebits.innerText = '₹' + Number(d.totalDebits || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
     const kpiInflow = document.getElementById('stmtKpiInflow');
-    if (kpiInflow) kpiInflow.innerText = '₹' + Number(d.monthlyInflow || 0).toLocaleString('en-IN');
+    if (kpiInflow) kpiInflow.innerText = `${creditDaysCount} Days Credited`;
 
     const countAllEl = document.getElementById('stmtCountAll');
     if (countAllEl) countAllEl.innerText = txns.length;
@@ -5274,12 +5408,13 @@ function populateStatementModal() {
     const countDebitEl = document.getElementById('stmtCountDebit');
     if (countDebitEl) countDebitEl.innerText = d.debitCount || 0;
 
-    const dlBtn = document.getElementById('stmtModalDownloadBtn');
-    if (dlBtn && state.aaTxnId) {
-        dlBtn.href = 'api/bank-data/export-statement.php?txn_id=' + encodeURIComponent(state.aaTxnId);
-    }
+    const dailyDaysCountEl = document.getElementById('stmtDailyDaysCount');
+    if (dailyDaysCountEl) dailyDaysCountEl.innerText = creditDaysCount;
 
-    renderStatementTable(txns);
+    const allTxnsCountEl = document.getElementById('stmtAllTxnsCount');
+    if (allTxnsCountEl) allTxnsCountEl.innerText = txns.length;
+
+    switchStatementViewMode(statementViewMode || 'daily');
 }
 
 function setStatementFilter(filter) {
@@ -5305,74 +5440,130 @@ function filterStatementTransactions() {
     const txns = Array.isArray(d.transactions) ? d.transactions : [];
     const searchVal = (document.getElementById('stmtSearchInput')?.value || '').toLowerCase().trim();
 
-    const filtered = txns.filter(t => {
-        const rawAmt = parseFloat(t.amount) || 0;
-        const isCredit = rawAmt >= 0;
+    if (statementViewMode === 'daily') {
+        const dailyList = computeDailyCreditSummary(txns);
+        const filtered = dailyList.filter(row => {
+            if (searchVal) {
+                const matchDate = row.date.includes(searchVal);
+                const matchAmt = Math.round(row.creditTotal).toString().includes(searchVal);
+                const matchDesc = row.txns.some(t => (t.narration || '').toLowerCase().includes(searchVal));
+                return matchDate || matchAmt || matchDesc;
+            }
+            return row.creditTotal > 0; // Show actual days when money was credited
+        });
+        renderStatementTable(filtered);
+    } else {
+        const filtered = txns.filter(t => {
+            const rawAmt = parseFloat(t.amount) || 0;
+            const isCredit = rawAmt >= 0;
 
-        if (currentStatementFilter === 'CREDIT' && !isCredit) return false;
-        if (currentStatementFilter === 'DEBIT' && isCredit) return false;
+            if (currentStatementFilter === 'CREDIT' && !isCredit) return false;
+            if (currentStatementFilter === 'DEBIT' && isCredit) return false;
 
-        if (searchVal) {
-            const desc = (t.narration || '').toLowerCase();
-            const ref = (t.reference || t.transaction_id || '').toLowerCase();
-            const amtStr = Math.abs(rawAmt).toString();
-            const dateStr = (t.date || '').toLowerCase();
-            return desc.includes(searchVal) || ref.includes(searchVal) || amtStr.includes(searchVal) || dateStr.includes(searchVal);
-        }
+            if (searchVal) {
+                const desc = (t.narration || '').toLowerCase();
+                const ref = (t.reference || t.transaction_id || '').toLowerCase();
+                const amtStr = Math.abs(rawAmt).toString();
+                const dateStr = (t.date || '').toLowerCase();
+                return desc.includes(searchVal) || ref.includes(searchVal) || amtStr.includes(searchVal) || dateStr.includes(searchVal);
+            }
 
-        return true;
-    });
+            return true;
+        });
 
-    renderStatementTable(filtered);
+        renderStatementTable(filtered);
+    }
 }
 
-function renderStatementTable(txns) {
+function renderStatementTable(dataList) {
     const tbody = document.getElementById('stmtTableBody');
     if (!tbody) return;
 
-    if (!txns || txns.length === 0) {
+    if (!dataList || dataList.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align:center; padding:32px 16px; color:#64748b;">
+                <td colspan="${statementViewMode === 'daily' ? 7 : 8}" style="text-align:center; padding:32px 16px; color:#64748b;">
                     <i class="fa-solid fa-folder-open" style="font-size:24px; margin-bottom:8px; display:block; opacity:0.6;"></i>
-                    No transactions match the search / filter criteria.
+                    No records match the search / filter criteria.
                 </td>
             </tr>
         `;
         return;
     }
 
-    let rowsHtml = '';
-    txns.forEach((t, i) => {
-        const rawAmt = parseFloat(t.amount) || 0;
-        const isCredit = rawAmt >= 0;
-        const typeBadge = isCredit
-            ? '<span class="txn-type-badge txn-type-credit"><i class="fa-solid fa-arrow-down-left"></i> CR</span>'
-            : '<span class="txn-type-badge txn-type-debit"><i class="fa-solid fa-arrow-up-right"></i> DR</span>';
-        
-        const amtDisplay = (isCredit ? '+₹' : '-₹') + Math.abs(rawAmt).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        const amtColor = isCredit ? '#15803d' : '#b91c1c';
-        const balDisplay = (t.balance !== undefined && t.balance !== null && t.balance !== '') ? ('₹' + Number(t.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })) : '-';
-        const dateDisplay = t.date ? t.date : '-';
-        const narration = t.narration ? t.narration : '-';
-        const ref = t.reference || t.transaction_id || '-';
-        const mode = t.mode_from_source || (isCredit ? 'UPI/NEFT' : 'DEBIT');
+    if (statementViewMode === 'daily') {
+        let rowsHtml = '';
+        dataList.forEach((day, i) => {
+            const hasCredit = day.creditTotal > 0;
+            const creditBadge = hasCredit
+                ? `<span style="font-size:13.5px; font-weight:800; color:#15803d; background:#dcfce7; padding:4px 8px; border-radius:6px; display:inline-block; border:1px solid #86efac;">+₹${Number(day.creditTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>`
+                : `<span style="color:#94a3b8; font-weight:600;">₹0.00</span>`;
+            
+            const net = day.creditTotal - day.debitTotal;
+            const netColor = net >= 0 ? '#15803d' : '#b91c1c';
+            const netStr = (net >= 0 ? '+₹' : '-₹') + Math.abs(net).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            const debitStr = day.debitTotal > 0 ? ('-₹' + Number(day.debitTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })) : '₹0.00';
 
-        rowsHtml += `
-            <tr>
-                <td style="color:#94a3b8; font-weight:600;">${i + 1}</td>
-                <td style="font-weight:600; white-space:nowrap;">${dateDisplay}</td>
-                <td style="max-width:280px; word-break:break-word; font-weight:500;">${narration}</td>
-                <td style="font-family:monospace; font-size:11px; color:#475569; word-break:break-all;">${ref}</td>
-                <td>${typeBadge}</td>
-                <td style="text-align:right; font-weight:700; color:${amtColor}; white-space:nowrap;">${amtDisplay}</td>
-                <td style="text-align:right; font-family:monospace; font-weight:600; white-space:nowrap;">${balDisplay}</td>
-                <td style="font-size:10.5px; color:#64748b; text-transform:uppercase;">${mode}</td>
-            </tr>
-        `;
-    });
+            const creditNarrations = (day.txns || []).map(t => {
+                const amt = parseFloat(t.amount) || 0;
+                const narr = t.narration || 'Credit';
+                return `<div style="font-size:11px; color:#334155; line-height:1.45; margin-bottom:3px;"><span style="color:#15803d; font-weight:700; background:#f0fdf4; padding:1px 5px; border-radius:3px;">+₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span> &bull; ${narr}</div>`;
+            }).join('');
 
-    tbody.innerHTML = rowsHtml;
+            rowsHtml += `
+                <tr style="border-bottom:1px solid #f1f5f9; ${hasCredit ? 'background:#f0fdf4;' : ''}">
+                    <td style="color:#94a3b8; font-weight:600;">${i + 1}</td>
+                    <td style="font-weight:700; white-space:nowrap; color:#0f172a; font-size:12.5px;">
+                        <i class="fa-regular fa-calendar" style="color:var(--brand-primary); margin-right:4px;"></i>${day.date}
+                    </td>
+                    <td style="text-align:right;">${creditBadge}</td>
+                    <td style="text-align:center;">
+                        <span style="font-weight:700; font-size:11.5px; ${hasCredit ? 'color:#15803d; background:#bbf7d0;' : 'color:#64748b; background:#f1f5f9;'} padding:2px 7px; border-radius:4px;">
+                            ${day.creditCount} ${day.creditCount === 1 ? 'Credit' : 'Credits'}
+                        </span>
+                    </td>
+                    <td style="text-align:right; font-weight:600; color:#b91c1c; font-size:12px;">${debitStr}</td>
+                    <td style="text-align:right; font-weight:700; color:${netColor}; font-size:12px;">${netStr}</td>
+                    <td style="max-width:320px; word-break:break-word;">
+                        ${creditNarrations || '<span style="color:#94a3b8; font-size:11px; font-style:italic;">No credit transactions</span>'}
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = rowsHtml;
+    } else {
+        let rowsHtml = '';
+        dataList.forEach((t, i) => {
+            const rawAmt = parseFloat(t.amount) || 0;
+            const isCredit = rawAmt >= 0;
+            const typeBadge = isCredit
+                ? '<span class="txn-type-badge txn-type-credit"><i class="fa-solid fa-arrow-down-left"></i> CR</span>'
+                : '<span class="txn-type-badge txn-type-debit"><i class="fa-solid fa-arrow-up-right"></i> DR</span>';
+            
+            const amtDisplay = (isCredit ? '+₹' : '-₹') + Math.abs(rawAmt).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            const amtColor = isCredit ? '#15803d' : '#b91c1c';
+            const balDisplay = (t.balance !== undefined && t.balance !== null && t.balance !== '') ? ('₹' + Number(t.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })) : '-';
+            const dateDisplay = t.date ? t.date : '-';
+            const narration = t.narration ? t.narration : '-';
+            const ref = t.reference || t.transaction_id || '-';
+            const mode = t.mode_from_source || (isCredit ? 'UPI/NEFT' : 'DEBIT');
+
+            rowsHtml += `
+                <tr>
+                    <td style="color:#94a3b8; font-weight:600;">${i + 1}</td>
+                    <td style="font-weight:600; white-space:nowrap;">${dateDisplay}</td>
+                    <td style="max-width:280px; word-break:break-word; font-weight:500;">${narration}</td>
+                    <td style="font-family:monospace; font-size:11px; color:#475569; word-break:break-all;">${ref}</td>
+                    <td>${typeBadge}</td>
+                    <td style="text-align:right; font-weight:700; color:${amtColor}; white-space:nowrap;">${amtDisplay}</td>
+                    <td style="text-align:right; font-family:monospace; font-weight:600; white-space:nowrap;">${balDisplay}</td>
+                    <td style="font-size:10.5px; color:#64748b; text-transform:uppercase;">${mode}</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = rowsHtml;
+    }
 }
 
 // Ensure aaModalMobileInput auto-sanitizes digits

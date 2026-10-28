@@ -53,9 +53,12 @@ $pan = !empty($holders[0]['pan']) ? $holders[0]['pan'] : '';
 $contact = !empty($holders[0]['contact_number']) ? $holders[0]['contact_number'] : '';
 $transactions = $accObj['transactions'] ?? [];
 
+$viewMode = trim((string)($_GET['view'] ?? 'txns'));
 $cleanBank = preg_replace('/[^A-Za-z0-9]/', '_', $bankName);
 $cleanAcc = substr(preg_replace('/[^A-Za-z0-9]/', '', $accNum), -4);
-$filename = "Statement_{$cleanBank}_{$cleanAcc}_" . date('Ymd') . ".csv";
+$filename = ($viewMode === 'daily') 
+    ? "Daily_Credit_Report_{$cleanBank}_{$cleanAcc}_" . date('Ymd') . ".csv"
+    : "Statement_{$cleanBank}_{$cleanAcc}_" . date('Ymd') . ".csv";
 
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -68,7 +71,7 @@ $out = fopen('php://output', 'w');
 fputs($out, "\xEF\xBB\xBF");
 
 // Header Metadata
-fputcsv($out, ['WAQT FINANCE - OFFICIAL BANK STATEMENT REPORT']);
+fputcsv($out, [($viewMode === 'daily') ? 'WAQT FINANCE - ACTUAL DAILY CREDIT REPORT (PER-DAY BREAKDOWN)' : 'WAQT FINANCE - OFFICIAL BANK STATEMENT REPORT']);
 fputcsv($out, ['Generated via RBI NBFC-AA (Account Aggregator)']);
 fputcsv($out, []);
 fputcsv($out, ['Account Holder Name', $holderName]);
@@ -83,26 +86,67 @@ fputcsv($out, ['Transaction ID', $txnId]);
 fputcsv($out, ['Report Date', date('d-M-Y H:i:s')]);
 fputcsv($out, []);
 
-// Table Header
-fputcsv($out, ['#', 'Date', 'Narration / Description', 'Reference / Txn ID', 'Type', 'Amount (INR)', 'Balance (INR)', 'Payment Mode']);
+if ($viewMode === 'daily') {
+    // Group transactions by date
+    $daily = [];
+    foreach ($transactions as $t) {
+        $rawAmt = (float)($t['amount'] ?? 0);
+        $d = substr((string)($t['date'] ?? ''), 0, 10);
+        if (empty($d)) continue;
+        if (!isset($daily[$d])) {
+            $daily[$d] = [
+                'date' => $d,
+                'credit_total' => 0.0,
+                'credit_count' => 0,
+                'debit_total' => 0.0,
+                'debit_count' => 0
+            ];
+        }
+        if ($rawAmt >= 0) {
+            $daily[$d]['credit_total'] += $rawAmt;
+            $daily[$d]['credit_count']++;
+        } else {
+            $daily[$d]['debit_total'] += abs($rawAmt);
+            $daily[$d]['debit_count']++;
+        }
+    }
+    krsort($daily);
 
-$idx = 1;
-foreach ($transactions as $t) {
-    $rawAmt = (float)($t['amount'] ?? 0);
-    $type = $rawAmt >= 0 ? 'CREDIT' : 'DEBIT';
-    $amt = abs($rawAmt);
-    $bal = isset($t['balance']) ? number_format((float)$t['balance'], 2) : '';
+    fputcsv($out, ['#', 'Date (Tarikh)', 'Actual Amount Credited (INR)', 'Number of Credit Txns', 'Debited on Day (INR)', 'Net Balance Change (INR)']);
+    $idx = 1;
+    foreach ($daily as $row) {
+        $net = $row['credit_total'] - $row['debit_total'];
+        fputcsv($out, [
+            $idx++,
+            $row['date'],
+            number_format($row['credit_total'], 2),
+            $row['credit_count'],
+            number_format($row['debit_total'], 2),
+            ($net >= 0 ? '+' : '-') . number_format(abs($net), 2)
+        ]);
+    }
+} else {
+    // Table Header
+    fputcsv($out, ['#', 'Date', 'Narration / Description', 'Reference / Txn ID', 'Type', 'Amount (INR)', 'Balance (INR)', 'Payment Mode']);
 
-    fputcsv($out, [
-        $idx++,
-        $t['date'] ?? '',
-        $t['narration'] ?? '',
-        $t['reference'] ?? $t['transaction_id'] ?? '',
-        $type,
-        ($type === 'CREDIT' ? '+' : '-') . number_format($amt, 2),
-        $bal,
-        $t['mode_from_source'] ?? 'ELECTRONIC'
-    ]);
+    $idx = 1;
+    foreach ($transactions as $t) {
+        $rawAmt = (float)($t['amount'] ?? 0);
+        $type = $rawAmt >= 0 ? 'CREDIT' : 'DEBIT';
+        $amt = abs($rawAmt);
+        $bal = isset($t['balance']) ? number_format((float)$t['balance'], 2) : '';
+
+        fputcsv($out, [
+            $idx++,
+            $t['date'] ?? '',
+            $t['narration'] ?? '',
+            $t['reference'] ?? $t['transaction_id'] ?? '',
+            $type,
+            ($type === 'CREDIT' ? '+' : '-') . number_format($amt, 2),
+            $bal,
+            $t['mode_from_source'] ?? 'ELECTRONIC'
+        ]);
+    }
 }
 
 fclose($out);
