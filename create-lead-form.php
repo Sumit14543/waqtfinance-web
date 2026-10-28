@@ -5103,8 +5103,6 @@ function fetchAndApplyAaReport(txnId) {
         });
 }
 
-let currentStatementFilter = 'ALL';
-
 function applyAaVerifiedReport(data, txnId) {
     const model = data?.model || data?.data || data || {};
     
@@ -5810,7 +5808,7 @@ function handleStep5Continue() {
 }
 
 function handleStep4Continue() {
-    handleStep5Continue();
+    stepNext();
 }
 
 // ==========================================
