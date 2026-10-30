@@ -1912,10 +1912,36 @@ if ($totalPages < 1) $totalPages = 1;
         if (type === 'general') {
             let parsedDetails = '';
             let aaCardHtml = '';
+            let breCardHtml = '';
             try {
                 const details = JSON.parse(lead.loan_details || '{}');
                 const aaTxnId = details.account_aggregator_txn_id || details.aa_txn_id || '';
                 const isAa = details.account_aggregator_verified || aaTxnId;
+
+                if (details.bre_status || details.bre_approved_limit) {
+                    const isApproved = details.bre_status === 'APPROVED';
+                    const limit = parseFloat(details.bre_approved_limit || 0);
+                    const tenure = parseInt(details.bre_tenure_days || 0);
+                    const reasons = Array.isArray(details.bre_decline_reasons) ? details.bre_decline_reasons : [];
+                    
+                    breCardHtml = `
+                        <div class="info-card" style="border-left: 4px solid ${isApproved ? '#16a34a' : '#dc2626'}; background: ${isApproved ? '#f0fdf4' : '#fef2f2'}; margin-bottom: 15px;">
+                            <h3 class="card-title" style="color: ${isApproved ? '#166534' : '#991b1b'}; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <span><i class="fa-solid ${isApproved ? 'fa-certificate' : 'fa-triangle-exclamation'}"></i> Auto-Underwriting Decision: ${details.bre_status || 'N/A'}</span>
+                                ${isApproved ? `<span style="font-size:13.5px; font-weight:800; color:#15803d;">Pre-Approved Limit: ₹${limit.toLocaleString('en-IN')} | Tenure: ${Math.round(tenure/30)} Months (${tenure} Days)</span>` : ''}
+                            </h3>
+                            ${!isApproved && reasons.length > 0 ? `
+                                <div style="font-size:11.5px; color:#991b1b; margin-top:8px;">
+                                    <strong>Underwriting Referral Reasons:</strong>
+                                    <ul style="margin:4px 0 0 16px; padding:0;">
+                                        ${reasons.map(r => `<li>${r}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
                 if (isAa) {
                     const bName = details.bank_name || 'Bank Account';
                     const aNum = details.account_number || '';
@@ -2001,6 +2027,8 @@ if ($totalPages < 1) $totalPages = 1;
                         <div class="field-item" style="grid-column: span 2;"><div class="field-label">Requested Loan Amount</div><div class="field-value" style="font-weight:800; color:var(--accent); font-size: 15px;">₹${parseFloat(lead.loan_amount).toLocaleString('en-IN')}</div></div>
                     </div>
                 </div>
+
+                ${breCardHtml}
 
                 ${aaCardHtml}
 

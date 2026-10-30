@@ -2844,6 +2844,9 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     </h2>
                 </div>
 
+                <!-- BRE PRE-APPROVED SANCTION OFFER CARD (DYNAMIC STEP 6) -->
+                <div id="breStep6OfferCard" style="margin-bottom: 16px;"></div>
+
 
                 <div class="f-group">
                     <label class="f-label">Loan Product <span class="req">*</span></label>
@@ -5763,13 +5766,14 @@ function updateCibilBreBanner(bre) {
         banner.style.color = '#14532d';
         header.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> BRE Step 1: Credit Bureau Criteria Satisfied';
         details.innerHTML = `
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px; margin-top:4px;">
-                <span>âœ“ CRIF Score: <strong>${bre.score}</strong> (â‰¥600)</span>
-                <span>âœ“ Overdue: <strong>â‚¹${Number(bre.overdue).toLocaleString('en-IN')}</strong> (â‰¤â‚¹10,000)</span>
-                <span>âœ“ Last 3M DPD: <strong>${bre.dpd_3m} Days</strong> (0 Allowed)</span>
-                <span>âœ“ Last 6M DPD: <strong>${bre.dpd_6m} Days</strong> (â‰¤30 Allowed)</span>
-                <span>âœ“ 3Y Write-Offs: <strong>${bre.write_offs_count}</strong></span>
-                <span>âœ“ 3Y Settlements: <strong>${bre.settlements_count}</strong></span>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px; font-size:11.5px;">
+                <span><i class="fa-solid fa-check text-success"></i> Score: <strong>${bre.score}</strong> (≥600)</span>
+                <span><i class="fa-solid fa-check text-success"></i> Overdue: <strong>₹${Number(bre.overdue).toLocaleString('en-IN')}</strong> (≤₹10,000)</span>
+                <span><i class="fa-solid fa-check text-success"></i> Last 3M DPD: <strong>${bre.dpd_3m} Days</strong> (≤10 Allowed)</span>
+                <span><i class="fa-solid fa-check text-success"></i> Last 6M DPD: <strong>${bre.dpd_6m} Days</strong> (≤30 Allowed)</span>
+                <span><i class="fa-solid fa-check text-success"></i> Post-2024 Write-Off: <strong>${bre.write_offs_count || 0}</strong> (Zero Allowed)</span>
+                <span><i class="fa-solid fa-check text-success"></i> Post-2024 Settlement: <strong>${bre.settlements_count || 0}</strong> (Zero Allowed)</span>
+                <span><i class="fa-solid fa-check text-success"></i> Suit Filed: <strong>${bre.suit_filed_count || 0}</strong> (Zero Allowed)</span>
             </div>
         `;
     } else {
@@ -5896,61 +5900,158 @@ function handleStep4Continue() {
 // ==========================================
 function calculateApprovedOffer(monthlyTurnover) {
     const crif = state.breCreditCheck;
-    const eodSelect = document.getElementById('dailyEodBalanceSelect');
-    const eod = parseFloat(state.dailyEodBalance || (eodSelect ? eodSelect.value : 2500)) || 2500;
-    state.dailyEodBalance = eod;
     const declineReasons = [];
+    const passedChecklist = [];
 
-    // Step 1 â€“ CRIF Check:
-    // CRIF Score â‰¥ 600; Overdue â‰¤ â‚¹10,000; Last 3 Months â€“ No DPD; Last 6 Months â€“ Maximum 30 DPD; Last 3 Years â€“ No Write-Off and No Settlement.
+    // ----------------------------------------------------
+    // STEP 1: CIBIL / CREDIT BUREAU CRITERIA EVALUATION
+    // ----------------------------------------------------
+    // Policy Rules:
+    // a) Total Overdue <= ₹10,000
+    // b) Last 3 Months DPD <= 10 Days
+    // c) Last 6 Months DPD <= 30 Days
+    // d) Post-2024 Write-Off == 0
+    // e) Post-2024 Settlement == 0
+    // f) Suit Filed / Wilful Default == 0
+    // g) Credit Score >= 600 (or clean NTC profile)
+
     let crifPassed = false;
-    if (!crif) {
-        if (state.cibilScore && state.cibilScore >= 600) {
-            crifPassed = true;
-        } else {
-            declineReasons.push("CRIF Score below 600 (Current Score: " + (state.cibilScore ? state.cibilScore : "NTC/0") + ")");
-        }
-    } else {
+    if (crif) {
         if (!crif.passed) {
             (crif.decline_reasons || []).forEach(r => declineReasons.push(r));
         } else {
             crifPassed = true;
         }
+    } else if (state.cibilScore !== null) {
+        if (state.cibilScore >= 600) {
+            crifPassed = true;
+        } else if (state.cibilScore > 0) {
+            declineReasons.push("Credit Score below 600 (Current Score: " + state.cibilScore + ", Min 600 required)");
+        }
     }
 
-    // Step 2 â€“ Banking Check:
-    // Minimum Daily EOD Balance â‰¥ â‚¹1,500. Banking credits assessed based on UPI credits only.
-    let bankingPassed = false;
-    if (eod < 1500) {
-        declineReasons.push("Daily EOD Balance below â‚¹1,500 (Current: â‚¹" + eod.toLocaleString('en-IN') + ", Minimum â‚¹1,500 required under BRE policy)");
-    } else {
-        bankingPassed = true;
+    // ----------------------------------------------------
+    // STEP 2: BANKING CRITERIA - EMI BOUNCES CHECK (Max 6)
+    // ----------------------------------------------------
+    // Policy Rule: EMI / Cheque / ECS bounces <= 6
+    let totalBounces = 0;
+    const aa = state.aaData || {};
+    const txns = Array.isArray(aa.transactions) ? aa.transactions : [];
+
+    // Check 1: Digitap Analysis Data Overall Bounces
+    const ov = aa.analysis_data?.Overall || {};
+    const digitapBounces = (parseInt(ov['Total No. of EMI Bounces'], 10) || 0)
+        + (parseInt(ov['Total No.of I / W Bounced'], 10) || 0)
+        + (parseInt(ov['Total No. of I/W ECS Bounced'], 10) || 0)
+        + (parseInt(ov['Total No. of I/W Chq Bounced'], 10) || 0)
+        + (parseInt(ov['Total No of Payment Bounce Charges'], 10) || 0);
+
+    // Check 2: Actual transaction narrations (debits only)
+    let txnBounces = 0;
+    txns.forEach(t => {
+        const rawAmt = parseFloat(t.amount) || 0;
+        if (rawAmt < 0) {
+            const narr = ((t.narration || '') + ' ' + (t.category || '')).toLowerCase();
+            if (
+                narr.includes('bounce') ||
+                narr.includes('ecs ret') ||
+                narr.includes('nach ret') ||
+                narr.includes('inw ret') ||
+                narr.includes('ret chq') ||
+                narr.includes('chq ret') ||
+                narr.includes('insufficient fund') ||
+                narr.includes('return charge')
+            ) {
+                txnBounces++;
+            }
+        }
+    });
+
+    totalBounces = Math.max(digitapBounces, txnBounces);
+
+    let bankingBouncesPassed = true;
+    if (totalBounces > 6) {
+        bankingBouncesPassed = false;
+        declineReasons.push("EMI / Debit bounces in bank account exceed policy limit of 6 (Total Bounces: " + totalBounces + ", Max 6 allowed)");
     }
 
-    // Step 3 â€“ Loan Amount & Tenure Matrix:
-    // Daily EOD >= 1,500 -> Max Loan: â‚¹60,000, Max Tenure: 120 Days
-    // Daily EOD >= 2,000 -> Max Loan: â‚¹70,000, Max Tenure: 150 Days
-    // Daily EOD >= 2,500 -> Max Loan: â‚¹75,000, Max Tenure: 180 Days
-    // Daily EOD >= 3,000 -> Max Loan: â‚¹1,00,000, Max Tenure: 180 Days
-    // Daily EOD >= 5,000 -> Max Loan: â‚¹2,00,000, Max Tenure: 240 Days
+    // ----------------------------------------------------
+    // STEP 3: ACCOUNT AGGREGATOR (AA) DAILY INFLOW MATRIX
+    // ----------------------------------------------------
+    // Policy Slabs:
+    // - Slab 4: Daily Inflow >= ₹5,000 -> ₹1,50,000 for 8 Months (240 Days)
+    // - Slab 3: Daily Inflow ₹3,000 to ₹5,000 -> ₹1,00,000 for 7 Months (210 Days)
+    // - Slab 2: Daily Inflow ₹2,000 to ₹3,000 -> ₹60,000 for 6 Months (180 Days)
+    // - Slab 1: Daily Inflow ₹1,000 to ₹2,000 (>= 78 times in 90D/stmt) -> ₹50,000 for 5 Months (150 Days)
+
     let maxLoan = 0;
     let maxTenureDays = 0;
-    if (crifPassed && bankingPassed) {
-        if (eod >= 5000) {
-            maxLoan = 200000;
-            maxTenureDays = 240;
-        } else if (eod >= 3000) {
-            maxLoan = 100000;
-            maxTenureDays = 180;
-        } else if (eod >= 2500) {
-            maxLoan = 75000;
-            maxTenureDays = 180;
-        } else if (eod >= 2000) {
-            maxLoan = 70000;
-            maxTenureDays = 150;
-        } else if (eod >= 1500) {
-            maxLoan = 60000;
-            maxTenureDays = 120;
+    let tierLabel = '';
+
+    const dailyList = computeDailyCreditSummary(txns);
+    const stmtCreditDays = dailyList.filter(row => row.creditTotal > 0).length;
+
+    // 90-Day period calculation from latest transaction date
+    let maxDateStr = '';
+    txns.forEach(t => {
+        const d = (t.date || '').slice(0, 10);
+        if (d && (!maxDateStr || d > maxDateStr)) maxDateStr = d;
+    });
+
+    const maxTs = maxDateStr ? new Date(maxDateStr + 'T23:59:59').getTime() : Date.now();
+    const cutoff90Ms = maxTs - (90 * 24 * 60 * 60 * 1000);
+
+    let count90d1k = 0;
+    let count90d2k = 0;
+    let count90d3k = 0;
+    let count90d5k = 0;
+    let count90dTotalCredits = 0;
+    let sum90dCredits = 0;
+
+    dailyList.forEach(row => {
+        const rowTs = new Date(row.date + 'T00:00:00').getTime();
+        if (rowTs >= cutoff90Ms) {
+            if (row.creditTotal > 0) {
+                count90dTotalCredits++;
+                sum90dCredits += row.creditTotal;
+            }
+            if (row.creditTotal >= 1000) count90d1k++;
+            if (row.creditTotal >= 2000) count90d2k++;
+            if (row.creditTotal >= 3000) count90d3k++;
+            if (row.creditTotal >= 5000) count90d5k++;
+        }
+    });
+
+    const stmtDays1k = dailyList.filter(r => r.creditTotal >= 1000).length;
+    const stmtDays2k = dailyList.filter(r => r.creditTotal >= 2000).length;
+    const stmtDays3k = dailyList.filter(r => r.creditTotal >= 3000).length;
+    const stmtDays5k = dailyList.filter(r => r.creditTotal >= 5000).length;
+
+    const avgDailyCredit = count90dTotalCredits > 0 ? (sum90dCredits / count90dTotalCredits) : 0;
+
+    if (count90d5k >= 8 || stmtDays5k >= 10 || avgDailyCredit >= 5000) {
+        // Slab 4: ₹5,000+ per day -> 1.50 Lakh for 8 Months
+        maxLoan = 150000;
+        maxTenureDays = 240; // 8 Months
+        tierLabel = '₹5,000+ Daily Inflow (Slab 4)';
+    } else if (count90d3k >= 8 || stmtDays3k >= 12 || avgDailyCredit >= 3000 || (count90d2k >= 15 && avgDailyCredit >= 2500)) {
+        // Slab 3: ₹3,000 to ₹5,000 per day -> 1.0 Lakh for 7 Months
+        maxLoan = 100000;
+        maxTenureDays = 210; // 7 Months
+        tierLabel = '₹3,000 - ₹5,000 Daily Inflow (Slab 3)';
+    } else if (count90d2k >= 10 || stmtDays2k >= 15 || avgDailyCredit >= 2000) {
+        // Slab 2: ₹2,000 to ₹3,000 per day -> 60k for 6 Months
+        maxLoan = 60000;
+        maxTenureDays = 180; // 6 Months
+        tierLabel = '₹2,000 - ₹3,000 Daily Inflow (Slab 2)';
+    } else if (count90d1k >= 78 || stmtDays1k >= 78 || stmtCreditDays >= 78 || (count90d1k >= 20 && avgDailyCredit >= 1000)) {
+        // Slab 1: ₹1,000 to ₹2,000 per day (>= 78 times / days) -> 50,000 for 5 Months
+        maxLoan = 50000;
+        maxTenureDays = 150; // 5 Months
+        tierLabel = '₹1,000 - ₹2,000 Daily Inflow (78+ Occurrences)';
+    } else {
+        if (state.aaVerified && txns.length > 0) {
+            declineReasons.push("Daily credit frequency does not meet minimum policy criteria: Minimum ₹1,000+ daily credit frequency with 78 credit occurrences required for sanction (Current 90D ₹1k+ days: " + count90d1k + ", Statement credit days: " + stmtCreditDays + ")");
         }
     }
 
@@ -5961,10 +6062,10 @@ function calculateApprovedOffer(monthlyTurnover) {
     state.breDeclineReasons = declineReasons;
     state.approvedLimit = maxLoan;
 
-    updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReasons);
+    updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, declineReasons, totalBounces);
 }
 
-function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReasons) {
+function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, declineReasons, totalBounces) {
     const cardEl = document.getElementById('breStep6OfferCard');
     const loanAmtInput = document.getElementById('loanAmount');
     const chipsWrap = document.querySelector('#pane6 .quick-chips-wrap');
@@ -5973,35 +6074,46 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
 
     if (isApproved) {
         cardEl.innerHTML = `
-            <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden;">
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #86efac; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden; box-shadow: 0 4px 14px rgba(22, 101, 52, 0.08);">
                 <div style="position:absolute; top:0; left:0; right:0; height:3px; background:var(--brand-dual-gradient);"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
                     <span style="display:inline-flex; align-items:center; gap:5px; background:#166534; color:#ffffff; font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:0.3px;">
-                        <i class="fa-solid fa-certificate"></i> In-Principle Sanction (BRE Approved)
+                        <i class="fa-solid fa-certificate"></i> In-Principle Sanction (Policy Approved)
                     </span>
                     <span style="font-size:10.5px; color:#15803d; font-weight:700;">Valid for 30 Days</span>
                 </div>
-                <div style="font-size:10.5px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Max Approved Loan Limit</div>
-                <div style="font-size:26px; font-weight:900; color:#14532d; letter-spacing:-0.5px; margin:2px 0 8px 0;" id="approvedLimitVal">
-                    â‚¹ ${maxLoan.toLocaleString('en-IN')}
+                <div style="font-size:10.5px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Pre-Approved Loan Limit</div>
+                <div style="font-size:28px; font-weight:900; color:#14532d; letter-spacing:-0.5px; margin:2px 0 8px 0;" id="approvedLimitVal">
+                    ₹ ${maxLoan.toLocaleString('en-IN')}
                 </div>
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; font-size:11px;">
+                
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; font-size:11px; margin-bottom:8px;">
                     <div>
                         <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Rate of Interest</span>
                         <strong style="color:var(--slate-900);">1.15% per month</strong>
                     </div>
                     <div>
-                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Max Tenure Offered</span>
-                        <strong style="color:var(--slate-900);">${maxTenureDays} Days (~${Math.round(maxTenureDays / 30)} Months)</strong>
+                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Approved Tenure</span>
+                        <strong style="color:#15803d; font-weight:800;">${Math.round(maxTenureDays / 30)} Months (${maxTenureDays} Days)</strong>
                     </div>
                     <div>
-                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Assessed Daily EOD</span>
-                        <strong style="color:var(--slate-900);">â‚¹ ${Number(eod).toLocaleString('en-IN')}</strong>
+                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Approved Inflow Tier</span>
+                        <strong style="color:#0284c7;">${tierLabel || 'Daily Inflow Tier'}</strong>
                     </div>
                     <div>
                         <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Disbursal TAT</span>
                         <strong style="color:#15803d;">Within 24 Hours</strong>
                     </div>
+                </div>
+
+                <!-- Underwriting Verification Badges -->
+                <div style="display:flex; flex-wrap:wrap; gap:4px; font-size:10px;">
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Overdue ≤ ₹10k</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 3M DPD ≤ 10</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 6M DPD ≤ 30</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Post-2024 Settlement/WO</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Suit Filed</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> EMI Bounces: ${totalBounces || 0}/6</span>
                 </div>
             </div>
         `;
@@ -6018,14 +6130,13 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
         // Dynamically populate quick chips up to max loan
         if (chipsWrap) {
             let chips = [];
-            if (maxLoan >= 200000) chips = [60000, 75000, 100000, 200000];
-            else if (maxLoan >= 100000) chips = [50000, 60000, 75000, 100000];
-            else if (maxLoan >= 75000) chips = [40000, 50000, 60000, 75000];
-            else if (maxLoan >= 70000) chips = [35000, 50000, 60000, 70000];
-            else chips = [30000, 40000, 50000, 60000];
+            if (maxLoan >= 150000) chips = [50000, 75000, 100000, 150000];
+            else if (maxLoan >= 100000) chips = [40000, 60000, 80000, 100000];
+            else if (maxLoan >= 60000) chips = [30000, 40000, 50000, 60000];
+            else chips = [20000, 30000, 40000, 50000];
 
             chipsWrap.innerHTML = chips.map(amt => `
-                <span class="amt-chip ${amt === maxLoan ? 'active' : ''}" onclick="setQuickAmt(${amt})">â‚¹${amt >= 100000 ? (amt/100000) + ' Lakh' : (amt/1000) + 'k'}</span>
+                <span class="amt-chip ${amt === maxLoan ? 'active' : ''}" onclick="setQuickAmt(${amt})">₹${amt >= 100000 ? (amt/100000) + ' Lakh' : (amt/1000) + 'k'}</span>
             `).join('');
         }
     } else {
@@ -6046,7 +6157,7 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
                     <span style="font-size:10.5px; color:#b91c1c; font-weight:700;">Manual Review</span>
                 </div>
                 <div style="font-size:12px; font-weight:800; color:#991b1b; margin-bottom:4px;">
-                    Preliminary Auto-Sanction Declined Under BRE Policy
+                    Preliminary Auto-Sanction Not Eligible Under Standard Policy
                 </div>
                 <div style="font-size:11px; color:#7f1d1d; margin-bottom:8px;">
                     Applicant does not satisfy one or more automatic credit or banking policy parameters:
@@ -6069,10 +6180,10 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, eod, declineReason
 
         if (chipsWrap) {
             chipsWrap.innerHTML = `
-                <span class="amt-chip" onclick="setQuickAmt(50000)">â‚¹50k</span>
-                <span class="amt-chip active" onclick="setQuickAmt(100000)">â‚¹1 Lakh</span>
-                <span class="amt-chip" onclick="setQuickAmt(200000)">â‚¹2 Lakh</span>
-                <span class="amt-chip" onclick="setQuickAmt(300000)">â‚¹3 Lakh</span>
+                <span class="amt-chip" onclick="setQuickAmt(50000)">₹50k</span>
+                <span class="amt-chip active" onclick="setQuickAmt(100000)">₹1 Lakh</span>
+                <span class="amt-chip" onclick="setQuickAmt(200000)">₹2 Lakh</span>
+                <span class="amt-chip" onclick="setQuickAmt(300000)">₹3 Lakh</span>
             `;
         }
     }

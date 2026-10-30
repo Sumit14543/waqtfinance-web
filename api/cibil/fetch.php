@@ -522,9 +522,10 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
     $maxDpd6m = 0;
     $writeOffAccounts = [];
     $settlementAccounts = [];
+    $suitFiledAccounts = [];
 
-    $now = time();
-    $threeYearsAgo = strtotime('-3 years', $now);
+    // Underwriting Rule: No Write-off or Settlement after 2024
+    $since2024 = strtotime('2024-01-01 00:00:00');
 
     foreach ($tradelines as $t) {
         $od = (float)str_replace(',', '', (string)($t['OVERDUE-AMT'] ?? '0'));
@@ -546,7 +547,7 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
         $closedDateStr = trim((string)($t['CLOSED-DT'] ?? ''));
         $reportedDateStr = trim((string)($t['REPORTED-DT'] ?? ''));
 
-        // Check if write-off reported in last 3 years
+        // Check if write-off reported after 2024
         $isWriteOff = false;
         if (strpos($wosStatus, 'write') !== false || strpos($wosStatus, 'written') !== false || strpos($acctStatus, 'write') !== false || strpos($acctStatus, 'written') !== false || $woAmt > 0 || $pWoAmt > 0) {
             $isWriteOff = true;
@@ -558,13 +559,15 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
                 $woTimestamp = strtotime($woDateStr);
             } elseif (!empty($reportedDateStr)) {
                 $woTimestamp = strtotime($reportedDateStr);
+            } elseif (!empty($closedDateStr)) {
+                $woTimestamp = strtotime($closedDateStr);
             }
-            if ($woTimestamp === false || $woTimestamp === null || $woTimestamp >= $threeYearsAgo) {
+            if ($woTimestamp === false || $woTimestamp === null || $woTimestamp >= $since2024) {
                 $writeOffAccounts[] = $lenderLabel;
             }
         }
 
-        // Check if settlement reported in last 3 years
+        // Check if settlement reported after 2024
         $isSettled = false;
         if (strpos($wosStatus, 'settle') !== false || strpos($acctStatus, 'settle') !== false || $settleAmt > 0) {
             $isSettled = true;
@@ -576,10 +579,33 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
                 $settleTimestamp = strtotime($closedDateStr);
             } elseif (!empty($reportedDateStr)) {
                 $settleTimestamp = strtotime($reportedDateStr);
+            } elseif (!empty($woDateStr)) {
+                $settleTimestamp = strtotime($woDateStr);
             }
-            if ($settleTimestamp === false || $settleTimestamp === null || $settleTimestamp >= $threeYearsAgo) {
+            if ($settleTimestamp === false || $settleTimestamp === null || $settleTimestamp >= $since2024) {
                 $settlementAccounts[] = $lenderLabel;
             }
+        }
+
+        // Suit Filed / Wilful Default Check
+        $suitStatus = strtolower(trim((string)($t['SUIT-FILED-STATUS'] ?? $t['SUIT-FILED-WILFUL-DEFAULT'] ?? $t['SUIT-FILED'] ?? '')));
+        $wilfulStatus = strtolower(trim((string)($t['WILFUL-DEFAULT-STATUS'] ?? $t['WILFUL-DEFAULT'] ?? '')));
+        $isSuit = false;
+        if (!empty($suitStatus) && !in_array($suitStatus, ['00', '0', 'none', 'no', 'no suit filed', 'false', 'n/a'], true)) {
+            if (strpos($suitStatus, 'suit') !== false || strpos($suitStatus, 'wilful') !== false || $suitStatus === 'yes' || $suitStatus === '01' || $suitStatus === '02') {
+                $isSuit = true;
+            }
+        }
+        if (!empty($wilfulStatus) && !in_array($wilfulStatus, ['00', '0', 'none', 'no', 'false', 'n/a'], true)) {
+            if (strpos($wilfulStatus, 'wilful') !== false || strpos($wilfulStatus, 'yes') !== false || $wilfulStatus === '01') {
+                $isSuit = true;
+            }
+        }
+        if (strpos($acctStatus, 'suit') !== false || strpos($acctStatus, 'wilful') !== false) {
+            $isSuit = true;
+        }
+        if ($isSuit) {
+            $suitFiledAccounts[] = $lenderLabel;
         }
 
         // Payment History for DPD
@@ -619,11 +645,11 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
 
     $overdueToUse = max($totalOverdueFromSummary, $sumTradelineOverdue);
     if ($overdueToUse > 10000) {
-        $declineReasons[] = "Overdue above ₹10,000 (Current Overdue: ₹" . number_format($overdueToUse) . ")";
+        $declineReasons[] = "Total Overdue above ₹10,000 (Current Overdue: ₹" . number_format($overdueToUse) . ", Max ₹10,000 allowed)";
     }
 
-    if ($maxDpd3m > 0) {
-        $declineReasons[] = "Any DPD in the last 3 months (Max DPD in 3M: $maxDpd3m days, No DPD Allowed)";
+    if ($maxDpd3m > 10) {
+        $declineReasons[] = "DPD above 10 days in the last 3 months (Max DPD in 3M: $maxDpd3m days, Max 10 allowed)";
     }
 
     if ($maxDpd6m > 30) {
@@ -632,12 +658,17 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
 
     if (count($writeOffAccounts) > 0) {
         $uniqueWo = array_unique($writeOffAccounts);
-        $declineReasons[] = "Write-Off reported during the last 3 years (" . count($uniqueWo) . " account: " . implode(', ', array_slice($uniqueWo, 0, 2)) . ")";
+        $declineReasons[] = "Loan Write-Off reported after 2024 (" . count($uniqueWo) . " account: " . implode(', ', array_slice($uniqueWo, 0, 2)) . ", Zero Write-Off allowed since 2024)";
     }
 
     if (count($settlementAccounts) > 0) {
         $uniqueSt = array_unique($settlementAccounts);
-        $declineReasons[] = "Settlement reported during the last 3 years (" . count($uniqueSt) . " account: " . implode(', ', array_slice($uniqueSt, 0, 2)) . ")";
+        $declineReasons[] = "Loan Settlement reported after 2024 (" . count($uniqueSt) . " account: " . implode(', ', array_slice($uniqueSt, 0, 2)) . ", Zero Settlement allowed since 2024)";
+    }
+
+    if (count($suitFiledAccounts) > 0) {
+        $uniqueSuit = array_unique($suitFiledAccounts);
+        $declineReasons[] = "Suit Filed / Wilful Default reported (" . count($uniqueSuit) . " account: " . implode(', ', array_slice($uniqueSuit, 0, 2)) . ", Zero Suit Filed allowed)";
     }
 
     $isPassed = empty($declineReasons);
@@ -650,13 +681,15 @@ function evaluateCrifBre(array $parsedData, ?int $bureauScore, float $totalOverd
         'overdue' => $overdueToUse,
         'overdue_passed' => $overdueToUse <= 10000,
         'dpd_3m' => $maxDpd3m,
-        'dpd_3m_passed' => $maxDpd3m === 0,
+        'dpd_3m_passed' => $maxDpd3m <= 10,
         'dpd_6m' => $maxDpd6m,
         'dpd_6m_passed' => $maxDpd6m <= 30,
         'write_offs_count' => count($writeOffAccounts),
         'write_offs_passed' => count($writeOffAccounts) === 0,
         'settlements_count' => count($settlementAccounts),
         'settlements_passed' => count($settlementAccounts) === 0,
+        'suit_filed_count' => count($suitFiledAccounts),
+        'suit_filed_passed' => count($suitFiledAccounts) === 0,
         'decline_reasons' => $declineReasons
     ];
 }

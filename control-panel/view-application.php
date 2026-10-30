@@ -1214,6 +1214,36 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                             </div>
                         </div>
                         <?php endif; ?>
+
+                        <?php if (!empty($leadExtra['bre_status']) || !empty($leadExtra['bre_approved_limit'])): 
+                            $isBreApprv = ($leadExtra['bre_status'] ?? '') === 'APPROVED';
+                            $breLimit = (float)($leadExtra['bre_approved_limit'] ?? 0);
+                            $breTenure = (int)($leadExtra['bre_tenure_days'] ?? 0);
+                            $breReasons = $leadExtra['bre_decline_reasons'] ?? [];
+                        ?>
+                        <div class="field-item" style="grid-column: span 2; background: <?php echo $isBreApprv ? '#f0fdf4' : '#fef2f2'; ?>; border: 1.5px solid <?php echo $isBreApprv ? '#86efac' : '#fca5a5'; ?>; border-radius: 8px; padding: 12px; margin-top: 10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <span class="badge" style="background:<?php echo $isBreApprv ? '#166534' : '#991b1b'; ?>; color:#fff; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:700;">
+                                    <i class="fa-solid <?php echo $isBreApprv ? 'fa-certificate' : 'fa-triangle-exclamation'; ?>"></i> Auto-Underwriting Decision: <?php echo htmlspecialchars((string)($leadExtra['bre_status'] ?? 'N/A')); ?>
+                                </span>
+                                <?php if ($isBreApprv): ?>
+                                    <span style="font-size:13px; font-weight:800; color:#15803d;">
+                                        Pre-Approved Limit: ₹<?php echo number_format($breLimit); ?> | Tenure: <?php echo round($breTenure/30); ?> Months (<?php echo $breTenure; ?> Days)
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <?php if (!$isBreApprv && !empty($breReasons)): ?>
+                                <div style="margin-top:8px; font-size:11.5px; color:#991b1b;">
+                                    <strong>Underwriting Referral Reasons:</strong>
+                                    <ul style="margin:4px 0 0 16px; padding:0;">
+                                        <?php foreach ((array)$breReasons as $r): ?>
+                                            <li><?php echo htmlspecialchars((string)$r); ?></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
