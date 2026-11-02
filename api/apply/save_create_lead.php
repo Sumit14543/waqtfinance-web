@@ -25,10 +25,22 @@ $rawJson = file_get_contents('php://input');
 $jsonBody = json_decode($rawJson, true) ?: [];
 $data = !empty($jsonBody) ? $jsonBody : $_POST;
 
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('save_lead_ip', $clientIp, 8, 900, 'Too many lead submissions from your network. Please wait a few minutes.');
+}
+
 $fullName = lead_clean($data['full_name'] ?? '');
 $mobile = preg_replace('/\D/', '', lead_clean($data['mobile'] ?? ''));
 $email = strtolower(lead_clean($data['email'] ?? ''));
 $pan = strtoupper(lead_clean($data['pan'] ?? ''));
+
+if (!empty($mobile) && function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('save_lead_mobile', $mobile, 3, 3600, 'Application submission limit reached for this mobile number. Please try again later.');
+}
+if (!empty($pan) && function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('save_lead_pan', $pan, 3, 3600, 'Application submission limit reached for this PAN. Please try again later.');
+}
 $aadhaarRaw = preg_replace('/\D/', '', lead_clean($data['aadhaar'] ?? ''));
 $gst = strtoupper(lead_clean($data['gst'] ?? ''));
 $udyam = strtoupper(lead_clean($data['udyam'] ?? ''));

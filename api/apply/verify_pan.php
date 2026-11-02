@@ -12,12 +12,18 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     exit;
 }
 
+$clientIp = waqt_client_ip();
+waqt_enforce_rate_limit('verify_pan_ip', $clientIp, 10, 600, 'Too many PAN verification requests from your network. Please wait a few minutes.');
+
 $pan = strtoupper(trim($_POST['pan'] ?? ''));
 
 if (!preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $pan)) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid PAN format (e.g. ABCDE1234F)']);
     exit;
 }
+
+// Enforce per-PAN rate limit (Max 5 checks per 15 mins)
+waqt_enforce_rate_limit('verify_pan_num', $pan, 5, 900, 'Verification limit reached for this PAN. Please wait a few minutes before trying again.');
 
 $payload = [
     'PAN_Number' => $pan,

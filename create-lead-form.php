@@ -3678,6 +3678,9 @@ function triggerSendOtp(isResend) {
     errBox.style.display = 'none';
     modalErrBox.style.display = 'none';
 
+    if (state.otpSending) return;
+    state.otpSending = true;
+
     if (!isResend) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Sending OTP...';
@@ -3697,6 +3700,7 @@ function triggerSendOtp(isResend) {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(data => {
+        state.otpSending = false;
         btn.disabled = false;
         btn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right"></i>';
 
@@ -3719,6 +3723,7 @@ function triggerSendOtp(isResend) {
         }
     })
     .catch(() => {
+        state.otpSending = false;
         btn.disabled = false;
         btn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right"></i>';
         showErr(errBox, 'Network issue connecting to OTP service.');
@@ -3833,6 +3838,9 @@ function submitOtpVerification() {
         return;
     }
 
+    if (state.otpVerifying) return;
+    state.otpVerifying = true;
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Verifying...';
 
@@ -3848,6 +3856,7 @@ function submitOtpVerification() {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(data => {
+        state.otpVerifying = false;
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify &amp; Proceed';
 
@@ -3869,6 +3878,7 @@ function submitOtpVerification() {
         }
     })
     .catch(() => {
+        state.otpVerifying = false;
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Verify &amp; Proceed';
         showErr(modalErrBox, 'Verification server connection error.');
@@ -3935,6 +3945,9 @@ function verifyPanAPI(userTriggered = false) {
         return;
     }
 
+    if (state.panVerifying) return;
+    state.panVerifying = true;
+
     setFieldStatus('pan', 'loading');
 
     const fd = new FormData();
@@ -3948,6 +3961,7 @@ function verifyPanAPI(userTriggered = false) {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(data => {
+        state.panVerifying = false;
         if (data.status === 'success') {
             state.panData = data;
             lastVerifiedPan = pan;
@@ -4001,6 +4015,7 @@ function verifyPanAPI(userTriggered = false) {
         }
     })
     .catch(() => {
+        state.panVerifying = false;
         setFieldStatus('pan', 'idle');
         showErr(errBox, 'PAN service connectivity error.');
     });
@@ -4302,6 +4317,9 @@ function fetchCibilScore() {
         return;
     }
 
+    if (state.cibilFetching) return;
+    state.cibilFetching = true;
+
     const actionBox = document.getElementById('cibilActionBox');
     const loadingBox = document.getElementById('cibilLoadingBox');
     const resultBox = document.getElementById('cibilResultBox');
@@ -4357,6 +4375,7 @@ function fetchCibilScore() {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(data => {
+        state.cibilFetching = false;
         clearTimeout(timer1);
         if (data.status === 'success') {
             const isNtc = !!data.is_ntc || data.score_display === 'NTC';
@@ -4508,6 +4527,7 @@ function fetchCibilScore() {
         }
     })
     .catch(() => {
+        state.cibilFetching = false;
         clearTimeout(timer1);
         if (loadingBox) loadingBox.style.display = 'none';
         if (actionBox) actionBox.style.display = 'block';
@@ -4658,6 +4678,9 @@ function verifyBusinessAPI(type) {
         return;
     }
 
+    if (state[type + 'Verifying']) return;
+    state[type + 'Verifying'] = true;
+
     setFieldStatus(type, 'loading');
 
     const fd = new FormData();
@@ -4672,6 +4695,7 @@ function verifyBusinessAPI(type) {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(data => {
+        state[type + 'Verifying'] = false;
         if (data.status === 'success') {
             setFieldStatus(type, 'success');
             if (isGst) {
@@ -4695,6 +4719,7 @@ function verifyBusinessAPI(type) {
         }
     })
     .catch(() => {
+        state[type + 'Verifying'] = false;
         setFieldStatus(type, 'idle');
         showErr(errBox, 'Business verification service error.');
     });
@@ -5035,6 +5060,9 @@ function requestAaOtp() {
     if (errAlert) errAlert.style.display = 'none';
     if (mobInp) mobInp.style.borderColor = '';
 
+    if (state.aaStarting) return;
+    state.aaStarting = true;
+
     const phoneDisp = document.getElementById('aaOtpPhoneDisplay');
     if (phoneDisp) phoneDisp.innerText = '+91 ' + enteredMob;
 
@@ -5059,6 +5087,7 @@ function requestAaOtp() {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(res => {
+        state.aaStarting = false;
         if (res.status === 'success' && res.url) {
             // Live Digitap Session Generated!
             currentDigitapAaUrl = res.url;
@@ -5091,6 +5120,7 @@ function requestAaOtp() {
         }
     })
     .catch(err => {
+        state.aaStarting = false;
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Proceed to Bank Verification';
         console.error('Digitap Bank Data API error:', err);
@@ -6314,6 +6344,9 @@ function submitFinalLead() {
         return;
     }
 
+    if (state.leadSubmitting) return;
+    state.leadSubmitting = true;
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Submitting...';
 
@@ -6373,6 +6406,7 @@ function submitFinalLead() {
     })
     .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
     .then(data => {
+        state.leadSubmitting = false;
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Submit Application';
 
@@ -6420,6 +6454,7 @@ function submitFinalLead() {
         }
     })
     .catch(() => {
+        state.leadSubmitting = false;
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Submit &amp; Claim Offer';
         alert('Server connection error. Please try again.');

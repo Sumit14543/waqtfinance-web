@@ -51,13 +51,22 @@ $stateName = trim((string)($input['state'] ?? ''));
 $pincode = trim((string)($input['pincode'] ?? ''));
 $gender = trim((string)($input['gender'] ?? 'Male'));
 
-// 2. Validation & Normalization Rules
+// 2. Validation & Normalization Rules & Rate Limiting
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('cibil_fetch_ip', $clientIp, 8, 3600, 'Too many credit report requests from your network. Please try again after 1 hour.');
+}
 
 // PAN Validation: Must be 10 characters uppercase /^[A-Z]{5}[0-9]{4}[A-Z]$/
 if (!preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]$/', $pan)) {
     http_response_code(422);
     echo json_encode(['status' => 'error', 'message' => 'Invalid PAN number format. Example: ABCDE1234F']);
     exit;
+}
+
+if (function_exists('waqt_enforce_rate_limit')) {
+    // Max 3 bureau pulls per 24 hours per PAN
+    waqt_enforce_rate_limit('cibil_fetch_pan', $pan, 3, 86400, 'Credit report inquiry limit reached for this PAN for today. Please try again tomorrow.');
 }
 
 // Mobile Normalization: strip non-digits, remove +91 or leading 0, exact 10 digits
@@ -71,6 +80,11 @@ if (!preg_match('/^[6-9][0-9]{9}$/', $mobile)) {
     http_response_code(422);
     echo json_encode(['status' => 'error', 'message' => 'Invalid 10-digit mobile number. Must start with 6, 7, 8, or 9.']);
     exit;
+}
+
+if (function_exists('waqt_enforce_rate_limit')) {
+    // Max 4 bureau pulls per 24 hours per Mobile
+    waqt_enforce_rate_limit('cibil_fetch_mobile', $mobile, 4, 86400, 'Credit report inquiry limit reached for this mobile number for today.');
 }
 
 // Date of Birth: Must strictly be DD-MM-YYYY

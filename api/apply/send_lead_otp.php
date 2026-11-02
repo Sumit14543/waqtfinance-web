@@ -14,6 +14,9 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     exit;
 }
 
+$clientIp = waqt_client_ip();
+waqt_enforce_rate_limit('send_lead_otp_ip', $clientIp, 8, 600, 'Too many OTP requests from your network. Please wait a few minutes before trying again.');
+
 $mobileRaw = trim((string) ($_POST['mobile'] ?? ''));
 $mobile = preg_replace('/\D/', '', $mobileRaw);
 
@@ -21,6 +24,9 @@ if (!preg_match('/^[6-9]\d{9}$/', $mobile)) {
     echo json_encode(['status' => 'error', 'message' => 'Please enter a valid 10-digit mobile number.']);
     exit;
 }
+
+// Enforce per-mobile rate limit (Max 5 OTPs per hour)
+waqt_enforce_rate_limit('send_lead_otp_mobile', $mobile, 5, 3600, 'Maximum OTP limit reached for this mobile number. Please try again after 1 hour.');
 
 $isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true) || (env_value('APP_ENV') === 'local');
 

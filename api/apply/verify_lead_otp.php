@@ -14,6 +14,9 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     exit;
 }
 
+$clientIp = waqt_client_ip();
+waqt_enforce_rate_limit('verify_lead_otp_ip', $clientIp, 20, 600, 'Too many verification attempts from your network. Please wait a few minutes.');
+
 $mobile = preg_replace('/\D/', '', trim((string) ($_POST['mobile'] ?? '')));
 $otp = trim((string) ($_POST['otp'] ?? ''));
 
@@ -21,6 +24,9 @@ if (!preg_match('/^[6-9]\d{9}$/', $mobile)) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid mobile number.']);
     exit;
 }
+
+// Enforce per-mobile rate limit (Max 6 verification attempts per 10 mins)
+waqt_enforce_rate_limit('verify_lead_otp_mobile', $mobile, 6, 600, 'Too many invalid attempts for this number. Please request a new OTP after some time.');
 
 if (!preg_match('/^\d{6}$/', $otp)) {
     echo json_encode(['status' => 'error', 'message' => 'Please enter a valid 6-digit OTP.']);

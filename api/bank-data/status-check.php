@@ -20,6 +20,11 @@ $rawInput = file_get_contents('php://input');
 $jsonBody = json_decode((string)$rawInput, true) ?: [];
 $requestId = trim((string)($_GET['request_id'] ?? $jsonBody['request_id'] ?? $_POST['request_id'] ?? ($_SESSION['digitap_aa_request_id'] ?? '')));
 
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('bank_data_status_check_ip', $clientIp, 60, 60, 'Status polling limit reached. Please wait a moment.');
+}
+
 if (empty($requestId)) {
     http_response_code(400);
     echo json_encode([

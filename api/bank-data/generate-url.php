@@ -20,7 +20,16 @@ $rawInput = file_get_contents('php://input');
 $jsonBody = json_decode((string)$rawInput, true) ?: [];
 $data = !empty($jsonBody) ? $jsonBody : $_POST;
 
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('bank_data_generate_url_ip', $clientIp, 10, 900, 'Too many Account Aggregator session requests from your network. Please wait a few minutes.');
+}
+
 $mobile = preg_replace('/\D/', '', (string)($data['mobile'] ?? $data['mobile_num'] ?? ''));
+
+if (!empty($mobile) && function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('bank_data_generate_url_mobile', $mobile, 5, 900, 'Too many verification attempts for this mobile number. Please wait a few minutes.');
+}
 $destination = trim((string)($data['destination'] ?? 'accountaggregator'));
 $clientRefNum = 'WF-AA-' . time() . '-' . substr(md5(($mobile ?: 'AA') . mt_rand()), 0, 6);
 

@@ -13,12 +13,21 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     exit;
 }
 
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('verify_business_ip', $clientIp, 15, 600, 'Too many business verification attempts from your network. Please wait a few minutes.');
+}
+
 $type = $_POST['type'] ?? '';
 $value = trim($_POST['value'] ?? '');
 
 if (empty($type) || empty($value)) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid parameters']);
     exit;
+}
+
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('verify_business_val', strtoupper($value), 5, 900, 'Verification limit reached for this business document. Please try again after 15 minutes.');
 }
 
 $client_id = required_env('DIGITAP_CLIENT_ID');

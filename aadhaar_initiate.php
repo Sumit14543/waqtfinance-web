@@ -68,6 +68,12 @@ if (empty($inputAadhaar) && basename($_SERVER['SCRIPT_FILENAME'] ?? '') !== 'aad
     return;
 }
 
+// Rate limiting check
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('aadhaar_initiate_ip', $clientIp, 10, 600, 'Too many Aadhaar verification attempts from your network. Please wait a few minutes.');
+}
+
 // Sanitize Aadhaar Number (if provided)
 $cleanAadhaar = preg_replace('/\D/', '', $inputAadhaar);
 $maskedAadhaar = 'XXXX-XXXX-AADH';
@@ -84,6 +90,9 @@ if (!empty($cleanAadhaar)) {
             header('Location: /aadhaar-verification.php');
         }
         exit;
+    }
+    if (function_exists('waqt_enforce_rate_limit')) {
+        waqt_enforce_rate_limit('aadhaar_initiate_num', hash('sha256', $cleanAadhaar), 5, 900, 'Verification limit reached for this Aadhaar. Please wait a few minutes before trying again.');
     }
     $last4 = substr($cleanAadhaar, -4);
     $maskedAadhaar = 'XXXX-XXXX-' . $last4;

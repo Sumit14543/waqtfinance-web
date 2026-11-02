@@ -7,6 +7,7 @@ ini_set('log_errors', '1');
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 
 require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../includes/rate_limiter.php';
 if (!defined('WAQT_SKIP_SESSION') || WAQT_SKIP_SESSION !== true) {
     start_secure_session();
 }

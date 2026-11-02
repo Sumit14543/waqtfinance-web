@@ -17,6 +17,11 @@ $txnId = trim((string)($_GET['txn_id'] ?? $jsonBody['txn_id'] ?? $_POST['txn_id'
 $reportType = strtolower(trim((string)($_GET['format'] ?? $jsonBody['report_type'] ?? 'json')));
 $reportSubtype = trim((string)($_GET['subtype'] ?? $jsonBody['report_subtype'] ?? 'type3'));
 
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('bank_data_report_ip', $clientIp, 30, 600, 'Report retrieval rate limit reached. Please wait a few minutes.');
+}
+
 if (empty($txnId)) {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(400);
