@@ -5953,11 +5953,13 @@ function calculateApprovedOffer(monthlyTurnover) {
             crifPassed = true;
         }
     } else if (state.cibilScore !== null) {
-        if (state.cibilScore >= 600) {
+        if (state.cibilScore >= 600 || state.cibilScore === -1) {
             crifPassed = true;
         } else if (state.cibilScore > 0) {
             declineReasons.push("Credit Score below 600 (Current Score: " + state.cibilScore + ", Min 600 required)");
         }
+    } else {
+        declineReasons.push("Credit bureau (CIBIL/CRIF) verification is required before loan underwriting decision.");
     }
 
     // ----------------------------------------------------
@@ -6059,29 +6061,41 @@ function calculateApprovedOffer(monthlyTurnover) {
 
     const avgDailyCredit = count90dTotalCredits > 0 ? (sum90dCredits / count90dTotalCredits) : 0;
 
-    if (count90d5k >= 8 || stmtDays5k >= 10 || avgDailyCredit >= 5000) {
-        // Slab 4: ₹5,000+ per day -> 1.50 Lakh for 8 Months
-        maxLoan = 150000;
-        maxTenureDays = 240; // 8 Months
-        tierLabel = '₹5,000+ Daily Inflow (Slab 4)';
-    } else if (count90d3k >= 8 || stmtDays3k >= 12 || avgDailyCredit >= 3000 || (count90d2k >= 15 && avgDailyCredit >= 2500)) {
-        // Slab 3: ₹3,000 to ₹5,000 per day -> 1.0 Lakh for 7 Months
-        maxLoan = 100000;
-        maxTenureDays = 210; // 7 Months
-        tierLabel = '₹3,000 - ₹5,000 Daily Inflow (Slab 3)';
-    } else if (count90d2k >= 10 || stmtDays2k >= 15 || avgDailyCredit >= 2000) {
-        // Slab 2: ₹2,000 to ₹3,000 per day -> 60k for 6 Months
-        maxLoan = 60000;
-        maxTenureDays = 180; // 6 Months
-        tierLabel = '₹2,000 - ₹3,000 Daily Inflow (Slab 2)';
-    } else if (count90d1k >= 78 || stmtDays1k >= 78 || stmtCreditDays >= 78 || (count90d1k >= 20 && avgDailyCredit >= 1000)) {
-        // Slab 1: ₹1,000 to ₹2,000 per day (>= 78 times / days) -> 50,000 for 5 Months
-        maxLoan = 50000;
-        maxTenureDays = 150; // 5 Months
-        tierLabel = '₹1,000 - ₹2,000 Daily Inflow (78+ Occurrences)';
+    if (!state.aaVerified || txns.length === 0) {
+        declineReasons.push("Bank account verification via Account Aggregator is required to analyze daily credit inflow and determine approved loan amount.");
     } else {
-        if (state.aaVerified && txns.length > 0) {
-            declineReasons.push("Daily credit frequency does not meet minimum policy criteria: Minimum ₹1,000+ daily credit frequency with 78 credit occurrences required for sanction (Current 90D ₹1k+ days: " + count90d1k + ", Statement credit days: " + stmtCreditDays + ")");
+        const activeCreditDays = count90dTotalCredits > 0 ? count90dTotalCredits : stmtCreditDays;
+
+        // Gate 1: Check Minimum 78 Credit Days in 90 Days
+        if (activeCreditDays < 78) {
+            declineReasons.push("Bank account does not meet minimum 78 daily credit occurrences in 90 days (Current: " + activeCreditDays + " credit days). Daily business collection loan requires regular daily merchant inflow.");
+        } else {
+            // Gate 2: Compute Actual Daily Inflow Amount across active credit days
+            const avgDailyInflow = count90dTotalCredits > 0 ? (sum90dCredits / count90dTotalCredits) : (sum90dCredits / Math.max(1, stmtCreditDays));
+
+            if (avgDailyInflow >= 5000) {
+                // Slab 4: ₹5,000+ per day -> ₹1,50,000 for 8 Months (240 Days)
+                maxLoan = 150000;
+                maxTenureDays = 240;
+                tierLabel = '₹5,000+ Daily Inflow (Slab 4: ₹1.50 Lakh)';
+            } else if (avgDailyInflow >= 3000) {
+                // Slab 3: ₹3,000 to ₹5,000 per day -> ₹1,00,000 for 7 Months (210 Days)
+                maxLoan = 100000;
+                maxTenureDays = 210;
+                tierLabel = '₹3,000 - ₹5,000 Daily Inflow (Slab 3: ₹1.00 Lakh)';
+            } else if (avgDailyInflow >= 2000) {
+                // Slab 2: ₹2,000 to ₹3,000 per day -> ₹60,000 for 6 Months (180 Days)
+                maxLoan = 60000;
+                maxTenureDays = 180;
+                tierLabel = '₹2,000 - ₹3,000 Daily Inflow (Slab 2: ₹60,000)';
+            } else if (avgDailyInflow >= 1000) {
+                // Slab 1: ₹1,000 to ₹2,000 per day -> ₹50,000 for 5 Months (150 Days)
+                maxLoan = 50000;
+                maxTenureDays = 150;
+                tierLabel = '₹1,000 - ₹2,000 Daily Inflow (Slab 1: ₹50,000)';
+            } else {
+                declineReasons.push("Average daily credit inflow is ₹" + Math.round(avgDailyInflow).toLocaleString('en-IN') + "/day. Policy requires minimum ₹1,000+ daily credit inflow for approval.");
+            }
         }
     }
 
