@@ -2845,7 +2845,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
 
                 <!-- BRE PRE-APPROVED SANCTION OFFER CARD (DYNAMIC STEP 6) -->
-                <div id="breStep6OfferCard" style="margin-bottom: 16px;"></div>
+                <div id="breStep6OfferCard" style="display: none;"></div>
 
 
                 <div class="f-group">
@@ -4078,6 +4078,9 @@ const aadhaarInput = document.getElementById('aadhaarInput');
 
 aadhaarInput.addEventListener('input', function() {
     let raw = this.value.replace(/\D/g, '').slice(0, 12);
+    if (raw.length > 0) {
+        state.rawAadhaar = raw;
+    }
     this.value = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
     const errBox = document.getElementById('aadhaarErrorAlert');
     if (errBox) errBox.style.display = 'none';
@@ -4097,7 +4100,8 @@ function handleStep2Continue() {
     }
 
     const aadh = aadhaarInput.value.replace(/\s/g, '');
-    if (!aadh || aadh.length !== 12) {
+    const cleanDigits = aadh.replace(/\D/g, '');
+    if (!state.aadhaarVerified && cleanDigits.length !== 12) {
         showErr(document.getElementById('aadhaarErrorAlert'), 'Please enter a 12-digit Aadhaar number.');
         aadhaarInput.focus();
         return;
@@ -4116,7 +4120,10 @@ function initiateDigiLockerKyc() {
     const errBox = document.getElementById('aadhaarErrorAlert');
     if (errBox) errBox.style.display = 'none';
 
-    if (!aadh || aadh.length !== 12) {
+    const cleanDigits = aadh.replace(/\D/g, '');
+    if (cleanDigits.length === 12) {
+        state.rawAadhaar = cleanDigits;
+    } else if (!state.rawAadhaar || state.rawAadhaar.length !== 12) {
         if (errBox) showErr(errBox, 'Please enter a valid 12-digit Aadhaar number to verify.');
         aadhaarInput.focus();
         return;
@@ -6105,6 +6112,8 @@ function calculateApprovedOffer(monthlyTurnover) {
     state.breApprovedTenureDays = maxTenureDays;
     state.breDeclineReasons = declineReasons;
     state.approvedLimit = maxLoan;
+    state.breTierLabel = tierLabel;
+    state.breTotalBounces = totalBounces;
 
     updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, declineReasons, totalBounces);
 }
@@ -6114,54 +6123,12 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, decline
     const loanAmtInput = document.getElementById('loanAmount');
     const chipsWrap = document.querySelector('#pane6 .quick-chips-wrap');
 
-    if (!cardEl) return;
+    if (cardEl) {
+        cardEl.style.display = 'none';
+        cardEl.innerHTML = '';
+    }
 
     if (isApproved) {
-        cardEl.innerHTML = `
-            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #86efac; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden; box-shadow: 0 4px 14px rgba(22, 101, 52, 0.08);">
-                <div style="position:absolute; top:0; left:0; right:0; height:3px; background:var(--brand-dual-gradient);"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
-                    <span style="display:inline-flex; align-items:center; gap:5px; background:#166534; color:#ffffff; font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:0.3px;">
-                        <i class="fa-solid fa-certificate"></i> In-Principle Sanction (Policy Approved)
-                    </span>
-                    <span style="font-size:10.5px; color:#15803d; font-weight:700;">Valid for 30 Days</span>
-                </div>
-                <div style="font-size:10.5px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Pre-Approved Loan Limit</div>
-                <div style="font-size:28px; font-weight:900; color:#14532d; letter-spacing:-0.5px; margin:2px 0 8px 0;" id="approvedLimitVal">
-                    ₹ ${maxLoan.toLocaleString('en-IN')}
-                </div>
-                
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; font-size:11px; margin-bottom:8px;">
-                    <div>
-                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Rate of Interest</span>
-                        <strong style="color:var(--slate-900);">1.15% per month</strong>
-                    </div>
-                    <div>
-                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Approved Tenure</span>
-                        <strong style="color:#15803d; font-weight:800;">${Math.round(maxTenureDays / 30)} Months (${maxTenureDays} Days)</strong>
-                    </div>
-                    <div>
-                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Approved Inflow Tier</span>
-                        <strong style="color:#0284c7;">${tierLabel || 'Daily Inflow Tier'}</strong>
-                    </div>
-                    <div>
-                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Disbursal TAT</span>
-                        <strong style="color:#15803d;">Within 24 Hours</strong>
-                    </div>
-                </div>
-
-                <!-- Underwriting Verification Badges -->
-                <div style="display:flex; flex-wrap:wrap; gap:4px; font-size:10px;">
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Overdue ≤ ₹10k</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 3M DPD ≤ 10</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 6M DPD ≤ 30</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Post-2024 Settlement/WO</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Suit Filed</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> EMI Bounces: ${totalBounces || 0}/6</span>
-                </div>
-            </div>
-        `;
-
         if (loanAmtInput) {
             loanAmtInput.max = maxLoan;
             loanAmtInput.min = 20000;
@@ -6184,37 +6151,6 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, decline
             `).join('');
         }
     } else {
-        const reasonsHtml = (declineReasons || []).map(r => `
-            <div style="display:flex; align-items:flex-start; gap:6px; margin-top:3px;">
-                <i class="fa-solid fa-xmark" style="color:#dc2626; margin-top:2px;"></i>
-                <span>${r}</span>
-            </div>
-        `).join('');
-
-        cardEl.innerHTML = `
-            <div style="background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden;">
-                <div style="position:absolute; top:0; left:0; right:0; height:3px; background:#ef4444;"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="display:inline-flex; align-items:center; gap:5px; background:#991b1b; color:#ffffff; font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:0.3px;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Underwriting Policy Referral
-                    </span>
-                    <span style="font-size:10.5px; color:#b91c1c; font-weight:700;">Manual Review</span>
-                </div>
-                <div style="font-size:12px; font-weight:800; color:#991b1b; margin-bottom:4px;">
-                    Preliminary Auto-Sanction Not Eligible Under Standard Policy
-                </div>
-                <div style="font-size:11px; color:#7f1d1d; margin-bottom:8px;">
-                    Applicant does not satisfy one or more automatic credit or banking policy parameters:
-                </div>
-                <div style="background:#ffffff; border:1px solid #fecaca; border-radius:8px; padding:8px 10px; font-size:11px; color:#991b1b; line-height:1.45;">
-                    ${reasonsHtml}
-                </div>
-                <div style="margin-top:8px; font-size:10.5px; color:#64748b; font-style:italic;">
-                    * You can still submit the application with your required amount. It will be routed for manual Credit Committee deviation review.
-                </div>
-            </div>
-        `;
-
         if (loanAmtInput) {
             loanAmtInput.max = 500000;
             loanAmtInput.min = 20000;
@@ -6235,68 +6171,88 @@ function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, decline
 
 function updateSuccessModalOfferCard(payload) {
     const isApproved = state.breStatus === 'APPROVED' && (state.breApprovedLimit > 0);
-    const badgeEl = document.getElementById('modalOfferBadge');
-    const validityEl = document.getElementById('modalOfferValidity');
-    const limitLabelEl = document.getElementById('modalOfferLimitLabel');
-    const limitValEl = document.getElementById('modalApprovedLimitVal');
-    const roiValEl = document.getElementById('modalRoiVal');
-    const tenureValEl = document.getElementById('modalTenureVal');
-    const tatValEl = document.getElementById('modalTatVal');
-    const declineWrap = document.getElementById('modalDeclineReasonsWrap');
-    const declineList = document.getElementById('modalDeclineReasonsList');
+    const wrap = document.getElementById('modalOfferCardWrap');
+    if (!wrap) return;
 
     if (isApproved) {
-        if (badgeEl) {
-            badgeEl.style.background = '#166534';
-            badgeEl.style.color = '#ffffff';
-            badgeEl.innerHTML = '<i class="fa-solid fa-certificate"></i> In-Principle Sanction';
-        }
-        if (validityEl) validityEl.innerText = 'Valid for 30 Days';
-        if (limitLabelEl) {
-            limitLabelEl.style.color = '#166534';
-            limitLabelEl.innerText = 'Pre-Approved Loan Limit (BRE)';
-        }
-        if (limitValEl) {
-            limitValEl.style.color = '#14532d';
-            limitValEl.innerText = 'â‚¹ ' + Number(state.breApprovedLimit).toLocaleString('en-IN');
-        }
-        if (roiValEl) roiValEl.innerText = '1.15% per month';
-        if (tenureValEl) tenureValEl.innerText = `${state.breApprovedTenureDays} Days (~${Math.round(state.breApprovedTenureDays / 30)} Months)`;
-        if (tatValEl) {
-            tatValEl.style.color = '#15803d';
-            tatValEl.innerText = 'Within 24 Hours';
-        }
-        if (declineWrap) declineWrap.style.display = 'none';
-    } else {
-        if (badgeEl) {
-            badgeEl.style.background = '#991b1b';
-            badgeEl.style.color = '#ffffff';
-            badgeEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Underwriting Policy Referral';
-        }
-        if (validityEl) validityEl.innerText = 'Manual Committee Review';
-        if (limitLabelEl) {
-            limitLabelEl.style.color = '#991b1b';
-            limitLabelEl.innerText = 'Automatic Pre-Sanction Status';
-        }
-        if (limitValEl) {
-            limitValEl.style.color = '#991b1b';
-            limitValEl.innerText = 'Policy Referral (Pending Committee)';
-        }
-        if (roiValEl) roiValEl.innerText = 'Subject to Risk Review';
-        if (tenureValEl) tenureValEl.innerText = 'Subject to Approval';
-        if (tatValEl) {
-            tatValEl.style.color = '#b45309';
-            tatValEl.innerText = 'Within 24-48 Hours';
-        }
-        if (declineWrap && declineList) {
-            declineWrap.style.display = 'block';
-            declineList.innerHTML = (state.breDeclineReasons || []).map(r => `
-                <div style="display:flex; align-items:flex-start; gap:5px; margin-top:2px;">
-                    <i class="fa-solid fa-xmark" style="color:#dc2626; margin-top:2px;"></i>
-                    <span>${r}</span>
+        const maxLoan = state.breApprovedLimit || payload?.loan_amount || 50000;
+        const maxTenureDays = state.breApprovedTenureDays || 150;
+        const tierLabel = state.breTierLabel || 'Daily Inflow Approved';
+        const totalBounces = (typeof state.breTotalBounces !== 'undefined') ? state.breTotalBounces : 0;
+
+        wrap.innerHTML = `
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #86efac; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden; box-shadow: 0 4px 14px rgba(22, 101, 52, 0.08);">
+                <div style="position:absolute; top:0; left:0; right:0; height:3px; background:var(--brand-dual-gradient);"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:#166534; color:#ffffff; font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:0.3px;">
+                        <i class="fa-solid fa-certificate"></i> In-Principle Sanction (Policy Approved)
+                    </span>
+                    <span style="font-size:10.5px; color:#15803d; font-weight:700;">Valid for 30 Days</span>
                 </div>
-            `).join('');
-        }
+                <div style="font-size:10.5px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Pre-Approved Loan Limit</div>
+                <div style="font-size:28px; font-weight:900; color:#14532d; letter-spacing:-0.5px; margin:2px 0 8px 0;" id="modalApprovedLimitVal">
+                    ₹ ${Number(maxLoan).toLocaleString('en-IN')}
+                </div>
+                
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; font-size:11px; margin-bottom:8px;">
+                    <div>
+                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Rate of Interest</span>
+                        <strong style="color:var(--slate-900);">1.15% per month</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Approved Tenure</span>
+                        <strong style="color:#15803d; font-weight:800;">${Math.round(maxTenureDays / 30)} Months (${maxTenureDays} Days)</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Approved Inflow Tier</span>
+                        <strong style="color:#0284c7;">${tierLabel}</strong>
+                    </div>
+                    <div>
+                        <span style="color:var(--slate-500); display:block; font-size:9.5px; font-weight:600;">Disbursal TAT</span>
+                        <strong style="color:#15803d;">Within 24 Hours</strong>
+                    </div>
+                </div>
+
+                <!-- Underwriting Verification Badges -->
+                <div style="display:flex; flex-wrap:wrap; gap:4px; font-size:10px;">
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Overdue ≤ ₹10k</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 3M DPD ≤ 10</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 6M DPD ≤ 30</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Post-2024 Settlement/WO</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Suit Filed</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> EMI Bounces: ${totalBounces}/6</span>
+                </div>
+            </div>
+        `;
+    } else {
+        const reasons = state.breDeclineReasons || [];
+        wrap.innerHTML = `
+            <div style="background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden;">
+                <div style="position:absolute; top:0; left:0; right:0; height:3px; background:#ef4444;"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:#991b1b; color:#ffffff; font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:999px; text-transform:uppercase; letter-spacing:0.3px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Underwriting Policy Referral
+                    </span>
+                    <span style="font-size:10.5px; color:#b91c1c; font-weight:700;">Manual Committee Review</span>
+                </div>
+                <div style="font-size:10.5px; color:#991b1b; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Policy Referral Status</div>
+                <div style="font-size:20px; font-weight:800; color:#991b1b; margin:2px 0 8px 0;">
+                    Referred to Credit Committee
+                </div>
+                <div style="background:#fff; border:1px solid #fca5a5; border-radius:8px; padding:8px 10px; font-size:11px; margin-bottom:6px;">
+                    <div style="font-weight:700; color:#991b1b; margin-bottom:4px;"><i class="fa-solid fa-circle-exclamation"></i> Review Observations:</div>
+                    ${reasons.map(r => `
+                        <div style="display:flex; align-items:flex-start; gap:6px; margin-top:3px; color:#7f1d1d;">
+                            <i class="fa-solid fa-xmark" style="color:#dc2626; margin-top:2px;"></i>
+                            <span>${r}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="font-size:10.5px; color:var(--slate-500); text-align:center;">
+                    Our credit officer will review your application within 24-48 hours.
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -6373,7 +6329,7 @@ function submitFinalLead() {
         pan_name: state.panData?.full_name || '',
         dob: document.getElementById('dob').value,
         gender: document.getElementById('gender').value,
-        aadhaar: document.getElementById('aadhaarInput').value.replace(/\s/g, ''),
+        aadhaar: (state.rawAadhaar && state.rawAadhaar.length === 12) ? state.rawAadhaar : document.getElementById('aadhaarInput').value.replace(/\s/g, ''),
         aadhaar_verified: state.aadhaarVerified ? 1 : 0,
         gst: document.getElementById('gstInput').value.trim(),
         gst_verified: state.gstVerified ? 1 : 0,

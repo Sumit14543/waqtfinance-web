@@ -96,6 +96,13 @@ if (!empty($cleanAadhaar)) {
     }
     $last4 = substr($cleanAadhaar, -4);
     $maskedAadhaar = 'XXXX-XXXX-' . $last4;
+    if (session_status() === PHP_SESSION_ACTIVE || !headers_sent()) {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
+        $_SESSION['aadhaar_full_number'] = $cleanAadhaar;
+        $_SESSION['aadhaar_masked'] = $maskedAadhaar;
+    }
 }
 
 // 3. Extract Applicant Metadata (Name, Mobile, Email) for Digitap DigiLocker Request

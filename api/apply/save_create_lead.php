@@ -41,7 +41,13 @@ if (!empty($mobile) && function_exists('waqt_enforce_rate_limit')) {
 if (!empty($pan) && function_exists('waqt_enforce_rate_limit')) {
     waqt_enforce_rate_limit('save_lead_pan', $pan, 3, 3600, 'Application submission limit reached for this PAN. Please try again later.');
 }
-$aadhaarRaw = preg_replace('/\D/', '', lead_clean($data['aadhaar'] ?? ''));
+$aadhaarInput = lead_clean($data['aadhaar'] ?? '');
+$isMaskedAadhaar = (stripos($aadhaarInput, 'x') !== false || str_contains($aadhaarInput, '*'));
+$aadhaarRaw = preg_replace('/\D/', '', $aadhaarInput);
+
+if (strlen($aadhaarRaw) !== 12 && !empty($_SESSION['aadhaar_full_number'])) {
+    $aadhaarRaw = preg_replace('/\D/', '', (string)$_SESSION['aadhaar_full_number']);
+}
 $gst = strtoupper(lead_clean($data['gst'] ?? ''));
 $udyam = strtoupper(lead_clean($data['udyam'] ?? ''));
 $companyName = lead_clean($data['company_name'] ?? '');
@@ -142,9 +148,16 @@ if (!empty($pan) && !preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]$/', $pan)) {
     exit;
 }
 
-if (!empty($aadhaarRaw) && strlen($aadhaarRaw) !== 12) {
-    echo json_encode(['status' => 'error', 'message' => 'Aadhaar must be 12 digits.']);
-    exit;
+if ($aadhaarVerified || $isMaskedAadhaar) {
+    if (!empty($aadhaarRaw) && strlen($aadhaarRaw) !== 12 && strlen($aadhaarRaw) !== 4) {
+        echo json_encode(['status' => 'error', 'message' => 'Please enter a valid 12-digit Aadhaar number.']);
+        exit;
+    }
+} else {
+    if (!empty($aadhaarRaw) && strlen($aadhaarRaw) !== 12) {
+        echo json_encode(['status' => 'error', 'message' => 'Aadhaar must be 12 digits.']);
+        exit;
+    }
 }
 
 if (!empty($gst) && !preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/', $gst)) {
