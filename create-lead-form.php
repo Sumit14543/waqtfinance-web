@@ -2380,7 +2380,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div id="mobileErrorAlert" class="f-error-alert"></div>
                     <div id="mobileVerifiedPill" class="verified-badge-row">
                         <span><i class="fa-solid fa-circle-check"></i> Phone Verified (+91 <span id="verifiedMobileText"></span>)</span>
-                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE âœ“</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
                     </div>
                 </div>
 
@@ -2519,7 +2519,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div id="gstErrorAlert" class="f-error-alert"></div>
                     <div id="gstVerifiedPill" class="verified-badge-row">
                         <div><i class="fa-solid fa-circle-check"></i> <strong id="gstBizName">-</strong></div>
-                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE âœ“</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
                     </div>
                 </div>
 
@@ -2536,7 +2536,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                     <div id="udyamErrorAlert" class="f-error-alert"></div>
                     <div id="udyamVerifiedPill" class="verified-badge-row">
                         <div><i class="fa-solid fa-circle-check"></i> <strong id="udyamBizName">-</strong></div>
-                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE âœ“</span>
+                        <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
                     </div>
                 </div>
 
@@ -2554,7 +2554,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                         </select>
                     </div>
                     <div class="f-group">
-                        <label class="f-label">Monthly Turnover (â‚¹)</label>
+                        <label class="f-label">Monthly Turnover (₹)</label>
                         <input type="number" id="monthlyIncome" class="f-input" placeholder="75,000" inputmode="numeric">
                     </div>
                 </div>
@@ -2731,15 +2731,15 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">Amount Required (â‚¹) <span class="req">*</span></label>
-                    <input type="number" id="loanAmount" class="f-input" placeholder="2,00,000" min="20000" step="10000" inputmode="numeric" required value="200000">
+                    <label class="f-label">Amount Required (₹) <span class="req">*</span></label>
+                    <input type="number" id="loanAmount" class="f-input" placeholder="Enter loan amount required" min="20000" step="5000" inputmode="numeric" required>
                     
                     <!-- Quick Amount Chips -->
                     <div class="quick-chips-wrap">
-                        <span class="amt-chip" onclick="setQuickAmt(100000)">â‚¹1 Lakh</span>
-                        <span class="amt-chip active" onclick="setQuickAmt(200000)">â‚¹2 Lakh</span>
-                        <span class="amt-chip" onclick="setQuickAmt(500000)">â‚¹5 Lakh</span>
-                        <span class="amt-chip" onclick="setQuickAmt(1000000)">â‚¹10 Lakh</span>
+                        <span class="amt-chip" onclick="setQuickAmt(50000)">₹50k</span>
+                        <span class="amt-chip" onclick="setQuickAmt(60000)">₹60k</span>
+                        <span class="amt-chip" onclick="setQuickAmt(100000)">₹1 Lakh</span>
+                        <span class="amt-chip" onclick="setQuickAmt(150000)">₹1.5 Lakh</span>
                     </div>
                 </div>
 
@@ -3180,8 +3180,8 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
     <canvas id="partyBombCanvas"></canvas>
 
     <!-- Visual Corner Party Popper Cannons -->
-    <div class="party-popper-corner left-cannon" id="leftCannon">ðŸŽ‰</div>
-    <div class="party-popper-corner right-cannon" id="rightCannon">ðŸŽ‰</div>
+    <div class="party-popper-corner left-cannon" id="leftCannon"><i class="fa-solid fa-gift"></i></div>
+    <div class="party-popper-corner right-cannon" id="rightCannon"><i class="fa-solid fa-gift"></i></div>
 
     <div class="success-modal" style="max-width: 440px; padding: 26px 20px;">
         <div style="display:flex; flex-direction:column; align-items:center; margin: 0 auto 12px auto;">
@@ -3189,12 +3189,12 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <div class="party-logo-glow"></div>
                 <img src="assets/images/logo1.webp" alt="Waqt Finance" style="width:58px; height:58px; object-fit:contain; border-radius:50%; background:#fff; padding:3px; box-shadow:0 6px 20px rgba(24, 82, 156, 0.25); border:1.5px solid var(--slate-200); position:relative; z-index:2;">
             </div>
-            <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(22, 101, 52, 0.08); color:#166534; font-size:10.5px; font-weight:800; padding:3px 10px; border-radius:999px;">
+            <span id="modalHeaderStatusBadge" style="display:inline-flex; align-items:center; gap:5px; background:rgba(22, 101, 52, 0.08); color:#166534; font-size:10.5px; font-weight:800; padding:3px 10px; border-radius:999px;">
                 <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> Sanction Generated
             </span>
         </div>
-        <h3 style="font-size: 21px; font-weight: 800; color: var(--slate-900); margin: 0 0 2px 0;">Lead Submitted Successfully</h3>
-        <p style="font-size: 12px; color: var(--slate-500); margin: 0 0 12px 0;">Official loan application reference &amp; pre-sanction generated.</p>
+        <h3 id="modalHeaderTitle" style="font-size: 21px; font-weight: 800; color: var(--slate-900); margin: 0 0 2px 0;">Lead Submitted Successfully</h3>
+        <p id="modalHeaderSubtitle" style="font-size: 12px; color: var(--slate-500); margin: 0 0 12px 0;">Official loan application reference &amp; pre-sanction generated.</p>
 
         <div class="lead-code-pill" id="modalRefCode" style="margin: 0 0 14px 0; font-size: 15px; padding: 8px 12px;">WF-LEAD-XXXXXX</div>
 
@@ -3211,7 +3211,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
                 <div id="modalOfferLimitLabel" style="font-size: 10.5px; color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;">Pre-Approved Loan Limit</div>
                 <div style="font-size: 26px; font-weight: 900; color: #14532d; letter-spacing: -0.5px; margin: 2px 0 10px 0;" id="modalApprovedLimitVal">
-                    â‚¹ 75,000
+                    ₹ 75,000
                 </div>
 
                 <div id="modalOfferDetailsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-size: 11px;">
@@ -3257,8 +3257,8 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <strong style="color: #15803d;" id="modalBankVal">Verified ✓</strong>
             </div>
             <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--slate-500);">Requested Amount:</span>
-                <strong style="color: var(--slate-900);" id="modalReqLoanVal">₹ 2,00,000</strong>
+                <span style="color: var(--slate-500);" id="modalLoanLabel">Approved Loan Limit:</span>
+                <strong style="color: var(--slate-900);" id="modalReqLoanVal">₹ 0</strong>
             </div>
         </div>
 
@@ -4353,17 +4353,17 @@ function fetchCibilScore() {
             const chip = document.getElementById('cibilHeaderChip');
             if (chip) {
                 if (isNtc) {
-                    chip.innerText = 'New to Credit (NTC) âœ“';
+                    chip.innerText = 'New to Credit (NTC) ✓';
                     chip.style.background = '#e0f2fe';
                     chip.style.color = '#0369a1';
                     chip.style.borderColor = '#bae6fd';
                 } else if (scoreVal) {
-                    chip.innerText = 'CIBIL ' + scoreVal + ' âœ“';
+                    chip.innerText = 'CIBIL ' + scoreVal + ' ✓';
                     chip.style.background = scoreVal >= 750 ? '#dcfce7' : (scoreVal >= 680 ? '#fef9c3' : '#fee2e2');
                     chip.style.color = scoreVal >= 750 ? '#15803d' : (scoreVal >= 680 ? '#854d0e' : '#b91c1c');
                     chip.style.borderColor = scoreVal >= 750 ? '#86efac' : (scoreVal >= 680 ? '#fef08a' : '#fca5a5');
                 } else {
-                    chip.innerText = 'Bureau Assessed âœ“';
+                    chip.innerText = 'Bureau Assessed ✓';
                     chip.style.background = '#f1f5f9';
                     chip.style.color = '#334155';
                     chip.style.borderColor = '#cbd5e1';
@@ -4406,7 +4406,7 @@ function bypassNtcBureau() {
     state.cibilPdfUrl = '';
     const chip = document.getElementById('cibilHeaderChip');
     if (chip) {
-        chip.innerText = 'New to Credit (NTC) âœ“';
+        chip.innerText = 'New to Credit (NTC) ✓';
         chip.style.background = '#e0f2fe';
         chip.style.color = '#0369a1';
         chip.style.borderColor = '#bae6fd';
@@ -5683,12 +5683,12 @@ function handleEodBalanceChange(val) {
     // Update hint text
     const hintEl = document.getElementById('breMatrixTierHint');
     if (hintEl) {
-        if (eod >= 5000) hintEl.innerText = 'Eligible: â‚¹2,00,000 / 240 Days';
-        else if (eod >= 3000) hintEl.innerText = 'Eligible: â‚¹1,00,000 / 180 Days';
-        else if (eod >= 2500) hintEl.innerText = 'Eligible: â‚¹75,000 / 180 Days';
-        else if (eod >= 2000) hintEl.innerText = 'Eligible: â‚¹70,000 / 150 Days';
-        else if (eod >= 1500) hintEl.innerText = 'Eligible: â‚¹60,000 / 120 Days';
-        else hintEl.innerText = 'Decline: EOD < â‚¹1,500';
+        if (eod >= 5000) hintEl.innerText = 'Eligible: ₹2,00,000 / 240 Days';
+        else if (eod >= 3000) hintEl.innerText = 'Eligible: ₹1,00,000 / 180 Days';
+        else if (eod >= 2500) hintEl.innerText = 'Eligible: ₹75,000 / 180 Days';
+        else if (eod >= 2000) hintEl.innerText = 'Eligible: ₹70,000 / 150 Days';
+        else if (eod >= 1500) hintEl.innerText = 'Eligible: ₹60,000 / 120 Days';
+        else hintEl.innerText = 'Decline: EOD < ₹1,500';
         hintEl.style.color = eod >= 1500 ? '#15803d' : '#dc2626';
     }
 
@@ -5734,12 +5734,12 @@ function completeAaAggregation() {
     if (document.getElementById('accountNumber')) document.getElementById('accountNumber').value = state.aaData.accountNumber;
     if (document.getElementById('confirmAccountNumber')) document.getElementById('confirmAccountNumber').value = state.aaData.accountNumber;
     if (document.getElementById('ifscCode')) document.getElementById('ifscCode').value = state.aaData.ifsc;
-    if (document.getElementById('ifscBranchText')) document.getElementById('ifscBranchText').innerText = `âœ“ Verified ${selectedBankName} Branch`;
+    if (document.getElementById('ifscBranchText')) document.getElementById('ifscBranchText').innerText = `✓ Verified ${selectedBankName} Branch`;
 
     // Populate Verified AA Card
     document.getElementById('aaDisplayBankName').innerText = `${selectedBankName} (Current A/C ****${state.aaData.accountNumber.slice(-4)})`;
-    document.getElementById('aaDisplayInflow').innerText = 'â‚¹' + monthlyInflow.toLocaleString('en-IN');
-    document.getElementById('aaDisplayAmb').innerText = 'â‚¹' + amb.toLocaleString('en-IN');
+    document.getElementById('aaDisplayInflow').innerText = '₹' + monthlyInflow.toLocaleString('en-IN');
+    document.getElementById('aaDisplayAmb').innerText = '₹' + amb.toLocaleString('en-IN');
     document.getElementById('aaDisplayHealth').innerText = `${healthScore} (High)`;
 
     document.getElementById('aaHeroCard').style.display = 'none';
@@ -5978,7 +5978,27 @@ function updateSuccessModalOfferCard(payload) {
     const wrap = document.getElementById('modalOfferCardWrap');
     if (!wrap) return;
 
+    // Dynamic Header Badge, Title, Subtitle & Summary Row
+    const headerBadge = document.getElementById('modalHeaderStatusBadge');
+    const headerTitle = document.getElementById('modalHeaderTitle');
+    const headerSubtitle = document.getElementById('modalHeaderSubtitle');
+    const loanLabelEl = document.getElementById('modalLoanLabel');
+    const reqLoanEl = document.getElementById('modalReqLoanVal');
+
     if (isApproved) {
+        if (headerBadge) {
+            headerBadge.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> Sanction Generated';
+            headerBadge.style.background = 'rgba(22, 101, 52, 0.08)';
+            headerBadge.style.color = '#166534';
+        }
+        if (headerTitle) headerTitle.innerText = 'Lead Submitted Successfully';
+        if (headerSubtitle) headerSubtitle.innerText = 'Official loan application reference & pre-sanction generated.';
+        if (loanLabelEl) loanLabelEl.innerText = 'Approved Loan Limit:';
+        if (reqLoanEl) {
+            reqLoanEl.innerText = '₹ ' + Number(state.breApprovedLimit).toLocaleString('en-IN');
+            reqLoanEl.style.color = '#15803d';
+        }
+
         const maxLoan = state.breApprovedLimit || payload?.loan_amount || 50000;
         const maxTenureDays = state.breApprovedTenureDays || 150;
         const tierLabel = state.breTierLabel || 'Daily Inflow Approved';
@@ -6028,6 +6048,19 @@ function updateSuccessModalOfferCard(payload) {
             </div>
         `;
     } else {
+        if (headerBadge) {
+            headerBadge.innerHTML = '<i class="fa-solid fa-clock-rotate-left" style="color:#b45309;"></i> Underwriting Review';
+            headerBadge.style.background = 'rgba(180, 83, 9, 0.1)';
+            headerBadge.style.color = '#b45309';
+        }
+        if (headerTitle) headerTitle.innerText = 'Application Submitted for Review';
+        if (headerSubtitle) headerSubtitle.innerText = 'Lead reference generated & forwarded to Credit Committee.';
+        if (loanLabelEl) loanLabelEl.innerText = 'Underwriting Decision:';
+        if (reqLoanEl) {
+            reqLoanEl.innerText = 'Referred to Committee';
+            reqLoanEl.style.color = '#b45309';
+        }
+
         const reasons = state.breDeclineReasons || [];
         wrap.innerHTML = `
             <div style="background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 14px; padding: 14px 12px; text-align: left; position:relative; overflow:hidden;">
@@ -6062,7 +6095,7 @@ function updateSuccessModalOfferCard(payload) {
 function handleLoanAmountChange(val) {
     const num = parseFloat(val) || 0;
     const txt = document.getElementById('sliderAmountText');
-    if (txt) txt.innerText = 'â‚¹ ' + num.toLocaleString('en-IN');
+    if (txt) txt.innerText = '₹ ' + num.toLocaleString('en-IN');
     updateEmiCalculation(num);
 }
 
@@ -6073,7 +6106,7 @@ function updateEmiCalculation(principal) {
     const emi = Math.round((principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / (Math.pow(1 + monthlyRate, tenureMonths) - 1));
     
     const emiDisp = document.getElementById('displayEmiVal');
-    if (emiDisp) emiDisp.innerText = 'â‚¹ ' + emi.toLocaleString('en-IN') + ' / month';
+    if (emiDisp) emiDisp.innerText = '₹ ' + emi.toLocaleString('en-IN') + ' / month';
 }
 
 function setQuickAmtToMax() {
@@ -6085,7 +6118,12 @@ function setQuickAmt(val) {
     if (input) input.value = val;
     handleLoanAmountChange(val);
     document.querySelectorAll('.amt-chip').forEach(c => {
-        c.classList.toggle('active', c.innerText.includes(val >= 1000000 ? '10 Lakh' : (val >= 500000 ? '5 Lakh' : (val >= 200000 ? '2 Lakh' : '1 Lakh'))));
+        const txt = c.innerText;
+        const matches = (val === 50000 && txt.includes('50k')) ||
+                        (val === 60000 && txt.includes('60k')) ||
+                        (val === 100000 && txt.includes('1 Lakh')) ||
+                        (val === 150000 && txt.includes('1.5 Lakh'));
+        c.classList.toggle('active', matches);
     });
 }
 
@@ -6100,7 +6138,7 @@ document.getElementById('pincode').addEventListener('input', function() {
                 const po = d[0].PostOffice[0];
                 document.getElementById('city').value = po.District || '';
                 document.getElementById('state').value = po.State || '';
-                document.getElementById('pincodeStatusText').innerText = `âœ“ ${po.District}, ${po.State}`;
+                document.getElementById('pincodeStatusText').innerText = `✓ ${po.District}, ${po.State}`;
             }
         }).catch(() => {});
     }
@@ -6191,7 +6229,7 @@ function submitFinalLead() {
             if (nameEl) nameEl.innerText = payload.full_name || '-';
             
             const mobileEl = document.getElementById('modalMobileVal');
-            if (mobileEl) mobileEl.innerText = (payload.mobile || '') + ' âœ“';
+            if (mobileEl) mobileEl.innerText = (payload.mobile || '') + ' ✓';
 
             const bankValEl = document.getElementById('modalBankVal');
             if (bankValEl) {
@@ -6201,16 +6239,11 @@ function submitFinalLead() {
             const bankDisplayEl = document.getElementById('modalBankDisplay');
             if (bankDisplayEl) {
                 const bName = payload.bank_name || 'Primary Bank';
-                const bAcc = payload.account_number ? ' (â€¢â€¢â€¢â€¢' + payload.account_number.slice(-4) + ')' : '';
+                const bAcc = payload.account_number ? ' (••••' + payload.account_number.slice(-4) + ')' : '';
                 bankDisplayEl.innerText = bName + bAcc;
             }
 
-            const reqLoanEl = document.getElementById('modalReqLoanVal');
-            if (reqLoanEl) {
-                reqLoanEl.innerText = 'â‚¹ ' + Number(payload.loan_amount || 200000).toLocaleString('en-IN');
-            }
-
-            // Update Dynamic Sanction / Referral Card in Modal
+            // Update Dynamic Sanction / Referral Card in Modal (also updates loan limit/status and header badge)
             updateSuccessModalOfferCard(payload);
 
             document.getElementById('successModal').style.display = 'flex';
@@ -6327,7 +6360,7 @@ function startHighImpactPartyBomb(canvas) {
     ];
     const particles = [];
 
-    // 1. Center Party Bomb Blast (80 particles radiating 360Â°)
+    // 1. Center Party Bomb Blast (80 particles radiating 360 degrees)
     const cx = canvas.width / 2;
     const cy = canvas.height * 0.5;
     for (let i = 0; i < 90; i++) {
@@ -6336,14 +6369,14 @@ function startHighImpactPartyBomb(canvas) {
         particles.push(createParticle(cx, cy, Math.cos(rad) * spd, Math.sin(rad) * spd - 6, colors));
     }
 
-    // 2. Left Cannon Blast (60 particles aiming top-right at 50-70Â°)
+    // 2. Left Cannon Blast (60 particles aiming top-right at 50-70 degrees)
     for (let i = 0; i < 65; i++) {
         const rad = (Math.random() * 30 + 45) * (Math.PI / 180);
         const spd = Math.random() * 26 + 12;
         particles.push(createParticle(30, canvas.height - 40, Math.cos(rad) * spd, -Math.sin(rad) * spd, colors));
     }
 
-    // 3. Right Cannon Blast (60 particles aiming top-left at 110-130Â°)
+    // 3. Right Cannon Blast (60 particles aiming top-left at 110-130 degrees)
     for (let i = 0; i < 65; i++) {
         const rad = (Math.random() * 30 + 105) * (Math.PI / 180);
         const spd = Math.random() * 26 + 12;
