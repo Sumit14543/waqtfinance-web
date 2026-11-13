@@ -2338,21 +2338,20 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
         </div>
     </header>
 
-    <!-- Modern Stepper Indicator (6 Steps) -->
+    <!-- Modern Stepper Indicator (5 Steps) -->
     <div class="stepper-card">
         <div class="stepper-header-row">
             <div class="step-label-title" id="stepperTitle">
                 <i class="fa-solid fa-phone"></i> Contact Details
             </div>
-            <span class="step-badge-counter" id="stepperCountText">Step 1 of 6</span>
+            <span class="step-badge-counter" id="stepperCountText">Step 1 of 5</span>
         </div>
         <div class="stepper-segments-bar">
             <div class="seg-item active" id="seg1" onclick="goToStep(1)" title="Step 1: Contact Details"></div>
             <div class="seg-item" id="seg2" onclick="goToStep(2)" title="Step 2: KYC Verification"></div>
-            <div class="seg-item" id="seg3" onclick="goToStep(3)" title="Step 3: CIBIL Score"></div>
-            <div class="seg-item" id="seg4" onclick="goToStep(4)" title="Step 4: Business Proofs"></div>
-            <div class="seg-item" id="seg5" onclick="goToStep(5)" title="Step 5: Bank &amp; Aggregator"></div>
-            <div class="seg-item" id="seg6" onclick="goToStep(6)" title="Step 6: Loan &amp; Address"></div>
+            <div class="seg-item" id="seg3" onclick="goToStep(3)" title="Step 3: Business Proofs"></div>
+            <div class="seg-item" id="seg4" onclick="goToStep(4)" title="Step 4: Bank &amp; Aggregator"></div>
+            <div class="seg-item" id="seg5" onclick="goToStep(5)" title="Step 5: Loan &amp; Address"></div>
         </div>
     </div>
 
@@ -2498,139 +2497,9 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             </div>
 
             <!-- ============================================== -->
-            <!-- STEP 3: CIBIL SCORE ASSESSMENT (DEDICATED)     -->
+            <!-- STEP 3: BUSINESS PROOFS (AUTO VERIFY)           -->
             <!-- ============================================== -->
             <div class="pane" id="pane3">
-                <div class="pane-head">
-                    <h2 class="pane-title">
-                        <i class="fa-solid fa-gauge-high" style="color:var(--brand-primary);"></i> Credit Score Check
-                    </h2>
-                    <p style="font-size: 12.5px; color: var(--slate-500); margin: 4px 0 0 0;">
-                        Check your credit score to assess pre-approved loan eligibility and interest rate.
-                    </p>
-                </div>
-
-                <!-- Official Bureau Verification Card -->
-                <div class="bureau-card" id="cibilCard">
-                    <div class="bureau-card-header">
-                        <div class="bureau-brand">
-                            <div class="bureau-icon-circle" style="width: 36px; height: 36px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 16px;">
-                                <i class="fa-solid fa-gauge-high"></i>
-                            </div>
-                            <div>
-                                <h4>Credit Score Verification</h4>
-                                <span class="bureau-sub">Instant assessment &bull; Zero score impact</span>
-                            </div>
-                        </div>
-                        <span class="bureau-soft-tag">
-                            <i class="fa-solid fa-shield-halved"></i> Free &amp; Secure
-                        </span>
-                    </div>
-
-                    <!-- State 1: Ready to Fetch -->
-                    <div id="cibilActionBox" class="bureau-card-body">
-                        <div class="bureau-notice-box">
-                            <i class="fa-solid fa-circle-info"></i>
-                            <div>
-                                <strong>Instant Credit Check</strong>
-                                <p>Your credit score will be checked securely using your verified PAN and mobile number. This inquiry will not lower or affect your credit score in any way.</p>
-                            </div>
-                        </div>
-
-                        <label class="bureau-consent-box checked" id="bureauConsentBox" for="cibilConsentCheck">
-                            <input type="checkbox" id="cibilConsentCheck" class="bureau-consent-input" checked onchange="toggleConsentStyle(this)">
-                            <div class="bureau-consent-content">
-                                <span class="bureau-consent-title">I agree to check my Credit Score</span>
-                                <p class="bureau-consent-desc">I authorize Waqt Finance to check my credit score to evaluate my loan eligibility.</p>
-                                <span class="bureau-consent-safe"><i class="fa-solid fa-shield-check"></i> 100% Safe &bull; Zero impact on credit score</span>
-                            </div>
-                        </label>
-
-                        <div id="cibilErrorAlert" class="f-error-alert" style="margin-bottom: 14px;"></div>
-
-                        <button type="button" class="btn-bureau-fetch" id="btnCheckCibil" onclick="fetchCibilScore()">
-                            <i class="fa-solid fa-gauge-high"></i> Check Credit Score
-                        </button>
-                    </div>
-
-                    <!-- State 2: Fetching Loader -->
-                    <div id="cibilLoadingBox" style="display:none; text-align:center; padding: 32px 16px;">
-                        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; color: #004c8f; margin-bottom: 12px;"></i>
-                        <div id="cibilLoaderText" style="font-size: 14px; font-weight: 700; color: var(--slate-800);">Checking Credit Score...</div>
-                        <div style="font-size: 12px; color: var(--slate-500); margin-top: 4px;">Fetching your credit score and repayment history</div>
-                    </div>
-
-                    <!-- State 3: Fetched Score Result View -->
-                    <div class="cibil-result-box" id="cibilResultBox" style="display:none;">
-                        <div class="bureau-score-display-row">
-                            <div class="score-main-block">
-                                <span class="score-label">CREDIT SCORE</span>
-                                <div class="score-number" id="cibilScoreDisplay">768</div>
-                                <div class="score-pill" id="cibilBandPill">
-                                    <i class="fa-solid fa-circle-check"></i> <span id="cibilStatusWord">Excellent</span>
-                                </div>
-                            </div>
-
-                            <div class="score-details-block">
-                                <div class="score-meter-line">
-                                    <div class="meter-bar">
-                                        <div class="meter-fill" id="cibilMeterFill" style="width: 78%;"></div>
-                                    </div>
-                                    <div class="meter-labels">
-                                        <span>300 (Poor)</span>
-                                        <span>650</span>
-                                        <span>750</span>
-                                        <span>900</span>
-                                    </div>
-                                </div>
-
-                                <div class="bureau-metrics-grid">
-                                    <div class="metric-item">
-                                        <span class="metric-lbl">On-Time Payments</span>
-                                        <strong class="metric-val text-success" id="cibilStatPayments">99.4%</strong>
-                                    </div>
-                                    <div class="metric-item">
-                                        <span class="metric-lbl">Active Accounts</span>
-                                        <strong class="metric-val" id="cibilStatAccounts">2 Active</strong>
-                                    </div>
-                                    <div class="metric-item">
-                                        <span class="metric-lbl">Recent Enquiries</span>
-                                        <strong class="metric-val" id="cibilStatEnquiries">1 Enq.</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <!-- PDF Download and Recheck -->
-                        <div class="bureau-report-footer">
-                            <div id="cibilPdfDownloadWrap" style="display:none;">
-                                <a id="cibilPdfDownloadBtn" href="#" target="_blank" class="bureau-pdf-link">
-                                    <i class="fa-solid fa-file-pdf" style="color:#dc2626;"></i> Download Credit Report (PDF)
-                                </a>
-                            </div>
-                            <a href="javascript:void(0)" onclick="recheckCibilScore()" class="bureau-recheck-link">
-                                <i class="fa-solid fa-rotate-right"></i> Re-check Score
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons Inside Step 3 Card -->
-                <div class="card-actions-row">
-                    <button type="button" class="btn-card btn-card-secondary" onclick="stepPrev()">
-                        <i class="fa-solid fa-arrow-left"></i> Back
-                    </button>
-                    <button type="button" class="btn-card btn-card-primary" onclick="handleStep3Continue()">
-                        Continue <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ============================================== -->
-            <!-- STEP 4: BUSINESS PROOFS (AUTO VERIFY)           -->
-            <!-- ============================================== -->
-            <div class="pane" id="pane4">
                 <div class="pane-head">
                     <h2 class="pane-title">
                         <i class="fa-solid fa-building-circle-check" style="color:var(--brand-primary);"></i> Business Verification
@@ -2740,9 +2609,9 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             </div>
 
             <!-- ============================================== -->
-            <!-- STEP 5: BANK DETAILS & ACCOUNT AGGREGATOR       -->
+            <!-- STEP 4: BANK DETAILS & ACCOUNT AGGREGATOR       -->
             <!-- ============================================== -->
-            <div class="pane" id="pane5">
+            <div class="pane" id="pane4">
                 <div class="pane-head">
                     <h2 class="pane-title">
                         <i class="fa-solid fa-building-columns" style="color:var(--brand-primary);"></i> Bank &amp; Aggregator
@@ -2823,21 +2692,21 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <input type="hidden" id="accountType" value="Current">
                 <div id="bankErrorAlert" class="f-error-alert" style="margin-top:14px; display:none;"></div>
 
-                <!-- Action Buttons Inside Step 5 Card -->
+                <!-- Action Buttons Inside Step 4 Card -->
                 <div class="card-actions-row">
                     <button type="button" class="btn-card btn-card-secondary" onclick="stepPrev()">
                         <i class="fa-solid fa-arrow-left"></i> Back
                     </button>
-                    <button type="button" class="btn-card btn-card-primary" onclick="handleStep5Continue()">
+                    <button type="button" class="btn-card btn-card-primary" onclick="handleStep4Continue()">
                         Continue <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
 
             <!-- ============================================== -->
-            <!-- STEP 6: LOAN REQUIREMENT & APPROVED OFFER      -->
+            <!-- STEP 5: LOAN REQUIREMENT & APPROVED OFFER      -->
             <!-- ============================================== -->
-            <div class="pane" id="pane6">
+            <div class="pane" id="pane5">
                 <div class="pane-head">
                     <h2 class="pane-title">
                         <i class="fa-solid fa-indian-rupee-sign" style="color:var(--brand-primary);"></i> Loan &amp; Address
@@ -3384,12 +3253,12 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <span style="color: var(--success); font-weight: 700;" id="modalMobileVal">-</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: var(--slate-500);">Credit Score:</span>
-                <strong style="color: #15803d;" id="modalCibilVal">768 âœ“</strong>
+                <span style="color: var(--slate-500);">Bank Statement (AA):</span>
+                <strong style="color: #15803d;" id="modalBankVal">Verified ✓</strong>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span style="color: var(--slate-500);">Requested Amount:</span>
-                <strong style="color: var(--slate-900);" id="modalReqLoanVal">â‚¹ 2,00,000</strong>
+                <strong style="color: var(--slate-900);" id="modalReqLoanVal">₹ 2,00,000</strong>
             </div>
         </div>
 
@@ -3406,12 +3275,11 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
 <script>
 let currentStep = 1;
-const totalSteps = 6;
+const totalSteps = 5;
 
 const stepTitles = [
     '<i class="fa-solid fa-phone"></i> Contact Details',
     '<i class="fa-solid fa-id-card"></i> KYC Verification',
-    '<i class="fa-solid fa-gauge-high"></i> CIBIL Score',
     '<i class="fa-solid fa-building-circle-check"></i> Business Proofs',
     '<i class="fa-solid fa-building-columns"></i> Bank &amp; Aggregator',
     '<i class="fa-solid fa-indian-rupee-sign"></i> Loan &amp; Address'
@@ -3495,28 +3363,6 @@ function goToStep(step) {
             url.searchParams.set('step', step);
             window.history.replaceState(null, '', url.toString());
         }
-        if (step === 3) {
-            ensureStep3TestData();
-        }
-    }
-}
-
-function ensureStep3TestData() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const mobInput = document.getElementById('mobileInput');
-    const panInp = document.getElementById('panInput');
-    const nameInp = document.getElementById('fullName');
-
-    if (mobInput && !mobInput.value.trim()) {
-        mobInput.value = urlParams.get('mobile') || '9876543210';
-        state.mobileVerified = true;
-        state.verifiedMobile = mobInput.value;
-    }
-    if (panInp && !panInp.value.trim()) {
-        panInp.value = (urlParams.get('pan') || 'AAAPL1234C').toUpperCase();
-    }
-    if (nameInp && !nameInp.value.trim()) {
-        nameInp.value = urlParams.get('name') || 'Rahul Sharma';
     }
 }
 
@@ -3614,6 +3460,10 @@ function checkDirectStepFromUrl() {
     if (!target && window.location.hash) {
         const hashNum = parseInt(window.location.hash.replace(/\D/g, ''), 10);
         if (hashNum) target = hashNum;
+    }
+    // Backward compatibility: if returning from AA where old callback was step=5, map to step 4
+    if ((params.get('aa_txn_id') || params.get('aa_status')) && target === 5) {
+        target = 4;
     }
     if (target && target >= 1 && target <= totalSteps) {
         goToStep(target);
@@ -4607,15 +4457,6 @@ function animateScoreCounter(elemId, start, end, duration) {
 }
 
 function handleStep3Continue() {
-    // If applicant hasn't checked CIBIL score yet, prompt and trigger bureau fetch
-    if (!state.cibilVerified) {
-        const errBox = document.getElementById('cibilErrorAlert');
-        if (errBox) {
-            showErr(errBox, 'Please click "Check CIBIL Score" to verify your bureau report before continuing.');
-        }
-        fetchCibilScore();
-        return;
-    }
     stepNext();
 }
 
@@ -5910,7 +5751,7 @@ function completeAaAggregation() {
     calculateApprovedOffer(monthlyInflow);
 }
 
-function handleStep5Continue() {
+function handleStep4Continue() {
     const err = document.getElementById('bankErrorAlert');
     if (err) err.style.display = 'none';
 
@@ -5922,55 +5763,25 @@ function handleStep5Continue() {
         return;
     }
 
-    // Calculate Offer via BRE
+    // Calculate Offer via BRE based purely on Account Aggregator data
     calculateApprovedOffer();
 
     stepNext();
 }
 
-function handleStep4Continue() {
-    stepNext();
+function handleStep5Continue() {
+    handleStep4Continue();
 }
 
 // ==========================================
-// 6. BUSINESS RULE ENGINE (BRE) - DECISION LOGIC & MATRIX
+// 6. BUSINESS RULE ENGINE (BRE) - DECISION LOGIC & MATRIX (PURE ACCOUNT AGGREGATOR)
 // ==========================================
 function calculateApprovedOffer(monthlyTurnover) {
-    const crif = state.breCreditCheck;
     const declineReasons = [];
     const passedChecklist = [];
 
     // ----------------------------------------------------
-    // STEP 1: CIBIL / CREDIT BUREAU CRITERIA EVALUATION
-    // ----------------------------------------------------
-    // Policy Rules:
-    // a) Total Overdue <= ₹10,000
-    // b) Last 3 Months DPD <= 10 Days
-    // c) Last 6 Months DPD <= 30 Days
-    // d) Post-2024 Write-Off == 0
-    // e) Post-2024 Settlement == 0
-    // f) Suit Filed / Wilful Default == 0
-    // g) Credit Score >= 600 (or clean NTC profile)
-
-    let crifPassed = false;
-    if (crif) {
-        if (!crif.passed) {
-            (crif.decline_reasons || []).forEach(r => declineReasons.push(r));
-        } else {
-            crifPassed = true;
-        }
-    } else if (state.cibilScore !== null) {
-        if (state.cibilScore >= 600 || state.cibilScore === -1) {
-            crifPassed = true;
-        } else if (state.cibilScore > 0) {
-            declineReasons.push("Credit Score below 600 (Current Score: " + state.cibilScore + ", Min 600 required)");
-        }
-    } else {
-        declineReasons.push("Credit bureau (CIBIL/CRIF) verification is required before loan underwriting decision.");
-    }
-
-    // ----------------------------------------------------
-    // STEP 2: BANKING CRITERIA - EMI BOUNCES CHECK (Max 6)
+    // STEP 1: BANKING CRITERIA - EMI BOUNCES CHECK (Max 6)
     // ----------------------------------------------------
     // Policy Rule: EMI / Cheque / ECS bounces <= 6
     let totalBounces = 0;
@@ -6015,7 +5826,7 @@ function calculateApprovedOffer(monthlyTurnover) {
     }
 
     // ----------------------------------------------------
-    // STEP 3: ACCOUNT AGGREGATOR (AA) DAILY INFLOW MATRIX
+    // STEP 2: ACCOUNT AGGREGATOR (AA) DAILY INFLOW MATRIX
     // ----------------------------------------------------
     // Policy Slabs:
     // - Slab 4: Daily Inflow >= ₹5,000 -> ₹1,50,000 for 8 Months (240 Days)
@@ -6060,13 +5871,6 @@ function calculateApprovedOffer(monthlyTurnover) {
             if (row.creditTotal >= 5000) count90d5k++;
         }
     });
-
-    const stmtDays1k = dailyList.filter(r => r.creditTotal >= 1000).length;
-    const stmtDays2k = dailyList.filter(r => r.creditTotal >= 2000).length;
-    const stmtDays3k = dailyList.filter(r => r.creditTotal >= 3000).length;
-    const stmtDays5k = dailyList.filter(r => r.creditTotal >= 5000).length;
-
-    const avgDailyCredit = count90dTotalCredits > 0 ? (sum90dCredits / count90dTotalCredits) : 0;
 
     if (!state.aaVerified || txns.length === 0) {
         declineReasons.push("Bank account verification via Account Aggregator is required to analyze daily credit inflow and determine approved loan amount.");
@@ -6121,7 +5925,7 @@ function calculateApprovedOffer(monthlyTurnover) {
 function updateStep6BreUI(isApproved, maxLoan, maxTenureDays, tierLabel, declineReasons, totalBounces) {
     const cardEl = document.getElementById('breStep6OfferCard');
     const loanAmtInput = document.getElementById('loanAmount');
-    const chipsWrap = document.querySelector('#pane6 .quick-chips-wrap');
+    const chipsWrap = document.querySelector('#pane5 .quick-chips-wrap, #pane6 .quick-chips-wrap');
 
     if (cardEl) {
         cardEl.style.display = 'none';
@@ -6213,14 +6017,13 @@ function updateSuccessModalOfferCard(payload) {
                     </div>
                 </div>
 
-                <!-- Underwriting Verification Badges -->
+                <!-- Underwriting Verification Badges (Pure AA Banking Criteria) -->
                 <div style="display:flex; flex-wrap:wrap; gap:4px; font-size:10px;">
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Overdue ≤ ₹10k</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 3M DPD ≤ 10</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 6M DPD ≤ 30</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Post-2024 Settlement/WO</span>
-                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 0 Suit Filed</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Bank Statement Verified (AA)</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> 78+ Days Daily Credits</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Inflow Policy Verified</span>
                     <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> EMI Bounces: ${totalBounces}/6</span>
+                    <span style="background:#dcfce7; color:#166534; border:1px solid #86efac; border-radius:4px; padding:2px 6px; font-weight:700;"><i class="fa-solid fa-check"></i> Disbursal Ready</span>
                 </div>
             </div>
         `;
@@ -6390,10 +6193,9 @@ function submitFinalLead() {
             const mobileEl = document.getElementById('modalMobileVal');
             if (mobileEl) mobileEl.innerText = (payload.mobile || '') + ' âœ“';
 
-            const cibilEl = document.getElementById('modalCibilVal');
-            if (cibilEl) {
-                const cibilText = (state.cibilScore === -1 || state.cibilScore === null) ? 'New to Credit (NTC)' : state.cibilScore;
-                cibilEl.innerText = cibilText + ' âœ“';
+            const bankValEl = document.getElementById('modalBankVal');
+            if (bankValEl) {
+                bankValEl.innerText = state.aaVerified ? 'Verified ✓' : 'Submitted ✓';
             }
 
             const bankDisplayEl = document.getElementById('modalBankDisplay');

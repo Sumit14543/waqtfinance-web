@@ -728,7 +728,7 @@ function renderSuccessScreen(string $name, string $maskedAadhaar, string $dob, s
                 </div>
 
                 <a href="create-lead-form?step=3&aadhaar_verified=1" class="btn-continue">
-                    Continue to Credit Score Check <i class="fa-solid fa-arrow-right"></i>
+                    Continue to Business Verification <i class="fa-solid fa-arrow-right"></i>
                 </a>
 
                 <div class="trust-strip">
