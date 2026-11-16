@@ -22,13 +22,39 @@ $data = !empty($jsonBody) ? $jsonBody : $_POST;
 
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('bank_data_generate_url_ip', $clientIp, 10, 900, 'Too many Account Aggregator session requests from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('bank_data_generate_url_ip', $clientIp, 5, 600, 'Too many Account Aggregator session requests from your network. Please wait a few minutes.');
+}
+
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || PHP_SAPI === 'cli';
+
+// 1. Mandatory Session Gate: Mobile OTP verification required before paid AA initiation
+$verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';
+if (empty($verifiedMobile) && !$isLocal) {
+    http_response_code(403);
+    echo json_encode([
+        'status' => 'error',
+        'code' => 'PRECONDITION_FAILED',
+        'message' => 'Please complete mobile number OTP verification before connecting Account Aggregator.'
+    ]);
+    exit;
 }
 
 $mobile = preg_replace('/\D/', '', (string)($data['mobile'] ?? $data['mobile_num'] ?? ''));
 
 if (!empty($mobile) && function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('bank_data_generate_url_mobile', $mobile, 5, 900, 'Too many verification attempts for this mobile number. Please wait a few minutes.');
+    waqt_enforce_rate_limit('bank_data_generate_url_mobile', $mobile, 3, 900, 'Verification limit reached for this mobile number (Max 3 attempts per 15 minutes). Please wait a few minutes.');
+}
+
+// 2. Re-use active session within 10 minutes to save API cost
+if (!empty($_SESSION['digitap_aa_session_url']) && !empty($_SESSION['digitap_aa_session_time']) && (time() - (int)$_SESSION['digitap_aa_session_time'] < 600)) {
+    echo json_encode([
+        'status' => 'success',
+        'url' => $_SESSION['digitap_aa_session_url'],
+        'request_id' => $_SESSION['digitap_aa_request_id'] ?? '',
+        'cached' => true
+    ]);
+    exit;
 }
 $destination = trim((string)($data['destination'] ?? 'accountaggregator'));
 $clientRefNum = 'WF-AA-' . time() . '-' . substr(md5(($mobile ?: 'AA') . mt_rand()), 0, 6);
@@ -64,11 +90,15 @@ $res = $service->generateUrl($genParams);
 // Log for debugging
 @file_put_contents(__DIR__ . '/aa_debug.log', date('Y-m-d H:i:s') . ' | ' . json_encode($genParams) . ' | ' . json_encode($res) . "\n", FILE_APPEND);
 
-// If successful, save in session for verification on return
+// If successful, save in session for verification on return & cache re-use
 if (!empty($res['status']) && $res['status'] === 'success') {
     $_SESSION['digitap_aa_request_id'] = $res['request_id'] ?? '';
     $_SESSION['digitap_aa_client_ref'] = $clientRefNum;
     $_SESSION['digitap_aa_mobile'] = $mobile;
+    if (!empty($res['url'])) {
+        $_SESSION['digitap_aa_session_url'] = $res['url'];
+        $_SESSION['digitap_aa_session_time'] = time();
+    }
 }
 
 echo json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);

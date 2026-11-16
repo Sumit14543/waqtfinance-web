@@ -8,6 +8,20 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 send_security_headers();
+
+// Enforce Page-Level Rate Limiting (Prevents spam reloads / bot flooding)
+if (function_exists('waqt_check_rate_limit')) {
+    $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+    $pageLimit = waqt_check_rate_limit('create_lead_form_view', $clientIp, 40, 60);
+    if (!$pageLimit['allowed']) {
+        http_response_code(429);
+        header('Retry-After: ' . $pageLimit['reset_in']);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Too Many Requests &bull; Waqt Finance</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;color:#1e293b;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;}.card{background:#fff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.08);padding:36px 28px;max-width:440px;text-align:center;border:1px solid #e2e8f0;}h2{color:#ea1d24;margin:0 0 10px;}p{font-size:14px;color:#64748b;line-height:1.5;margin-bottom:20px;}.pill{display:inline-block;background:#fee2e2;color:#991b1b;padding:6px 14px;border-radius:999px;font-weight:700;font-size:13px;}</style></head><body><div class="card"><h2>⚠️ Too Many Requests</h2><p>You have accessed or reloaded this application form too many times in a short interval. For security and fraud prevention, access is temporarily paused.</p><div class="pill">Please wait ' . (int)$pageLimit['reset_in'] . ' seconds and try again.</div></div></body></html>';
+        exit;
+    }
+}
+
 $csrf_token = csrf_token();
 $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 ?>
@@ -3795,6 +3809,11 @@ function verifyPanAPI(userTriggered = false) {
         return;
     }
 
+    if (state.panVerified && lastVerifiedPan === pan) {
+        if (userTriggered) openPanModal();
+        return;
+    }
+
     if (state.panVerifying) return;
     state.panVerifying = true;
 
@@ -4139,321 +4158,18 @@ function restoreFormDraftFromSession() {
 }
 
 // ==========================================
-// CIBIL CREDIT BUREAU SCORE LOGIC (DIGITAP LIVE API)
+// BUREAU EVALUATION (DEPRECATED - EVALUATED VIA ACCOUNT AGGREGATOR)
 // ==========================================
 function fetchCibilScore() {
-    const pan = panInput.value.trim().toUpperCase();
-    const mobile = mobileInput.value.trim();
-    const fullName = (state.panData && state.panData.full_name) ? state.panData.full_name : (document.getElementById('fullName').value.trim() || 'Applicant');
-    const email = (document.getElementById('email')?.value || '').trim();
-    const dob = (state.panData && state.panData.dob) ? state.panData.dob : (document.getElementById('dob')?.value || '').trim();
-    const gender = (document.getElementById('gender')?.value || 'Male').trim();
-    const address = (document.getElementById('address')?.value || '').trim();
-    const city = (document.getElementById('city')?.value || '').trim();
-    const stateVal = (document.getElementById('state')?.value || '').trim();
-    const pincode = (document.getElementById('pincode')?.value || '').trim();
-
-    const errBox = document.getElementById('cibilErrorAlert');
-    if (errBox) errBox.style.display = 'none';
-
-    const consentCheck = document.getElementById('cibilConsentCheck');
-    if (consentCheck && !consentCheck.checked) {
-        if (errBox) showErr(errBox, 'Please check the consent box to authorize your CIBIL score verification.');
-        consentCheck.focus();
-        return;
-    }
-
-    if (!pan || !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
-        if (errBox) showErr(errBox, 'Please enter a valid 10-digit PAN before checking CIBIL.');
-        panInput.focus();
-        return;
-    }
-
-    if (!mobile || mobile.length !== 10) {
-        if (errBox) showErr(errBox, 'Please verify your mobile number before checking CIBIL.');
-        return;
-    }
-
-    if (state.cibilFetching) return;
-    state.cibilFetching = true;
-
-    const actionBox = document.getElementById('cibilActionBox');
-    const loadingBox = document.getElementById('cibilLoadingBox');
-    const resultBox = document.getElementById('cibilResultBox');
-    const loaderText = document.getElementById('cibilLoaderText');
-
-    if (actionBox) actionBox.style.display = 'none';
-    if (loadingBox) loadingBox.style.display = 'block';
-    if (resultBox) resultBox.style.display = 'none';
-
-    if (loaderText) loaderText.innerText = 'Connecting to Digitap Credit Bureau...';
-
-    const stepItems = document.querySelectorAll('.cibil-step-item');
-    if (stepItems && stepItems.length >= 3) {
-        stepItems[0].className = 'cibil-step-item done';
-        stepItems[0].innerHTML = '<i class="fa-solid fa-circle-check"></i> Identity &amp; PAN Record Match';
-        stepItems[1].className = 'cibil-step-item active';
-        stepItems[1].innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Bureau Tradeline &amp; Account Audit';
-        stepItems[2].className = 'cibil-step-item pending';
-        stepItems[2].innerHTML = '<i class="fa-regular fa-circle"></i> Underwriting Score &amp; Limit Assessment';
-    }
-
-    const timer1 = setTimeout(() => {
-        if (loaderText) loaderText.innerText = 'Scanning active credit accounts & repayment history...';
-        if (stepItems && stepItems.length >= 3) {
-            stepItems[1].className = 'cibil-step-item done';
-            stepItems[1].innerHTML = '<i class="fa-solid fa-circle-check"></i> Bureau Tradeline &amp; Account Audit';
-            stepItems[2].className = 'cibil-step-item active';
-            stepItems[2].innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Underwriting Score &amp; Limit Assessment';
-        }
-    }, 1800);
-
-    const payload = {
-        pan: pan,
-        mobile: mobile,
-        fullName: fullName || 'Applicant',
-        email: email,
-        dob: dob,
-        gender: gender,
-        address: address,
-        city: city,
-        state: stateVal,
-        pincode: pincode,
-        csrf_token: CSRF
-    };
-
-    fetch('api/cibil/fetch', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': CSRF
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(r => r.json().catch(() => ({ status: 'error', message: 'HTTP ' + r.status })))
-    .then(data => {
-        state.cibilFetching = false;
-        clearTimeout(timer1);
-        if (data.status === 'success') {
-            const isNtc = !!data.is_ntc || data.score_display === 'NTC';
-            const isExclusion = !!data.is_exclusion;
-            const scoreVal = (data.score !== null && !isNaN(data.score)) ? parseInt(data.score, 10) : null;
-            const scoreDisplay = data.score_display || (scoreVal ? String(scoreVal) : 'NTC');
-            const rating = data.rating || (isNtc ? 'New to Credit' : 'Bureau Assessed');
-            const riskBand = data.risk_band || (isNtc ? 'No History' : 'Standard Risk');
-
-            if (loadingBox) loadingBox.style.display = 'none';
-            if (resultBox) resultBox.style.display = 'block';
-
-            const scoreDisplayElem = document.getElementById('cibilScoreDisplay');
-            const meterFill = document.getElementById('cibilMeterFill');
-            const bandPill = document.getElementById('cibilBandPill');
-
-            if (isNtc) {
-                // New to Credit Applicant
-                if (scoreDisplayElem) {
-                    scoreDisplayElem.innerText = 'NTC';
-                    scoreDisplayElem.style.fontSize = '38px';
-                    scoreDisplayElem.style.color = '#0284c7';
-                }
-                if (meterFill) {
-                    meterFill.style.transition = 'width 0.8s ease-out';
-                    meterFill.style.width = '15%';
-                    meterFill.style.background = '#0284c7';
-                }
-                if (bandPill) {
-                    bandPill.style.background = '#e0f2fe';
-                    bandPill.style.color = '#0369a1';
-                    bandPill.style.borderColor = '#bae6fd';
-                    bandPill.innerHTML = `<i class="fa-solid fa-seedling"></i> <span id="cibilStatusWord">New to Credit</span> (${riskBand})`;
-                }
-            } else if (isExclusion) {
-                // Bureau exclusion flag (e.g. over-leveraged / code 11)
-                if (scoreDisplayElem) {
-                    scoreDisplayElem.innerText = scoreVal ? String(scoreVal) : 'Risk Flag';
-                    scoreDisplayElem.style.fontSize = scoreVal ? '42px' : '28px';
-                    scoreDisplayElem.style.color = '#dc2626';
-                }
-                if (meterFill) {
-                    meterFill.style.transition = 'width 0.8s ease-out';
-                    meterFill.style.width = '25%';
-                    meterFill.style.background = '#dc2626';
-                }
-                if (bandPill) {
-                    bandPill.style.background = '#fee2e2';
-                    bandPill.style.color = '#b91c1c';
-                    bandPill.style.borderColor = '#fca5a5';
-                    bandPill.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span id="cibilStatusWord">${rating}</span> (${riskBand})`;
-                }
-            } else if (scoreVal) {
-                // Genuine Numeric Score (300-900)
-                const scoreColor = scoreVal >= 750 ? '#15803d' : (scoreVal >= 680 ? '#b45309' : '#dc2626');
-                if (scoreDisplayElem) {
-                    scoreDisplayElem.style.fontSize = '42px';
-                    scoreDisplayElem.style.color = scoreColor;
-                }
-                animateScoreCounter('cibilScoreDisplay', 300, scoreVal, 800);
-
-                const pct = Math.min(Math.max((scoreVal - 300) / 600, 0), 1) * 100;
-                if (meterFill) {
-                    meterFill.style.transition = 'width 1s cubic-bezier(0.4, 0, 0.2, 1)';
-                    meterFill.style.width = pct + '%';
-                    meterFill.style.background = scoreColor;
-                }
-
-                // Update Status Pill
-                if (bandPill) {
-                    const pillBg = scoreVal >= 750 ? '#dcfce7' : (scoreVal >= 680 ? '#fef9c3' : '#fee2e2');
-                    const pillColor = scoreVal >= 750 ? '#15803d' : (scoreVal >= 680 ? '#854d0e' : '#b91c1c');
-                    const pillBorder = scoreVal >= 750 ? '#86efac' : (scoreVal >= 680 ? '#fef08a' : '#fca5a5');
-                    bandPill.style.background = pillBg;
-                    bandPill.style.color = pillColor;
-                    bandPill.style.borderColor = pillBorder;
-                    bandPill.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span id="cibilStatusWord">${rating}</span> (${riskBand})`;
-                }
-            }
-
-            // Update Bureau Stats with Real Data
-            if (data.summary) {
-                const elPayments = document.getElementById('cibilStatPayments');
-                const elAccounts = document.getElementById('cibilStatAccounts');
-                const elEnquiries = document.getElementById('cibilStatEnquiries');
-
-                if (elPayments && data.summary.on_time_payments) {
-                    elPayments.innerText = data.summary.on_time_payments;
-                }
-                if (elAccounts && data.summary.active_accounts) {
-                    elAccounts.innerText = data.summary.active_accounts;
-                }
-                if (elEnquiries && data.summary.enquiries_90d) {
-                    elEnquiries.innerText = data.summary.enquiries_90d;
-                }
-            }
-
-            // PDF Download Button
-            const pdfWrap = document.getElementById('cibilPdfDownloadWrap');
-            const pdfBtn = document.getElementById('cibilPdfDownloadBtn');
-            if (pdfWrap && pdfBtn && data.pdf_url) {
-                pdfBtn.href = data.pdf_url;
-                pdfWrap.style.display = 'block';
-            }
-
-            // Save in global state for underwriting and final submission
-            state.cibilScore = scoreVal || (isNtc ? -1 : 0);
-            state.cibilVerified = true;
-            state.cibilPdfUrl = data.pdf_url || '';
-            state.cibilRefNum = data.client_ref_num || '';
-            state.breCreditCheck = data.bre_credit_check || null;
-
-            // Render BRE Step 1 Banner in CIBIL card
-            if (data.bre_credit_check) {
-                updateCibilBreBanner(data.bre_credit_check);
-            }
-
-            const chip = document.getElementById('cibilHeaderChip');
-            if (chip) {
-                if (isNtc) {
-                    chip.innerText = 'New to Credit (NTC) ✓';
-                    chip.style.background = '#e0f2fe';
-                    chip.style.color = '#0369a1';
-                    chip.style.borderColor = '#bae6fd';
-                } else if (scoreVal) {
-                    chip.innerText = 'CIBIL ' + scoreVal + ' ✓';
-                    chip.style.background = scoreVal >= 750 ? '#dcfce7' : (scoreVal >= 680 ? '#fef9c3' : '#fee2e2');
-                    chip.style.color = scoreVal >= 750 ? '#15803d' : (scoreVal >= 680 ? '#854d0e' : '#b91c1c');
-                    chip.style.borderColor = scoreVal >= 750 ? '#86efac' : (scoreVal >= 680 ? '#fef08a' : '#fca5a5');
-                } else {
-                    chip.innerText = 'Bureau Assessed ✓';
-                    chip.style.background = '#f1f5f9';
-                    chip.style.color = '#334155';
-                    chip.style.borderColor = '#cbd5e1';
-                }
-            }
-        } else {
-            if (loadingBox) loadingBox.style.display = 'none';
-            if (actionBox) actionBox.style.display = 'block';
-            if (errBox) {
-                errBox.innerHTML = `<div>${data.message || 'Bureau verification failed. Please try again.'}</div>
-                <div style="margin-top:8px;">
-                    <button type="button" onclick="bypassNtcBureau()" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:11.5px; font-weight:700; border-radius:6px; padding:5px 12px; cursor:pointer;">
-                        <i class="fa-solid fa-arrow-right"></i> Proceed as New to Credit (NTC)
-                    </button>
-                </div>`;
-                errBox.style.display = 'block';
-            }
-        }
-    })
-    .catch(() => {
-        state.cibilFetching = false;
-        clearTimeout(timer1);
-        if (loadingBox) loadingBox.style.display = 'none';
-        if (actionBox) actionBox.style.display = 'block';
-        if (errBox) {
-            errBox.innerHTML = `<div>Credit bureau server connection timeout. Please try again.</div>
-            <div style="margin-top:8px;">
-                <button type="button" onclick="bypassNtcBureau()" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:11.5px; font-weight:700; border-radius:6px; padding:5px 12px; cursor:pointer;">
-                    <i class="fa-solid fa-arrow-right"></i> Proceed as New to Credit (NTC)
-                </button>
-            </div>`;
-            errBox.style.display = 'block';
-        }
-    });
+    stepNext();
 }
 
 function bypassNtcBureau() {
-    state.cibilScore = -1;
-    state.cibilVerified = true;
-    state.cibilPdfUrl = '';
-    const chip = document.getElementById('cibilHeaderChip');
-    if (chip) {
-        chip.innerText = 'New to Credit (NTC) ✓';
-        chip.style.background = '#e0f2fe';
-        chip.style.color = '#0369a1';
-        chip.style.borderColor = '#bae6fd';
-    }
     stepNext();
 }
 
 function recheckCibilScore() {
-    const actionBox = document.getElementById('cibilActionBox');
-    const resultBox = document.getElementById('cibilResultBox');
-    const pdfWrap = document.getElementById('cibilPdfDownloadWrap');
-    if (actionBox) actionBox.style.display = 'block';
-    if (resultBox) resultBox.style.display = 'none';
-    if (pdfWrap) pdfWrap.style.display = 'none';
-    const scoreDisplayElem = document.getElementById('cibilScoreDisplay');
-    if (scoreDisplayElem) scoreDisplayElem.style.color = '#15803d';
-    const chip = document.getElementById('cibilHeaderChip');
-    if (chip) {
-        chip.innerText = 'Soft Pull (Zero Impact)';
-        chip.style.background = '#f1f5f9';
-        chip.style.color = '#64748b';
-        chip.style.borderColor = '#e2e8f0';
-    }
-}
-
-function toggleConsentStyle(checkbox) {
-    const box = document.getElementById('bureauConsentBox');
-    if (box) {
-        box.classList.toggle('checked', checkbox.checked);
-    }
-}
-
-function animateScoreCounter(elemId, start, end, duration) {
-    const obj = document.getElementById(elemId);
-    if (!obj) return;
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerText = Math.floor(progress * (end - start) + start);
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        } else {
-            obj.innerText = end;
-        }
-    };
-    window.requestAnimationFrame(step);
+    stepNext();
 }
 
 function handleStep3Continue() {
@@ -4523,6 +4239,13 @@ function verifyBusinessAPI(type) {
 
     if (!val) {
         showErr(errBox, 'Please enter a ' + (isGst ? 'GST number' : 'Udyam number') + '.');
+        return;
+    }
+
+    if (isGst && state.gstVerified && lastVerifiedGst === val) {
+        return;
+    }
+    if (!isGst && state.udyamVerified && lastVerifiedUdyam === val) {
         return;
     }
 

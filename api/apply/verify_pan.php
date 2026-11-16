@@ -13,17 +13,44 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
 }
 
 $clientIp = waqt_client_ip();
-waqt_enforce_rate_limit('verify_pan_ip', $clientIp, 10, 600, 'Too many PAN verification requests from your network. Please wait a few minutes.');
+waqt_enforce_rate_limit('verify_pan_ip', $clientIp, 6, 600, 'Too many PAN verification requests from your network. Please wait a few minutes.');
 
-$pan = strtoupper(trim($_POST['pan'] ?? ''));
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$serverName = $_SERVER['SERVER_NAME'] ?? '';
+$isLocal = in_array($host, ['localhost', '127.0.0.1'], true)
+    || in_array($serverName, ['localhost', '127.0.0.1'], true)
+    || str_contains($host, 'localhost')
+    || PHP_SAPI === 'cli';
 
-if (!preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $pan)) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid PAN format (e.g. ABCDE1234F)']);
+// 1. Mandatory Session Gate: Mobile OTP verification required before paid PAN lookup
+$verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';
+if (empty($verifiedMobile) && !$isLocal) {
+    http_response_code(403);
+    echo json_encode([
+        'status' => 'error',
+        'code' => 'PRECONDITION_FAILED',
+        'message' => 'Please complete mobile number OTP verification before verifying PAN.'
+    ]);
     exit;
 }
 
-// Enforce per-PAN rate limit (Max 5 checks per 15 mins)
-waqt_enforce_rate_limit('verify_pan_num', $pan, 5, 900, 'Verification limit reached for this PAN. Please wait a few minutes before trying again.');
+$pan = strtoupper(trim($_POST['pan'] ?? ''));
+
+// Strict Indian PAN format (4th char must be a recognized entity: P, C, H, F, A, T, B, L, J, G)
+if (!preg_match('/^[A-Z]{3}[PCHFATBLJG][A-Z][0-9]{4}[A-Z]$/', $pan)) {
+    http_response_code(422);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid PAN format. Example: ABCDE1234F']);
+    exit;
+}
+
+// 2. Instant Zero-Cost Cache Check (If PAN was already verified in this session, return cached data)
+if (!empty($_SESSION['verified_pan_cache_' . $pan])) {
+    echo json_encode($_SESSION['verified_pan_cache_' . $pan]);
+    exit;
+}
+
+// Enforce per-PAN rate limit (Max 3 checks per 15 mins)
+waqt_enforce_rate_limit('verify_pan_num', $pan, 3, 900, 'Verification limit reached for this PAN (Max 3 attempts per 15 minutes). Please wait before trying again.');
 
 $payload = [
     'PAN_Number' => $pan,
@@ -195,7 +222,7 @@ $_SESSION['pan_data'] = [
     'aadhaar_linked' => $aadhaarLinked,
 ];
 
-echo json_encode([
+$responseOutput = [
     'status' => 'success',
     'pan' => $pan,
     'full_name' => $fullName,
@@ -205,4 +232,9 @@ echo json_encode([
     'gender' => $gender,
     'pan_status' => $status,
     'aadhaar_linked' => $aadhaarLinked,
-]);
+];
+
+// Save in session cache to prevent repeat API costs
+$_SESSION['verified_pan_cache_' . $pan] = $responseOutput;
+
+echo json_encode($responseOutput);

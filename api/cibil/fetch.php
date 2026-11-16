@@ -51,7 +51,19 @@ $stateName = trim((string)($input['state'] ?? ''));
 $pincode = trim((string)($input['pincode'] ?? ''));
 $gender = trim((string)($input['gender'] ?? 'Male'));
 
-// 2. Validation & Normalization Rules & Rate Limiting
+// 2. Security Check: Bureau API Deprecation Gate (Protects against CRIF API costs)
+$cibilEnabled = env_value('CIBIL_ENABLED', 'false');
+if ($cibilEnabled === 'false' || empty($cibilEnabled)) {
+    http_response_code(403);
+    echo json_encode([
+        'status' => 'error',
+        'code' => 'BUREAU_API_DISABLED',
+        'message' => 'Credit bureau inquiry is disabled. Underwriting is evaluated via Account Aggregator banking analysis.'
+    ]);
+    exit;
+}
+
+// 3. Validation & Normalization Rules & Rate Limiting
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
     waqt_enforce_rate_limit('cibil_fetch_ip', $clientIp, 8, 3600, 'Too many credit report requests from your network. Please try again after 1 hour.');

@@ -202,6 +202,12 @@ if (empty($txnId) && empty($uniqueId) && !in_array(basename($_SERVER['SCRIPT_FIL
     return;
 }
 
+// Enforce Rate Limiting on Aadhaar Callback
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+if (function_exists('waqt_enforce_rate_limit')) {
+    waqt_enforce_rate_limit('aadhaar_callback_ip', $clientIp, 15, 600, 'Too many verification attempts from your network. Please wait a few minutes.');
+}
+
 // Check for explicit failure from DigiLocker redirect
 if (strtolower($successParam) === 'false' || !empty($errorCode)) {
     $displayError = $errorMsg ?: 'DigiLocker Aadhaar verification was cancelled or could not be completed.';

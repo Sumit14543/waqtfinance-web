@@ -24,7 +24,7 @@ if (!$csrf || !hash_equals((string)$sessionCsrf, (string)$csrf)) {
 
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('upload_shop_photo_ip', $clientIp, 12, 600, 'Too many photo uploads from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('upload_shop_photo_ip', $clientIp, 8, 600, 'Too many photo uploads from your network. Please wait a few minutes.');
 }
 
 $uploadDir = dirname(__DIR__, 2) . '/uploads/shop_photos';

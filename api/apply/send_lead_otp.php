@@ -15,7 +15,10 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
 }
 
 $clientIp = waqt_client_ip();
-waqt_enforce_rate_limit('send_lead_otp_ip', $clientIp, 8, 600, 'Too many OTP requests from your network. Please wait a few minutes before trying again.');
+waqt_enforce_rate_limit('send_lead_otp_ip', $clientIp, 5, 600, 'Too many OTP requests from your network. Please wait a few minutes before trying again.');
+
+// System-wide Global Circuit Breaker (Prevents distributed botnets from draining SMS balance)
+waqt_enforce_rate_limit('global_lead_otp_dispatch', 'global', 120, 3600, 'Verification system capacity reached. Please try again in a few moments.');
 
 $mobileRaw = trim((string) ($_POST['mobile'] ?? ''));
 $mobile = preg_replace('/\D/', '', $mobileRaw);
@@ -25,8 +28,13 @@ if (!preg_match('/^[6-9]\d{9}$/', $mobile)) {
     exit;
 }
 
-// Enforce per-mobile rate limit (Max 5 OTPs per hour)
-waqt_enforce_rate_limit('send_lead_otp_mobile', $mobile, 5, 3600, 'Maximum OTP limit reached for this mobile number. Please try again after 1 hour.');
+if ($mobile === '9876543210' || preg_match('/^(\d)\1{9}$/', $mobile)) {
+    echo json_encode(['status' => 'error', 'message' => 'Please enter a valid personal mobile number.']);
+    exit;
+}
+
+// Enforce per-mobile rate limit (Max 3 OTPs per hour)
+waqt_enforce_rate_limit('send_lead_otp_mobile', $mobile, 3, 3600, 'Maximum OTP limit reached for this mobile number (Max 3 per hour). Please try again after 1 hour.');
 
 $isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true) || (env_value('APP_ENV') === 'local');
 

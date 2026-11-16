@@ -15,7 +15,22 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
 
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('verify_business_ip', $clientIp, 15, 600, 'Too many business verification attempts from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('verify_business_ip', $clientIp, 6, 600, 'Too many business verification attempts from your network. Please wait a few minutes.');
+}
+
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || PHP_SAPI === 'cli';
+
+// 1. Mandatory Session Gate: Mobile OTP verification required before paid business lookup
+$verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';
+if (empty($verifiedMobile) && !$isLocal) {
+    http_response_code(403);
+    echo json_encode([
+        'status' => 'error',
+        'code' => 'PRECONDITION_FAILED',
+        'message' => 'Please complete mobile number OTP verification before business verification.'
+    ]);
+    exit;
 }
 
 $type = $_POST['type'] ?? '';
@@ -26,8 +41,15 @@ if (empty($type) || empty($value)) {
     exit;
 }
 
+// 2. Instant Zero-Cost Cache Check (If GST/Udyam was already verified in this session, return cached data)
+$cacheKey = 'biz_verified_' . md5($type . ':' . strtoupper($value));
+if (!empty($_SESSION[$cacheKey])) {
+    echo json_encode($_SESSION[$cacheKey]);
+    exit;
+}
+
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('verify_business_val', strtoupper($value), 5, 900, 'Verification limit reached for this business document. Please try again after 15 minutes.');
+    waqt_enforce_rate_limit('verify_business_val', strtoupper($value), 3, 900, 'Verification limit reached for this business document (Max 3 attempts per 15 minutes). Please try again later.');
 }
 
 $client_id = required_env('DIGITAP_CLIENT_ID');
@@ -39,7 +61,13 @@ $client_ref_num = 'WAQT_' . time() . '_' . bin2hex(random_bytes(4));
 if ($type === 'gst') {
     $gst = strtoupper($value);
     if (!preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/', $gst)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid GSTIN format']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid GSTIN format. Example: 07AAAAA0000A1Z5']);
+        exit;
+    }
+
+    $stateCode = (int)substr($gst, 0, 2);
+    if ($stateCode < 1 || ($stateCode > 38 && $stateCode !== 97 && $stateCode !== 99)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid GSTIN state jurisdiction code.']);
         exit;
     }
 
@@ -198,11 +226,16 @@ if ($type === 'gst') {
 }
 
 if ($business_name !== '') {
-    echo json_encode([
+    $successPayload = [
         'status' => 'success',
         'business_name' => $business_name,
         'details' => $result
-    ]);
+    ];
+
+    // Save in session cache to prevent repeat API costs
+    $_SESSION[$cacheKey] = $successPayload;
+
+    echo json_encode($successPayload);
 } else {
     $msg = $res_data['message'] ?? '';
     if (empty($msg)) {

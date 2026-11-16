@@ -68,10 +68,27 @@ if (empty($inputAadhaar) && basename($_SERVER['SCRIPT_FILENAME'] ?? '') !== 'aad
     return;
 }
 
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || PHP_SAPI === 'cli';
+
+// 1. Mandatory Session Gate: Mobile OTP verification required before paid Aadhaar DigiLocker initiation
+$verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';
+if (empty($verifiedMobile) && !$isLocal) {
+    http_response_code(403);
+    $errMsg = 'Please complete mobile number OTP verification before Aadhaar verification.';
+    if ($isAjax) {
+        echo json_encode(['status' => 'error', 'code' => 'PRECONDITION_FAILED', 'message' => $errMsg]);
+    } else {
+        $_SESSION['aadhaar_error'] = $errMsg;
+        header('Location: /create-lead-form');
+    }
+    exit;
+}
+
 // Rate limiting check
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('aadhaar_initiate_ip', $clientIp, 10, 600, 'Too many Aadhaar verification attempts from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('aadhaar_initiate_ip', $clientIp, 5, 600, 'Too many Aadhaar verification attempts from your network. Please wait a few minutes.');
 }
 
 // Sanitize Aadhaar Number (if provided)
@@ -80,9 +97,9 @@ $maskedAadhaar = 'XXXX-XXXX-AADH';
 $last4 = '';
 
 if (!empty($cleanAadhaar)) {
-    if (strlen($cleanAadhaar) !== 12) {
+    if (strlen($cleanAadhaar) !== 12 || !preg_match('/^[2-9]\d{11}$/', $cleanAadhaar) || preg_match('/^(\d)\1{11}$/', $cleanAadhaar)) {
         http_response_code(400);
-        $errMsg = 'Please enter a valid 12-digit Aadhaar number.';
+        $errMsg = 'Please enter a valid 12-digit Indian Aadhaar number.';
         if ($isAjax) {
             echo json_encode(['status' => 'error', 'message' => $errMsg]);
         } else {
@@ -92,7 +109,7 @@ if (!empty($cleanAadhaar)) {
         exit;
     }
     if (function_exists('waqt_enforce_rate_limit')) {
-        waqt_enforce_rate_limit('aadhaar_initiate_num', hash('sha256', $cleanAadhaar), 5, 900, 'Verification limit reached for this Aadhaar. Please wait a few minutes before trying again.');
+        waqt_enforce_rate_limit('aadhaar_initiate_num', hash('sha256', $cleanAadhaar), 3, 900, 'Verification limit reached for this Aadhaar (Max 3 attempts per 15 minutes). Please wait before trying again.');
     }
     $last4 = substr($cleanAadhaar, -4);
     $maskedAadhaar = 'XXXX-XXXX-' . $last4;
