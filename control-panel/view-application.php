@@ -145,6 +145,55 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
 ?>
 
 <style>
+    .btn-statement-view {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        width: auto !important;
+        min-width: 170px !important;
+        height: auto !important;
+        padding: 10px 18px !important;
+        background: #16a34a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-statement-view:hover {
+        background: #15803d !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35) !important;
+    }
+    .btn-statement-csv {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        width: auto !important;
+        min-width: 170px !important;
+        height: auto !important;
+        padding: 10px 18px !important;
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 12.5px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-statement-csv:hover {
+        background: #1e293b !important;
+        transform: translateY(-1px) !important;
+    }
     .view-container {
         width: 100%;
         max-width: 100%;
@@ -1201,11 +1250,11 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <div style="display:flex; gap:8px;">
-                                    <button type="button" class="btn-action" onclick="openAdminStatementModal('<?php echo htmlspecialchars($aaTxnId); ?>', '<?php echo htmlspecialchars((string)($app['mobile'] ?? $app['mobile_number'] ?? '')); ?>', '<?php echo htmlspecialchars((string)($app['account_number'] ?? '')); ?>', '<?php echo (int)($app['id'] ?? 0); ?>')" style="background:#16a34a; color:#fff; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                                <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
+                                    <button type="button" class="btn-statement-view" onclick="openAdminStatementModal('<?php echo htmlspecialchars($aaTxnId); ?>', '<?php echo htmlspecialchars((string)($app['mobile'] ?? $app['mobile_number'] ?? '')); ?>', '<?php echo htmlspecialchars((string)($app['account_number'] ?? '')); ?>', '<?php echo (int)($app['id'] ?? 0); ?>')">
                                         <i class="fa-solid fa-file-invoice"></i> View Statement
                                     </button>
-                                    <a href="../api/bank-data/export-statement.php?txn_id=<?php echo urlencode($aaTxnId); ?>&mobile=<?php echo urlencode((string)($app['mobile'] ?? $app['mobile_number'] ?? '')); ?>&account=<?php echo urlencode((string)($app['account_number'] ?? '')); ?>&lead_id=<?php echo (int)($app['id'] ?? 0); ?>" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                    <a href="../api/bank-data/export-statement.php?txn_id=<?php echo urlencode($aaTxnId); ?>&mobile=<?php echo urlencode((string)($app['mobile'] ?? $app['mobile_number'] ?? '')); ?>&account=<?php echo urlencode((string)($app['account_number'] ?? '')); ?>&lead_id=<?php echo (int)($app['id'] ?? 0); ?>" class="btn-statement-csv" target="_blank">
                                         <i class="fa-solid fa-download"></i> Download CSV
                                     </a>
                                 </div>

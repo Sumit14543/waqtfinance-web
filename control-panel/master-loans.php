@@ -1015,13 +1015,69 @@ if ($totalPages < 1) $totalPages = 1;
         transform: scale(1.05);
     }
     .btn-action-view {
-        border-color: rgba(24, 82, 156, 0.2);
-        color: var(--primary);
+        border-color: #18529c;
+        background: #18529c;
+        color: #ffffff;
+        width: auto;
+        padding: 6px 12px;
+        gap: 5px;
+        font-weight: 700;
+        font-size: 12px;
+        box-shadow: 0 2px 6px rgba(24, 82, 156, 0.25);
     }
     .btn-action-view:hover {
-        background: var(--primary);
+        background: #103a71;
         color: #ffffff;
-        box-shadow: 0 4px 10px rgba(24, 82, 156, 0.25);
+        box-shadow: 0 4px 10px rgba(24, 82, 156, 0.35);
+    }
+    .btn-statement-view {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        width: auto !important;
+        min-width: 175px !important;
+        height: auto !important;
+        padding: 10px 18px !important;
+        background: #16a34a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-statement-view:hover {
+        background: #15803d !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35) !important;
+    }
+    .btn-statement-csv {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        width: auto !important;
+        min-width: 175px !important;
+        height: auto !important;
+        padding: 10px 18px !important;
+        background: #0f172a !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 12.5px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-statement-csv:hover {
+        background: #1e293b !important;
+        transform: translateY(-1px) !important;
     }
     .btn-action-edit {
         border-color: rgba(245, 158, 11, 0.2);
@@ -1200,7 +1256,7 @@ if ($totalPages < 1) $totalPages = 1;
                                 <td style="white-space: nowrap;">
                                     <div class="action-btn-group">
                                         <button type="button" class="btn-action-premium btn-action-view view-gen-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="View Details">
-                                            <i class="fa-solid fa-eye"></i>
+                                            <i class="fa-solid fa-eye"></i> View
                                         </button>
                                         <button type="button" class="btn-action-premium btn-action-edit edit-gen-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="Edit Lead">
                                             <i class="fa-solid fa-pen"></i>
@@ -1256,7 +1312,7 @@ if ($totalPages < 1) $totalPages = 1;
                                 <td style="white-space: nowrap;">
                                     <div class="action-btn-group">
                                         <button type="button" class="btn-action-premium btn-action-view view-edi-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="View Details">
-                                            <i class="fa-solid fa-eye"></i>
+                                            <i class="fa-solid fa-eye"></i> View
                                         </button>
                                         <button type="button" class="btn-action-premium btn-action-edit edit-edi-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="Edit Lead">
                                             <i class="fa-solid fa-pen"></i>
@@ -1526,7 +1582,7 @@ if ($totalPages < 1) $totalPages = 1;
                 <td style="color: var(--text-muted); font-size: 12.5px;">${formatDateTime(lead.created_at)}</td>
                 <td style="white-space: nowrap;">
                     <div class="action-btn-group">
-                        <button type="button" class="btn-action-premium btn-action-view js-master-action" data-action="view" data-type="general" data-id="${escapeHtml(lead.id)}" title="View Details"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="btn-action-premium btn-action-view js-master-action" data-action="view" data-type="general" data-id="${escapeHtml(lead.id)}" title="View Details"><i class="fa-solid fa-eye"></i> View</button>
                         <button type="button" class="btn-action-premium btn-action-edit js-master-action" data-action="edit" data-type="general" data-id="${escapeHtml(lead.id)}" title="Edit Lead"><i class="fa-solid fa-pen"></i></button>
                         <button type="button" class="btn-action-premium btn-action-delete js-master-action" data-action="delete" data-type="general" data-id="${escapeHtml(lead.id)}" title="Delete Lead"><i class="fa-solid fa-trash"></i></button>
                     </div>
@@ -1554,7 +1610,7 @@ if ($totalPages < 1) $totalPages = 1;
                     <td><span class="badge-status badge-${escapeHtml(status)}" id="badge-${escapeHtml(lead.id)}">${escapeHtml(status)}</span></td>
                     <td style="white-space: nowrap;">
                         <div class="action-btn-group">
-                            <button type="button" class="btn-action-premium btn-action-view js-master-action" data-action="view" data-type="edi" data-id="${escapeHtml(lead.id)}" title="View Details"><i class="fa-solid fa-eye"></i></button>
+                            <button type="button" class="btn-action-premium btn-action-view js-master-action" data-action="view" data-type="edi" data-id="${escapeHtml(lead.id)}" title="View Details"><i class="fa-solid fa-eye"></i> View</button>
                             <button type="button" class="btn-action-premium btn-action-edit js-master-action" data-action="edit" data-type="edi" data-id="${escapeHtml(lead.id)}" title="Edit Lead"><i class="fa-solid fa-pen"></i></button>
                             <button type="button" class="btn-action-premium btn-action-delete js-master-action" data-action="delete" data-type="edi" data-id="${escapeHtml(lead.id)}" title="Delete Lead"><i class="fa-solid fa-trash"></i></button>
                         </div>
@@ -1963,11 +2019,11 @@ if ($totalPages < 1) $totalPages = 1;
                                 <div class="field-item"><div class="field-label">Avg Balance (AMB)</div><div class="field-value" style="font-weight:700;">₹${amb.toLocaleString('en-IN')}</div></div>
                                 <div class="field-item"><div class="field-label">Aggregator Txn ID</div><div class="field-value" style="font-family:monospace; font-size:12px;">${aaTxnId || 'Verified (Auto-Resolved)'}</div></div>
                             </div>
-                            <div style="display:flex; gap:10px; margin-top:14px; padding-top:12px; border-top:1px dashed #86efac; flex-wrap:wrap;">
-                                <button type="button" class="btn-action" onclick="openMasterStatementModal('${aaTxnId}', '${encodeURIComponent(lead.mobile_number || '')}', '${encodeURIComponent(aNum || '')}', '${encodeURIComponent(lead.id || lead.application_id || '')}')" style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                            <div style="display:flex; gap:12px; margin-top:14px; padding-top:12px; border-top:1px dashed #86efac; flex-wrap:wrap;">
+                                <button type="button" class="btn-statement-view" onclick="openMasterStatementModal('${aaTxnId}', '${encodeURIComponent(lead.mobile_number || '')}', '${encodeURIComponent(aNum || '')}', '${encodeURIComponent(lead.id || lead.application_id || '')}')">
                                     <i class="fa-solid fa-file-invoice"></i> View Full Statement
                                 </button>
-                                <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}&mobile=${encodeURIComponent(lead.mobile_number || '')}&account=${encodeURIComponent(aNum || '')}&lead_id=${encodeURIComponent(lead.id || lead.application_id || '')}" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                                <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}&mobile=${encodeURIComponent(lead.mobile_number || '')}&account=${encodeURIComponent(aNum || '')}&lead_id=${encodeURIComponent(lead.id || lead.application_id || '')}" class="btn-statement-csv" target="_blank">
                                     <i class="fa-solid fa-download"></i> Download Statement (CSV)
                                 </a>
                             </div>
