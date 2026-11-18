@@ -13,7 +13,7 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
 }
 
 $clientIp = waqt_client_ip();
-waqt_enforce_rate_limit('verify_pan_ip', $clientIp, 6, 600, 'Too many PAN verification requests from your network. Please wait a few minutes.');
+waqt_enforce_rate_limit('verify_pan_ip', $clientIp, 60, 600, 'Too many PAN verification requests from your network. Please wait a few minutes.');
 
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $serverName = $_SERVER['SERVER_NAME'] ?? '';

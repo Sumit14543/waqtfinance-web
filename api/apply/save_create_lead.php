@@ -27,7 +27,7 @@ $data = !empty($jsonBody) ? $jsonBody : $_POST;
 
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('save_lead_ip', $clientIp, 5, 900, 'Too many lead submissions from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('save_lead_ip', $clientIp, 60, 900, 'Too many lead submissions from your network. Please wait a few minutes.');
 }
 
 $fullName = lead_clean($data['full_name'] ?? '');

@@ -88,7 +88,7 @@ if (empty($verifiedMobile) && !$isLocal) {
 // Rate limiting check
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('aadhaar_initiate_ip', $clientIp, 5, 600, 'Too many Aadhaar verification attempts from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('aadhaar_initiate_ip', $clientIp, 60, 600, 'Too many Aadhaar verification attempts from your network. Please wait a few minutes.');
 }
 
 // Sanitize Aadhaar Number (if provided)

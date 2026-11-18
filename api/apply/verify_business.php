@@ -15,7 +15,7 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
 
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('verify_business_ip', $clientIp, 6, 600, 'Too many business verification attempts from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('verify_business_ip', $clientIp, 60, 600, 'Too many business verification attempts from your network. Please wait a few minutes.');
 }
 
 $host = $_SERVER['HTTP_HOST'] ?? '';

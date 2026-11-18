@@ -15,7 +15,7 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
 }
 
 $clientIp = waqt_client_ip();
-waqt_enforce_rate_limit('send_lead_otp_ip', $clientIp, 5, 600, 'Too many OTP requests from your network. Please wait a few minutes before trying again.');
+waqt_enforce_rate_limit('send_lead_otp_ip', $clientIp, 40, 600, 'Too many OTP requests from your network. Please wait a few minutes before trying again.');
 
 // System-wide Global Circuit Breaker (Prevents distributed botnets from draining SMS balance)
 waqt_enforce_rate_limit('global_lead_otp_dispatch', 'global', 120, 3600, 'Verification system capacity reached. Please try again in a few moments.');

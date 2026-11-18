@@ -22,7 +22,7 @@ $data = !empty($jsonBody) ? $jsonBody : $_POST;
 
 $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 if (function_exists('waqt_enforce_rate_limit')) {
-    waqt_enforce_rate_limit('bank_data_generate_url_ip', $clientIp, 5, 600, 'Too many Account Aggregator session requests from your network. Please wait a few minutes.');
+    waqt_enforce_rate_limit('bank_data_generate_url_ip', $clientIp, 60, 600, 'Too many Account Aggregator session requests from your network. Please wait a few minutes.');
 }
 
 $host = $_SERVER['HTTP_HOST'] ?? '';
