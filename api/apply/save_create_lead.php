@@ -16,17 +16,6 @@ if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     exit;
 }
 
-// Enforce Lead Portal Password Authorization
-if (empty($_SESSION['lead_portal_authorized'])) {
-    http_response_code(403);
-    echo json_encode([
-        'status' => 'error',
-        'code' => 'PORTAL_UNAUTHORIZED',
-        'message' => 'Portal session not authorized. Please refresh and enter the portal access password.'
-    ]);
-    exit;
-}
-
 // 1. Sanitize input fields
 function lead_clean(?string $val): string {
     return trim((string) ($val ?? ''));
