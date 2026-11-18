@@ -1201,16 +1201,14 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <?php if (!empty($aaTxnId)): ?>
                                 <div style="display:flex; gap:8px;">
-                                    <button type="button" class="btn-action" onclick="openAdminStatementModal('<?php echo htmlspecialchars($aaTxnId); ?>')" style="background:#16a34a; color:#fff; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                                    <button type="button" class="btn-action" onclick="openAdminStatementModal('<?php echo htmlspecialchars($aaTxnId); ?>', '<?php echo htmlspecialchars((string)($app['mobile'] ?? $app['mobile_number'] ?? '')); ?>', '<?php echo htmlspecialchars((string)($app['account_number'] ?? '')); ?>', '<?php echo (int)($app['id'] ?? 0); ?>')" style="background:#16a34a; color:#fff; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
                                         <i class="fa-solid fa-file-invoice"></i> View Statement
                                     </button>
-                                    <a href="../api/bank-data/export-statement.php?txn_id=<?php echo urlencode($aaTxnId); ?>" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                    <a href="../api/bank-data/export-statement.php?txn_id=<?php echo urlencode($aaTxnId); ?>&mobile=<?php echo urlencode((string)($app['mobile'] ?? $app['mobile_number'] ?? '')); ?>&account=<?php echo urlencode((string)($app['account_number'] ?? '')); ?>&lead_id=<?php echo (int)($app['id'] ?? 0); ?>" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
                                         <i class="fa-solid fa-download"></i> Download CSV
                                     </a>
                                 </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -2185,16 +2183,23 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
     }
 
     // View Verified Bank Statement from Digitap Account Aggregator
-    function openAdminStatementModal(txnId) {
+    function openAdminStatementModal(txnId, mobile, account, leadId) {
         Swal.fire({
             title: 'Loading Bank Statement...',
             html: '<div style="padding:20px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px; color:var(--primary);"></i><div style="margin-top:10px; font-weight:600;">Fetching live aggregated transactions...</div></div>',
             showConfirmButton: false,
             allowOutsideClick: false,
             didOpen: () => {
-                fetch('../api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
+                const fetchUrl = (txnId && txnId !== 'N/A')
+                    ? ('../api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
+                    : ('../api/bank-data/find-report.php?mobile=' + encodeURIComponent(mobile || '') + '&account=' + encodeURIComponent(account || '') + '&lead_id=' + encodeURIComponent(leadId || ''));
+
+                fetch(fetchUrl)
                     .then(r => r.json())
-                    .then(data => {
+                    .then(rawRes => {
+                        const data = (rawRes && rawRes.report) ? rawRes.report : rawRes;
+                        const activeTxn = (rawRes && rawRes.txn_id) ? rawRes.txn_id : (txnId || 'live');
+
                         if (!data || !data.banks || data.banks.length === 0) {
                             Swal.fire('Notice', 'No bank statement data available for this transaction.', 'info');
                             return;
@@ -2362,10 +2367,10 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                             </button>
                                         </div>
                                         <div style="display:flex; gap:6px;">
-                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}&view=daily" target="_blank" style="background:#15803d; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(activeTxn)}&mobile=${encodeURIComponent(mobile || '')}&lead_id=${encodeURIComponent(leadId || '')}&view=daily" target="_blank" style="background:#15803d; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
                                                 <i class="fa-solid fa-download"></i> Daily Credit CSV
                                             </a>
-                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(activeTxn)}&mobile=${encodeURIComponent(mobile || '')}&lead_id=${encodeURIComponent(leadId || '')}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
                                                 <i class="fa-solid fa-download"></i> All Txns CSV
                                             </a>
                                         </div>

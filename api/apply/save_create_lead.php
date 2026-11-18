@@ -69,8 +69,12 @@ $ifscCode = strtoupper(lead_clean($data['ifsc_code'] ?? ''));
 $accountType = lead_clean($data['account_type'] ?? 'Current');
 $aaVerified = !empty($data['aa_verified']) && (string)$data['aa_verified'] === '1';
 $aaTxnId = lead_clean($data['aa_txn_id'] ?? '');
+if (empty($aaTxnId) && !empty($_SESSION['digitap_aa_request_id'])) {
+    $aaTxnId = lead_clean((string)$_SESSION['digitap_aa_request_id']);
+}
 $aaInflow = (float)($data['aa_inflow'] ?? 0);
 $aaAmb = (float)($data['aa_amb'] ?? 0);
+$aaData = is_array($data['aa_data'] ?? null) ? $data['aa_data'] : null;
 $approvedLimit = (float)($data['approved_limit'] ?? 0);
 $cibilScore = (int)($data['cibil_score'] ?? 0);
 $cibilPdfUrl = lead_clean($data['cibil_pdf_url'] ?? '');
@@ -236,6 +240,7 @@ $leadDetailsArray = [
     'account_aggregator_verified' => $aaVerified,
     'account_aggregator_txn_id' => $aaTxnId,
     'aa_txn_id' => $aaTxnId,
+    'aa_data' => $aaData,
     'monthly_inflow' => $aaInflow,
     'average_monthly_balance' => $aaAmb,
     'pincode' => $pincode,

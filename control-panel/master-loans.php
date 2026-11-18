@@ -1961,18 +1961,16 @@ if ($totalPages < 1) $totalPages = 1;
                                 <div class="field-item"><div class="field-label">IFSC Code</div><div class="field-value" style="font-family:monospace; color:var(--primary); font-weight:700;">${ifsc}</div></div>
                                 <div class="field-item"><div class="field-label">Monthly Inflow</div><div class="field-value" style="color:#16a34a; font-weight:800;">₹${inflow.toLocaleString('en-IN')}</div></div>
                                 <div class="field-item"><div class="field-label">Avg Balance (AMB)</div><div class="field-value" style="font-weight:700;">₹${amb.toLocaleString('en-IN')}</div></div>
-                                <div class="field-item"><div class="field-label">Aggregator Txn ID</div><div class="field-value" style="font-family:monospace; font-size:12px;">${aaTxnId || 'N/A'}</div></div>
+                                <div class="field-item"><div class="field-label">Aggregator Txn ID</div><div class="field-value" style="font-family:monospace; font-size:12px;">${aaTxnId || 'Verified (Auto-Resolved)'}</div></div>
                             </div>
-                            ${aaTxnId ? `
                             <div style="display:flex; gap:10px; margin-top:14px; padding-top:12px; border-top:1px dashed #86efac; flex-wrap:wrap;">
-                                <button type="button" class="btn-action" onclick="openMasterStatementModal('${aaTxnId}')" style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                                <button type="button" class="btn-action" onclick="openMasterStatementModal('${aaTxnId}', '${encodeURIComponent(lead.mobile_number || '')}', '${encodeURIComponent(aNum || '')}', '${encodeURIComponent(lead.id || lead.application_id || '')}')" style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
                                     <i class="fa-solid fa-file-invoice"></i> View Full Statement
                                 </button>
-                                <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                                <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}&mobile=${encodeURIComponent(lead.mobile_number || '')}&account=${encodeURIComponent(aNum || '')}&lead_id=${encodeURIComponent(lead.id || lead.application_id || '')}" class="btn-action" target="_blank" style="background:#0f172a; color:#fff; text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
                                     <i class="fa-solid fa-download"></i> Download Statement (CSV)
                                 </a>
                             </div>
-                            ` : ''}
                         </div>
                     `;
                 }
@@ -2887,16 +2885,23 @@ if ($totalPages < 1) $totalPages = 1;
     });
 
     // View Verified Bank Statement from Digitap Account Aggregator
-    window.openMasterStatementModal = function(txnId) {
+    window.openMasterStatementModal = function(txnId, mobile, account, leadId) {
         Swal.fire({
             title: 'Loading Bank Statement...',
             html: '<div style="padding:20px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px; color:var(--primary);"></i><div style="margin-top:10px; font-weight:600;">Fetching live aggregated transactions...</div></div>',
             showConfirmButton: false,
             allowOutsideClick: false,
             didOpen: () => {
-                fetch('../api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
+                const fetchUrl = (txnId && txnId !== 'N/A')
+                    ? ('../api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
+                    : ('../api/bank-data/find-report.php?mobile=' + encodeURIComponent(mobile || '') + '&account=' + encodeURIComponent(account || '') + '&lead_id=' + encodeURIComponent(leadId || ''));
+
+                fetch(fetchUrl)
                     .then(r => r.json())
-                    .then(data => {
+                    .then(rawRes => {
+                        const data = (rawRes && rawRes.report) ? rawRes.report : rawRes;
+                        const activeTxn = (rawRes && rawRes.txn_id) ? rawRes.txn_id : (txnId || 'live');
+
                         if (!data || !data.banks || data.banks.length === 0) {
                             Swal.fire('Notice', 'No bank statement data available for this transaction.', 'info');
                             return;
@@ -3064,10 +3069,10 @@ if ($totalPages < 1) $totalPages = 1;
                                             </button>
                                         </div>
                                         <div style="display:flex; gap:6px;">
-                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}&view=daily" target="_blank" style="background:#15803d; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(activeTxn)}&mobile=${encodeURIComponent(mobile || '')}&lead_id=${encodeURIComponent(leadId || '')}&view=daily" target="_blank" style="background:#15803d; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
                                                 <i class="fa-solid fa-download"></i> Daily Credit CSV
                                             </a>
-                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(txnId)}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(activeTxn)}&mobile=${encodeURIComponent(mobile || '')}&lead_id=${encodeURIComponent(leadId || '')}" target="_blank" style="background:#0f172a; color:#fff; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
                                                 <i class="fa-solid fa-download"></i> All Txns CSV
                                             </a>
                                         </div>

@@ -8,11 +8,25 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/config/db.php';
 require_once dirname(__DIR__, 2) . '/includes/DigitapBankDataUIService.php';
+require_once dirname(__DIR__, 2) . '/includes/aa_report_helper.php';
 
 $txnId = trim((string)($_GET['txn_id'] ?? ''));
+$mobile = trim((string)($_GET['mobile'] ?? ''));
+$account = trim((string)($_GET['account'] ?? ''));
+$leadId = trim((string)($_GET['lead_id'] ?? ''));
+
+$data = null;
+if (empty($txnId) && (!empty($mobile) || !empty($account) || !empty($leadId))) {
+    $resolved = waqt_resolve_aa_report($conn ?? null, $mobile, $account, '', $leadId);
+    if (!empty($resolved['txn_id'])) {
+        $txnId = $resolved['txn_id'];
+        $data = $resolved['report'] ?? null;
+    }
+}
+
 if (empty($txnId)) {
     http_response_code(400);
-    echo "Transaction ID (txn_id) is required.";
+    echo "Transaction ID (txn_id) or mobile number is required.";
     exit;
 }
 
