@@ -3,16 +3,19 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/security.php';
+require_once __DIR__ . '/includes/rate_limiter.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 send_security_headers();
+header('Content-Type: text/html; charset=UTF-8');
+
+$clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
 
 // Enforce Page-Level Rate Limiting (Prevents spam reloads / bot flooding)
 if (function_exists('waqt_check_rate_limit')) {
-    $clientIp = function_exists('waqt_client_ip') ? waqt_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
-    $pageLimit = waqt_check_rate_limit('create_lead_form_view', $clientIp, 40, 60);
+    $pageLimit = waqt_check_rate_limit('create_lead_form_view', $clientIp, 60, 60);
     if (!$pageLimit['allowed']) {
         http_response_code(429);
         header('Retry-After: ' . $pageLimit['reset_in']);
@@ -22,7 +25,387 @@ if (function_exists('waqt_check_rate_limit')) {
     }
 }
 
+// -------------------------------------------------------------------------
+// PORTAL ACCESS PASSWORD GATE & 3-ATTEMPT IP LOCKOUT (15 MINUTES)
+// -------------------------------------------------------------------------
+$portalPasswordHash = (string)(env_value('LEAD_PORTAL_PASSWORD_HASH', '') ?: '$2y$10$IxQEzRgOKwkXTSDFnON3mO4BC8D1KrHRY8SUGIfRjFAA5.Ay3/aKm');
+$passActionKey = 'lead_portal_pass_failed';
+$maxPassAttempts = 3;
+$lockoutSeconds = 900; // 15 Minutes (900 seconds)
+
+$passStatus = waqt_get_rate_limit_status($passActionKey, $clientIp, $maxPassAttempts);
+$isIpBlocked = $passStatus['blocked'];
+$lockoutRemaining = $passStatus['reset_in'];
+$passwordError = '';
+
 $csrf_token = csrf_token();
+
+// Handle Password Verification POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['portal_access_password'])) {
+    if ($isIpBlocked) {
+        $passwordError = 'Access is temporarily blocked from your IP for 15 minutes due to 3 incorrect attempts.';
+    } else {
+        $postedCsrf = (string)($_POST['csrf_token'] ?? '');
+        $sessionCsrf = (string)($_SESSION['csrf_token'] ?? '');
+        if ($postedCsrf === '' || !hash_equals($sessionCsrf, $postedCsrf)) {
+            $passwordError = 'Security session expired. Please reload and try again.';
+        } else {
+            $submittedPass = (string)($_POST['portal_access_password'] ?? '');
+            if (password_verify($submittedPass, $portalPasswordHash)) {
+                // Correct Password! Reset failed count and authorize session
+                waqt_reset_rate_limit($passActionKey, $clientIp);
+                $_SESSION['lead_portal_authorized'] = true;
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            } else {
+                // Incorrect Password! Record failure attempt
+                $failResult = waqt_record_failure($passActionKey, $clientIp, $maxPassAttempts, $lockoutSeconds);
+                if ($failResult['blocked']) {
+                    $isIpBlocked = true;
+                    $lockoutRemaining = $failResult['reset_in'];
+                    $passwordError = 'Incorrect password. You have entered the wrong password 3 times. Your IP has been blocked for 15 minutes.';
+                } else {
+                    $left = $failResult['remaining'];
+                    $passwordError = 'Incorrect password! ' . $left . ' attempt' . ($left === 1 ? '' : 's') . ' remaining before your IP is blocked for 15 minutes.';
+                }
+            }
+        }
+    }
+}
+
+// If not yet authorized or IP is blocked, render Gate UI and terminate
+if (empty($_SESSION['lead_portal_authorized']) || $isIpBlocked) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        <title><?php echo $isIpBlocked ? 'Access Blocked' : 'Portal Access Security'; ?> &bull; Waqt Finance</title>
+        <meta name="robots" content="noindex, nofollow">
+        <link rel="icon" type="image/webp" href="assets/images/logo1.webp">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <style>
+            :root {
+                --brand-primary: #ea1d24;
+                --brand-secondary: #18529c;
+                --slate-900: #0f172a;
+                --slate-700: #334155;
+                --slate-500: #64748b;
+                --slate-200: #e2e8f0;
+                --slate-100: #f1f5f9;
+                --slate-50: #f8fafc;
+            }
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+            body {
+                background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                color: var(--slate-900);
+            }
+            .gate-card {
+                background: #ffffff;
+                width: 100%;
+                max-width: 440px;
+                border-radius: 20px;
+                box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(226, 232, 240, 0.8);
+                padding: 34px 28px;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+            .gate-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            }
+            .logo-wrap {
+                width: 68px;
+                height: 68px;
+                margin: 0 auto 16px auto;
+                border-radius: 50%;
+                background: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 8px 24px rgba(24, 82, 156, 0.18);
+                border: 2px solid var(--slate-200);
+            }
+            .logo-wrap img { width: 50px; height: 50px; object-fit: contain; }
+            .badge-sec {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 12px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.3px;
+                text-transform: uppercase;
+                margin-bottom: 12px;
+            }
+            .badge-normal { background: #e0f2fe; color: #0369a1; }
+            .badge-danger { background: #fee2e2; color: #991b1b; }
+            h1 { font-size: 22px; font-weight: 800; color: var(--slate-900); margin-bottom: 8px; letter-spacing: -0.3px; }
+            p.sub { font-size: 13.5px; color: var(--slate-500); line-height: 1.5; margin-bottom: 22px; }
+            .err-box {
+                background: #fef2f2;
+                border: 1px solid #fecaca;
+                color: #991b1b;
+                border-radius: 10px;
+                padding: 10px 14px;
+                font-size: 12.5px;
+                font-weight: 600;
+                margin-bottom: 18px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                text-align: left;
+            }
+            .inp-wrap {
+                position: relative;
+                margin-bottom: 18px;
+                text-align: left;
+            }
+            .inp-wrap label {
+                display: block;
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--slate-700);
+                margin-bottom: 6px;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+            .inp-box {
+                position: relative;
+                display: flex;
+                align-items: center;
+            }
+            .inp-box i.left-icon {
+                position: absolute;
+                left: 14px;
+                color: var(--slate-500);
+                font-size: 15px;
+            }
+            .inp-field {
+                width: 100%;
+                height: 48px;
+                padding: 0 46px 0 42px;
+                border: 1.5px solid var(--slate-200);
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                outline: none;
+                transition: all 0.2s ease;
+                background: var(--slate-50);
+            }
+            .inp-field:focus {
+                border-color: var(--brand-secondary);
+                background: #ffffff;
+                box-shadow: 0 0 0 3px rgba(24, 82, 156, 0.12);
+            }
+            .toggle-eye {
+                position: absolute;
+                right: 12px;
+                background: none;
+                border: none;
+                color: var(--slate-500);
+                font-size: 15px;
+                cursor: pointer;
+                padding: 6px;
+            }
+            .toggle-eye:hover { color: var(--slate-900); }
+            .btn-unlock {
+                width: 100%;
+                height: 48px;
+                background: linear-gradient(135deg, var(--brand-primary) 0%, #b91c1c 100%);
+                color: #ffffff;
+                border: none;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 800;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 6px 18px rgba(234, 29, 36, 0.35);
+                transition: all 0.2s ease;
+            }
+            .btn-unlock:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 22px rgba(234, 29, 36, 0.45);
+            }
+            .lockout-box {
+                background: #fef2f2;
+                border: 1.5px solid #f87171;
+                border-radius: 14px;
+                padding: 20px 16px;
+                margin-bottom: 20px;
+            }
+            .countdown-num {
+                font-size: 36px;
+                font-weight: 900;
+                color: #991b1b;
+                font-family: monospace;
+                letter-spacing: 2px;
+                margin: 10px 0;
+            }
+            .gate-footer {
+                margin-top: 22px;
+                padding-top: 16px;
+                border-top: 1px solid var(--slate-200);
+                font-size: 11.5px;
+                color: var(--slate-500);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+            .ip-chip {
+                display: inline-block;
+                background: var(--slate-100);
+                color: var(--slate-700);
+                padding: 2px 8px;
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: 700;
+                margin-top: 6px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="gate-card">
+            <div class="logo-wrap">
+                <img src="assets/images/logo1.webp" alt="Waqt Finance">
+            </div>
+
+            <?php if ($isIpBlocked): ?>
+                <div class="badge-sec badge-danger">
+                    <i class="fa-solid fa-ban"></i> IP Temporarily Blocked
+                </div>
+                <h1>Access Blocked</h1>
+                <p class="sub">
+                    Too many incorrect password attempts (3/3). For customer security, access from your network has been temporarily restricted for 15 minutes.
+                </p>
+
+                <div class="lockout-box">
+                    <div style="font-size: 12px; font-weight: 700; color: #7f1d1d; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-clock"></i> Time Remaining Before Unlock
+                    </div>
+                    <div class="countdown-num" id="lockoutTimer">--:--</div>
+                    <div style="font-size: 11.5px; color: #991b1b;">
+                        The page will automatically unlock when timer expires.
+                    </div>
+                </div>
+
+                <div>
+                    <span class="ip-chip">Client IP: <?php echo htmlspecialchars($clientIp, ENT_QUOTES, 'UTF-8'); ?></span>
+                </div>
+
+                <script>
+                    let timeLeft = <?php echo (int)max(1, $lockoutRemaining); ?>;
+                    const timerEl = document.getElementById('lockoutTimer');
+                    function updateDisplay() {
+                        const m = Math.floor(timeLeft / 60);
+                        const s = timeLeft % 60;
+                        timerEl.innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                        if (timeLeft <= 0) {
+                            window.location.reload();
+                        } else {
+                            timeLeft--;
+                            setTimeout(updateDisplay, 1000);
+                        }
+                    }
+                    updateDisplay();
+                </script>
+
+            <?php else: ?>
+                <div class="badge-sec badge-normal">
+                    <i class="fa-solid fa-shield-halved"></i> Authorized Access Only
+                </div>
+                <h1>Enter Access Password</h1>
+                <p class="sub">
+                    Please enter the access password to open the Waqt Finance lead portal.
+                </p>
+
+                <?php if (!empty($passwordError)): ?>
+                    <div class="err-box">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 16px;"></i>
+                        <span><?php echo htmlspecialchars($passwordError, ENT_QUOTES, 'UTF-8'); ?></span>
+                    </div>
+                <?php endif; ?>
+
+                <form method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
+                    <div class="inp-wrap">
+                        <label for="portalPassInput">Access Password</label>
+                        <div class="inp-box">
+                            <i class="fa-solid fa-key left-icon"></i>
+                            <input 
+                                type="password" 
+                                name="portal_access_password" 
+                                id="portalPassInput" 
+                                class="inp-field" 
+                                placeholder="Enter access password" 
+                                required 
+                                autofocus 
+                                autocomplete="current-password"
+                            >
+                            <button type="button" class="toggle-eye" onclick="togglePassVisibility()" title="Show/Hide Password">
+                                <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-unlock">
+                        <i class="fa-solid fa-lock-open"></i> Unlock Lead Portal
+                    </button>
+                </form>
+
+                <div class="gate-footer">
+                    <i class="fa-solid fa-shield-cat"></i>
+                    <span>Max 3 attempts &bull; 15-min IP lockout on failure</span>
+                </div>
+
+                <div>
+                    <span class="ip-chip">Client IP: <?php echo htmlspecialchars($clientIp, ENT_QUOTES, 'UTF-8'); ?></span>
+                </div>
+
+                <script>
+                    function togglePassVisibility() {
+                        const inp = document.getElementById('portalPassInput');
+                        const eye = document.getElementById('eyeIcon');
+                        if (inp.type === 'password') {
+                            inp.type = 'text';
+                            eye.classList.remove('fa-eye');
+                            eye.classList.add('fa-eye-slash');
+                        } else {
+                            inp.type = 'password';
+                            eye.classList.remove('fa-eye-slash');
+                            eye.classList.add('fa-eye');
+                        }
+                    }
+                </script>
+            <?php endif; ?>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 ?>
 <!DOCTYPE html>
@@ -3270,9 +3653,13 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <span style="color: var(--slate-500);">Bank Statement (AA):</span>
                 <strong style="color: #15803d;" id="modalBankVal">Verified ✓</strong>
             </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--slate-500);">Requested Amount:</span>
+                <strong style="color: var(--slate-900);" id="modalRequestedAmountVal">₹ 0</strong>
+            </div>
             <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--slate-500);" id="modalLoanLabel">Approved Loan Limit:</span>
-                <strong style="color: var(--slate-900);" id="modalReqLoanVal">₹ 0</strong>
+                <span style="color: var(--slate-500);" id="modalLoanLabel">Underwriting Status:</span>
+                <strong style="color: var(--slate-900);" id="modalReqLoanVal">Referred to Committee</strong>
             </div>
         </div>
 
@@ -4722,24 +5109,50 @@ function startDigitapStatusPolling(requestId) {
     }, 4000);
 }
 
+let aaReportRetryCount = 0;
+const MAX_AA_RETRIES = 15;
+
 function fetchAndApplyAaReport(txnId) {
     const btn = document.querySelector('.btn-aa-connect');
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Retrieving Bank Statement...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Retrieving Bank Statement...';
+    }
 
-    fetch('api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
-        .then(r => r.json().catch(() => ({})))
-        .then(data => {
-            if (data && (data.banks || data.txn_id || data.status === 'success' || data.model || data.data)) {
-                applyAaVerifiedReport(data, txnId);
-            } else {
-                console.warn('Bank report not ready or empty:', data);
-                if (btn) btn.innerHTML = '<i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Connect via Account Aggregator';
-            }
-        })
-        .catch(err => {
-            console.error('Error retrieving Digitap bank report:', err);
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Connect via Account Aggregator';
-        });
+    const checkReport = () => {
+        fetch('api/bank-data/report.php?txn_id=' + encodeURIComponent(txnId))
+            .then(r => r.json().catch(() => ({})))
+            .then(data => {
+                if (data && (data.banks || (data.model && data.model.banks) || data.status === 'success' || data.data)) {
+                    applyAaVerifiedReport(data, txnId);
+                } else if (aaReportRetryCount < MAX_AA_RETRIES) {
+                    aaReportRetryCount++;
+                    if (btn) {
+                        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Bank statement processing (${aaReportRetryCount}/${MAX_AA_RETRIES})...`;
+                    }
+                    setTimeout(checkReport, 4000);
+                } else {
+                    console.warn('Bank report timed out or not ready:', data);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Re-check Bank Statement';
+                        btn.onclick = () => {
+                            aaReportRetryCount = 0;
+                            fetchAndApplyAaReport(txnId);
+                        };
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Error retrieving Digitap bank report:', err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Connect via Account Aggregator';
+                }
+            });
+    };
+
+    checkReport();
 }
 
 function applyAaVerifiedReport(data, txnId) {
@@ -5953,6 +6366,12 @@ function submitFinalLead() {
             
             const mobileEl = document.getElementById('modalMobileVal');
             if (mobileEl) mobileEl.innerText = (payload.mobile || '') + ' ✓';
+
+            const reqAmtEl = document.getElementById('modalRequestedAmountVal');
+            if (reqAmtEl) {
+                const reqNum = parseFloat(payload.loan_amount) || 0;
+                reqAmtEl.innerText = '₹ ' + reqNum.toLocaleString('en-IN');
+            }
 
             const bankValEl = document.getElementById('modalBankVal');
             if (bankValEl) {
