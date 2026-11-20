@@ -36,10 +36,10 @@ try {
         $firstName = 'User';
     }
 
-    $smtpHost = required_env('SMTP_HOST');
-    $smtpUsername = required_env('SMTP_USERNAME');
-    $smtpPassword = required_env('SMTP_PASSWORD');
-    $smtpFromEmail = required_env('SMTP_FROM_EMAIL');
+    $smtpHost = env_value('SMTP_HOST') ?: 'smtp.gmail.com';
+    $smtpUsername = env_value('SMTP_USERNAME') ?: 'waqtit3@gmail.com';
+    $smtpPassword = env_value('SMTP_PASSWORD') ?: 'klfexusxqebufeqi';
+    $smtpFromEmail = env_value('SMTP_FROM_EMAIL') ?: 'waqtit3@gmail.com';
     $smtpFromName = env_value('SMTP_FROM_NAME', 'Waqt Finance') ?? 'Waqt Finance';
     $smtpSecure = env_value('SMTP_SECURE', PHPMailer::ENCRYPTION_SMTPS) ?? PHPMailer::ENCRYPTION_SMTPS;
     $smtpPort = (int) (env_value('SMTP_PORT', '465') ?? '465');

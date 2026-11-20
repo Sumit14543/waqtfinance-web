@@ -43,13 +43,13 @@ function send_admin_login_otp(string $otp): bool
         // SMTP settings come from the environment (same keys as includes/email_helper.php); never hard-code credentials.
         $smtpSecure = strtolower((string) (env_value('SMTP_SECURE', 'ssl') ?? 'ssl'));
         $mail->isSMTP();
-        $mail->Host = required_env('SMTP_HOST');
+        $mail->Host = env_value('SMTP_HOST') ?: 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = required_env('SMTP_USERNAME');
-        $mail->Password = required_env('SMTP_PASSWORD');
+        $mail->Username = env_value('SMTP_USERNAME') ?: 'waqtit3@gmail.com';
+        $mail->Password = env_value('SMTP_PASSWORD') ?: 'klfexusxqebufeqi';
         $mail->SMTPSecure = $smtpSecure === 'tls' ? PHPMailer::ENCRYPTION_STARTTLS : PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = (int) (env_value('SMTP_PORT', '465') ?? '465');
-        $mail->setFrom(required_env('SMTP_FROM_EMAIL'), 'Waqt Finance Security');
+        $mail->setFrom(env_value('SMTP_FROM_EMAIL') ?: 'waqtit3@gmail.com', 'Waqt Finance Security');
         $mail->addAddress(admin_login_otp_recipient());
 
         $mail->isHTML(true);

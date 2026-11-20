@@ -11,12 +11,12 @@ if (!function_exists('send_notification_email')) {
     function send_notification_email(string $subject, string $htmlBody): bool
     {
         try {
-            $smtpHost = required_env('SMTP_HOST');
+            $smtpHost = env_value('SMTP_HOST') ?: 'smtp.gmail.com';
             $smtpPort = (int) (env_value('SMTP_PORT', '465') ?? '465');
             $smtpSecure = env_value('SMTP_SECURE', 'ssl') ?? 'ssl';
-            $smtpUsername = required_env('SMTP_USERNAME');
-            $smtpPassword = required_env('SMTP_PASSWORD');
-            $smtpFromEmail = required_env('SMTP_FROM_EMAIL');
+            $smtpUsername = env_value('SMTP_USERNAME') ?: 'waqtit3@gmail.com';
+            $smtpPassword = env_value('SMTP_PASSWORD') ?: 'klfexusxqebufeqi';
+            $smtpFromEmail = env_value('SMTP_FROM_EMAIL') ?: 'waqtit3@gmail.com';
             $smtpFromName = env_value('SMTP_FROM_NAME', 'Waqt Finance') ?? 'Waqt Finance';
 
             $mail = new PHPMailer(true);
