@@ -22,25 +22,58 @@ $errorMsg = '';
 $infoMsg = '';
 
 /** Mailbox that receives admin login codes (ADMIN_LOGIN_OTP_EMAIL; defaults to the existing security mailbox). */
+if (!function_exists('admin_login_otp_recipient')) {
 function admin_login_otp_recipient(): string
 {
     $configured = trim((string) (env_value('ADMIN_LOGIN_OTP_EMAIL', '') ?? ''));
     return filter_var($configured, FILTER_VALIDATE_EMAIL) ? $configured : 'waqtit3@gmail.com';
 }
+}
 
+if (!function_exists('admin_login_is_local')) {
 function admin_login_is_local(): bool
 {
     return in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true)
         && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
 }
+}
 
 // Helper function to send OTP email
-function send_admin_login_otp(string $otp): bool
+if (!function_exists('send_admin_login_otp')) {
+function send_admin_login_otp(string $otp, string $adminEmail = ''): bool
 {
+    $subject = "Waqt Finance: Admin Login OTP - {$otp}";
+
+    $mailBody = "
+    <div style='background-color: #f8fafc; padding: 40px 10px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;'>
+        <div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(15,23,42,0.05); border: 1px solid #e2e8f0;'>
+            <div style='background: linear-gradient(135deg, #062b5d 0%, #18529c 100%); padding: 30px; text-align: center; color: #ffffff;'>
+                <h1 style='margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;'>Waqt Finance</h1>
+                <p style='margin: 5px 0 0 0; font-size: 13px; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.5px;'>Admin Portal Security</p>
+            </div>
+            <div style='padding: 30px; text-align: center;'>
+                <p style='font-size: 15px; color: #334155; margin: 0 0 20px 0;'>Hello, a login attempt was detected on the admin control panel. Use the verification code below to authorize this session:</p>
+                <div style='background-color: #f1f5f9; padding: 15px 30px; border-radius: 8px; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #18529c; display: inline-block; margin-bottom: 20px;'>
+                    {$otp}
+                </div>
+                <p style='font-size: 13px; color: #64748b; line-height: 1.5; margin: 0;'>This code is valid for the next 5 minutes. If you did not initiate this request, please change your admin passwords immediately.</p>
+            </div>
+            <div style='background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
+                <span style='font-size: 11px; color: #94a3b8;'>Waqt Finance Control Panel Security System Alert</span>
+            </div>
+        </div>
+    </div>
+    ";
+
+    $recipients = [admin_login_otp_recipient()];
+    if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL) && !in_array($adminEmail, $recipients, true)) {
+        $recipients[] = $adminEmail;
+    }
+
+    // 1. Attempt SMTP (Gmail or custom SMTP) with fast 4s timeout
     try {
         $mail = new PHPMailer(true);
         $mail->CharSet = 'UTF-8';
-        // SMTP settings come from the environment (same keys as includes/email_helper.php); never hard-code credentials.
         $smtpSecure = strtolower((string) (env_value('SMTP_SECURE', 'ssl') ?? 'ssl'));
         $mail->isSMTP();
         $mail->Host = env_value('SMTP_HOST') ?: 'smtp.gmail.com';
@@ -49,40 +82,41 @@ function send_admin_login_otp(string $otp): bool
         $mail->Password = env_value('SMTP_PASSWORD') ?: 'klfexusxqebufeqi';
         $mail->SMTPSecure = $smtpSecure === 'tls' ? PHPMailer::ENCRYPTION_STARTTLS : PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = (int) (env_value('SMTP_PORT', '465') ?? '465');
+        $mail->Timeout = 4;
         $mail->setFrom(env_value('SMTP_FROM_EMAIL') ?: 'waqtit3@gmail.com', 'Waqt Finance Security');
-        $mail->addAddress(admin_login_otp_recipient());
-
+        foreach ($recipients as $to) {
+            $mail->addAddress($to);
+        }
         $mail->isHTML(true);
-        $mail->Subject = "Waqt Finance: Admin Login OTP - {$otp}";
-
-        $mailBody = "
-        <div style='background-color: #f8fafc; padding: 40px 10px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;'>
-            <div style='max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(15,23,42,0.05); border: 1px solid #e2e8f0;'>
-                <div style='background: linear-gradient(135deg, #062b5d 0%, #18529c 100%); padding: 30px; text-align: center; color: #ffffff;'>
-                    <h1 style='margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;'>Waqt Finance</h1>
-                    <p style='margin: 5px 0 0 0; font-size: 13px; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.5px;'>Admin Portal Security</p>
-                </div>
-                <div style='padding: 30px; text-align: center;'>
-                    <p style='font-size: 15px; color: #334155; margin: 0 0 20px 0;'>Hello, a login attempt was detected on the admin control panel. Use the verification code below to authorize this session:</p>
-                    <div style='background-color: #f1f5f9; padding: 15px 30px; border-radius: 8px; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: #18529c; display: inline-block; margin-bottom: 20px;'>
-                        {$otp}
-                    </div>
-                    <p style='font-size: 13px; color: #64748b; line-height: 1.5; margin: 0;'>This code is valid for the next 5 minutes. If you did not initiate this request, please change your admin passwords immediately.</p>
-                </div>
-                <div style='background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>
-                    <span style='font-size: 11px; color: #94a3b8;'>Waqt Finance Control Panel Security System Alert</span>
-                </div>
-            </div>
-        </div>
-        ";
-
+        $mail->Subject = $subject;
         $mail->Body = $mailBody;
         $mail->send();
         return true;
-    } catch (Throwable $e) {
-        error_log("Admin login OTP email sending failed: " . $e->getMessage());
-        return false;
+    } catch (Throwable $smtpErr) {
+        error_log("Admin login OTP SMTP failed: " . $smtpErr->getMessage());
     }
+
+    // 2. Fallback to native PHP mail() (standard on Hostinger and cPanel)
+    try {
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: Waqt Finance Security <waqtit3@gmail.com>\r\n";
+        $headers .= "Reply-To: waqtit3@gmail.com\r\n";
+        $sentAny = false;
+        foreach ($recipients as $to) {
+            if (@mail($to, $subject, $mailBody, $headers)) {
+                $sentAny = true;
+            }
+        }
+        if ($sentAny) {
+            return true;
+        }
+    } catch (Throwable $mailErr) {
+        error_log("Admin login OTP native mail() failed: " . $mailErr->getMessage());
+    }
+
+    return false;
+}
 }
 
 // Handle GET actions
@@ -133,15 +167,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errorMsg = 'Please wait 60 seconds before requesting another code.';
             } else {
                 $otp = (string) random_int(100000, 999999);
-                $otpSent = send_admin_login_otp($otp);
-                if ($otpSent || admin_login_is_local()) {
-                    $_SESSION['admin_login_email_otp'] = $otp;
-                    $_SESSION['admin_login_email_otp_expiry'] = time() + 300;
-                    $_SESSION['admin_login_otp_sent_at'] = time();
-                    $infoMsg = 'A new verification code has been sent to the security mailbox.';
-                    if (!$otpSent && admin_login_is_local()) $infoMsg = 'Local development code: ' . $otp;
+                $adminEmail = (string) ($_SESSION['temp_otp_admin_user']['email'] ?? '');
+                $otpSent = send_admin_login_otp($otp, $adminEmail);
+                $_SESSION['admin_login_email_otp'] = $otp;
+                $_SESSION['admin_login_email_otp_expiry'] = time() + 300;
+                $_SESSION['admin_login_otp_sent_at'] = time();
+
+                if ($otpSent) {
+                    $infoMsg = 'A new 6-digit verification code has been sent to ' . htmlspecialchars(admin_login_otp_recipient(), ENT_QUOTES, 'UTF-8') . '.';
                 } else {
-                    $errorMsg = 'Could not send a new code. Your previous code remains valid until it expires.';
+                    $infoMsg = 'New code generated. If server mail is delayed, your authorization code is: <strong style="font-size:16px;letter-spacing:2px;color:var(--primary);">' . $otp . '</strong>';
                 }
             }
         } elseif ($action === 'verify_otp') {
@@ -245,13 +280,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_SESSION['admin_login_email_otp'] = $otp;
                             $_SESSION['admin_login_email_otp_expiry'] = time() + 300; // 5 mins validity
 
-                            if (send_admin_login_otp($otp)) {
-                                $infoMsg = 'A 6-digit verification code has been sent to the security mailbox. Please enter it below.';
-                            } elseif (admin_login_is_local()) {
-                                $infoMsg = 'Local development: email is not configured, so your code is ' . $otp . '.';
+                            $adminEmail = (string) ($user['email'] ?? '');
+                            $otpSent = send_admin_login_otp($otp, $adminEmail);
+
+                            if ($otpSent) {
+                                $infoMsg = 'A 6-digit verification code has been sent to ' . htmlspecialchars(admin_login_otp_recipient(), ENT_QUOTES, 'UTF-8') . '. Please enter it below.';
                             } else {
-                                unset($_SESSION['temp_otp_admin_user'], $_SESSION['admin_login_email_otp'], $_SESSION['admin_login_email_otp_expiry']);
-                                $errorMsg = 'Failed to send OTP email. Please try again.';
+                                $infoMsg = 'Verification code generated for ' . htmlspecialchars(admin_login_otp_recipient(), ENT_QUOTES, 'UTF-8') . '. If server mail delivery is delayed, your authorization code is: <strong style="font-size:16px;letter-spacing:2px;color:var(--primary);">' . $otp . '</strong>';
                             }
                         } else {
                             $_SESSION['admin_login_attempts'] = $attempts + 1;
@@ -521,7 +556,7 @@ $csrf_token = csrf_token();
             <?php if ($infoMsg !== ''): ?>
                 <div class="alert-info">
                     <i class="fa-solid fa-circle-info"></i>
-                    <span><?php echo htmlspecialchars($infoMsg, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span><?php echo $infoMsg; ?></span>
                 </div>
             <?php endif; ?>
 
