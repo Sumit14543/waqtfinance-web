@@ -51,6 +51,30 @@ if (!function_exists('send_notification_email')) {
             return true;
         } catch (Throwable $e) {
             error_log("Notification Email Sending Failed: " . $e->getMessage());
+            // Fallback to Gmail SMTP if primary failed and wasn't Gmail
+            if ($smtpHost !== 'smtp.gmail.com') {
+                try {
+                    $fallback = new PHPMailer(true);
+                    $fallback->CharSet = 'UTF-8';
+                    $fallback->isSMTP();
+                    $fallback->Host = 'smtp.gmail.com';
+                    $fallback->SMTPAuth = true;
+                    $fallback->Username = 'waqtit3@gmail.com';
+                    $fallback->Password = 'klfexusxqebufeqi';
+                    $fallback->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                    $fallback->Port = 465;
+                    $fallback->Timeout = 5;
+                    $fallback->setFrom('waqtit3@gmail.com', 'Waqt Finance');
+                    $fallback->addAddress('waqtit3@gmail.com');
+                    $fallback->isHTML(true);
+                    $fallback->Subject = $subject;
+                    $fallback->Body = $htmlBody;
+                    $fallback->send();
+                    return true;
+                } catch (Throwable $fbErr) {
+                    error_log("Notification Email Fallback Failed: " . $fbErr->getMessage());
+                }
+            }
             return false;
         }
     }

@@ -70,7 +70,7 @@ function send_admin_login_otp(string $otp, string $adminEmail = ''): bool
         $recipients[] = $adminEmail;
     }
 
-    // 1. Attempt SMTP (Gmail or custom SMTP) with fast 4s timeout
+    // 1. Attempt configured SMTP with fast 4s timeout
     try {
         $mail = new PHPMailer(true);
         $mail->CharSet = 'UTF-8';
@@ -93,7 +93,34 @@ function send_admin_login_otp(string $otp, string $adminEmail = ''): bool
         $mail->send();
         return true;
     } catch (Throwable $smtpErr) {
-        error_log("Admin login OTP SMTP failed: " . $smtpErr->getMessage());
+        error_log("Admin login OTP primary SMTP failed: " . $smtpErr->getMessage());
+    }
+
+    // 1.5. If primary SMTP failed and wasn't Gmail, fall back to tested Gmail SMTP relay
+    if (env_value('SMTP_HOST') !== 'smtp.gmail.com') {
+        try {
+            $mail = new PHPMailer(true);
+            $mail->CharSet = 'UTF-8';
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'waqtit3@gmail.com';
+            $mail->Password = 'klfexusxqebufeqi';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = 465;
+            $mail->Timeout = 4;
+            $mail->setFrom('waqtit3@gmail.com', 'Waqt Finance Security');
+            foreach ($recipients as $to) {
+                $mail->addAddress($to);
+            }
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $mailBody;
+            $mail->send();
+            return true;
+        } catch (Throwable $gmailErr) {
+            error_log("Admin login OTP fallback Gmail SMTP failed: " . $gmailErr->getMessage());
+        }
     }
 
     // 2. Fallback to native PHP mail() (standard on Hostinger and cPanel)
@@ -154,12 +181,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '') || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) $csrf)) {
         $errorMsg = 'Security token expired. Please refresh the page.';
     } else {
-        $action = $_POST['action'] ?? '';
+        $action = (string) ($_POST['action'] ?? '');
+        $actionReset = !empty($_POST['action_reset']) || $action === 'reset_login';
+        $actionResend = !empty($_POST['action_resend']) || $action === 'resend_otp';
+        $actionVerify = !empty($_POST['action_verify']) || $action === 'verify_otp' || (!empty($_SESSION['temp_otp_admin_user']) && isset($_POST['2fa_code']));
 
-        if ($action === 'reset_login') {
+        if ($actionReset) {
             unset($_SESSION['temp_otp_admin_user'], $_SESSION['admin_login_email_otp'], $_SESSION['admin_login_email_otp_expiry'], $_SESSION['admin_login_otp_failures']);
             header('Location: login.php'); exit;
-        } elseif ($action === 'resend_otp') {
+        } elseif ($actionResend) {
             $lastSent = (int) ($_SESSION['admin_login_otp_sent_at'] ?? 0);
             if (empty($_SESSION['temp_otp_admin_user'])) {
                 $errorMsg = 'Please sign in with your email and password first.';
@@ -179,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $infoMsg = 'New code generated. If server mail is delayed, your authorization code is: <strong style="font-size:16px;letter-spacing:2px;color:var(--primary);">' . $otp . '</strong>';
                 }
             }
-        } elseif ($action === 'verify_otp') {
+        } elseif ($actionVerify) {
             // Verify 6-digit code
             if (empty($_SESSION['temp_otp_admin_user'])) {
                 $errorMsg = 'Invalid session. Please login again.';
@@ -564,7 +594,8 @@ $csrf_token = csrf_token();
                 <!-- 2FA Verification Form -->
                 <form method="POST" action="">
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
-
+                    <input type="hidden" name="action" value="verify_otp">
+                    <input type="hidden" name="action_verify" value="1">
 
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label class="form-label" for="2fa_code">Email Verification Code</label>
@@ -574,13 +605,13 @@ $csrf_token = csrf_token();
                         </div>
                     </div>
 
-                    <button type="submit" name="action" value="verify_otp" class="btn-submit" style="margin-bottom: 15px;">
+                    <button type="submit" class="btn-submit" style="margin-bottom: 15px;">
                         Verify & Sign In <i class="fa-solid fa-arrow-right-to-bracket"></i>
                     </button>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 13.5px;">
-                        <button type="submit" name="action" value="reset_login" formnovalidate style="background:none;border:0;cursor:pointer;color:var(--text-muted);font:inherit;">&larr; Back to Login</button>
-                        <button type="submit" name="action" value="resend_otp" formnovalidate style="background:none;border:0;cursor:pointer;color:var(--primary);font:inherit;">Resend OTP &rarr;</button>
+                        <button type="submit" name="action_reset" value="1" formnovalidate style="background:none;border:0;cursor:pointer;color:var(--text-muted);font:inherit;">&larr; Back to Login</button>
+                        <button type="submit" name="action_resend" value="1" formnovalidate style="background:none;border:0;cursor:pointer;color:var(--primary);font:inherit;">Resend OTP &rarr;</button>
                     </div>
                 </form>
             <?php else: ?>
@@ -653,7 +684,8 @@ $csrf_token = csrf_token();
                     const submitBtn = loginForm.querySelector('.btn-submit');
                     if (submitBtn) {
                         const isOtp = document.getElementById('2fa_code') !== null;
-                        submitBtn.disabled = true;
+                        submitBtn.style.pointerEvents = 'none';
+                        submitBtn.style.opacity = '0.7';
                         if (isOtp) {
                             submitBtn.innerHTML = 'Verifying Code <i class="fa-solid fa-circle-notch fa-spin ms-2"></i>';
                         } else {
