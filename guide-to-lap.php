@@ -12,7 +12,7 @@ include 'includes/main-header.php';
 <div class="container" style="margin-top:10px;">
     <div class="cs-blog-detail box-shadow-card">
         <div class="cs-main-post">
-            <figure><img onload="pagespeed.CriticalImages.checkImageForCriticality(this);" alt="loan against property guide" src="assets/images/loan-lap.webp"></figure>
+            <figure><img alt="loan against property guide" src="assets/images/loan-lap.webp"></figure>
         </div>
 
         <div class="cs-post-option-panel">

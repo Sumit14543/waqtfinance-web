@@ -235,6 +235,7 @@ $is_contact = isset($_GET['type']) && $_GET['type'] === 'contact';
     }
 
     .thankyou-title {
+        margin-top: 0; padding: 0; border: 0; line-height: 1.2; font-family: inherit;
         font-size: 34px;
         font-weight: 800;
         background: linear-gradient(135deg, #18529c 0%, #0d4182 100%);
@@ -414,7 +415,7 @@ $is_contact = isset($_GET['type']) && $_GET['type'] === 'contact';
 
         <?php if ($is_contact): ?>
             <!-- TITLE -->
-            <div class="thankyou-title">Thank You!</div>
+            <h1 class="thankyou-title">Thank You!</h1>
 
             <!-- MESSAGE -->
             <div class="thankyou-text">
@@ -445,7 +446,7 @@ $is_contact = isset($_GET['type']) && $_GET['type'] === 'contact';
             </div>
         <?php else: ?>
             <!-- TITLE -->
-            <div class="thankyou-title">Thank You!</div>
+            <h1 class="thankyou-title">Thank You!</h1>
 
             <!-- MESSAGE -->
             <div class="thankyou-text">

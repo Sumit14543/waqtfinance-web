@@ -2,18 +2,18 @@
 $page_title = "Find the Right Loan for You | Waqt Finance Products";
 $meta_description = "From personal loans to business finance — Waqt Finance offers 7 loan types with clear eligibility criteria and fast digital approval. Compare now.";
 $canonical_url = "https://waqtfinance.com/products";
-$meta_image = "assets/images/loan-hero.webp";
+$meta_image = "assets/images/og-default.jpg";
 $meta_image_alt = "Explore Waqt Finance loan products";
 $breadcrumb_label = "Loan Products";
 
 $loan_products = [
-    ['key'=>'personal','audience'=>'personal','icon'=>'fa-user','name'=>'Personal Loan','eyebrow'=>'Everyday personal needs','description'=>'A general-purpose unsecured loan journey for eligible salaried or self-employed applicants.','best'=>'Medical needs, travel, education, wedding or planned expenses','security'=>'Generally unsecured','learn'=>'personal-loan','apply'=>'personal-loan-apply'],
-    ['key'=>'payday','audience'=>'personal','icon'=>'fa-calendar-check','name'=>'Payday Loan','eyebrow'=>'Short-term cash-flow support','description'=>'A short-duration application journey intended for eligible salaried applicants facing a temporary cash-flow gap.','best'=>'Time-sensitive expenses before the next salary cycle','security'=>'Generally unsecured','learn'=>'pay-day-loan','apply'=>'payday-apply'],
-    ['key'=>'business','audience'=>'business','icon'=>'fa-briefcase','name'=>'Business Loan','eyebrow'=>'Funding for enterprises','description'=>'Business finance assessed using turnover, cash flow, continuity, banking and the overall applicant profile.','best'=>'Working capital, inventory, equipment or business expansion','security'=>'Product dependent','learn'=>'business-loan','apply'=>'business-loan-apply'],
-    ['key'=>'shopkeeper','audience'=>'business','icon'=>'fa-store','name'=>'Shopkeeper Business Loan','eyebrow'=>'Designed for retail businesses','description'=>'A focused business-loan journey for eligible shopkeepers and small retail establishments.','best'=>'Stock purchase, store improvement and operating expenses','security'=>'Product dependent','learn'=>'shopkeeper-business-loan','apply'=>'business-loan-apply'],
-    ['key'=>'edi','audience'=>'business','icon'=>'fa-building-columns','name'=>'EDI Loan','eyebrow'=>'Structured business application','description'=>'A dedicated application journey for eligible businesses seeking finance through the EDI product process.','best'=>'Eligible enterprise and institutional funding requirements','security'=>'Assessment dependent','learn'=>'edi-loan','apply'=>'edi-loan-apply'],
-    ['key'=>'vehicle','audience'=>'secured','icon'=>'fa-car-side','name'=>'Vehicle Loan','eyebrow'=>'Finance for mobility','description'=>'Finance for an eligible vehicle purchase, subject to applicant, vehicle and documentation assessment.','best'=>'New or used eligible vehicle purchase','security'=>'Vehicle-backed','learn'=>'vehicle-loan','apply'=>'vehicle-loan-apply'],
-    ['key'=>'lap','audience'=>'secured','icon'=>'fa-house-chimney','name'=>'Loan Against Property','eyebrow'=>'Unlock property value','description'=>'A secured loan assessed against an eligible property, income, repayment capacity and legal verification.','best'=>'Larger personal or business funding requirements','security'=>'Property-backed','learn'=>'loan-against-property','apply'=>'loan-against-property-apply'],
+    ['key'=>'personal','amount'=>'Up to ₹25 lakh','tenure'=>'12 to 60 months','security_icon'=>'fa-unlock','audience'=>'personal','icon'=>'fa-user','name'=>'Personal Loan','eyebrow'=>'Everyday personal needs','description'=>'A general-purpose unsecured loan journey for eligible salaried or self-employed applicants.','best'=>'Medical needs, travel, education, wedding or planned expenses','security'=>'Generally unsecured','learn'=>'personal-loan','apply'=>'personal-loan-apply'],
+    ['key'=>'payday','amount'=>'₹5,000 to ₹50,000','tenure'=>'Short term, till next salary','security_icon'=>'fa-unlock','audience'=>'personal','icon'=>'fa-calendar-check','name'=>'Payday Loan','eyebrow'=>'Short-term cash-flow support','description'=>'A short-duration application journey intended for eligible salaried applicants facing a temporary cash-flow gap.','best'=>'Time-sensitive expenses before the next salary cycle','security'=>'Generally unsecured','learn'=>'pay-day-loan','apply'=>'payday-apply'],
+    ['key'=>'business','amount'=>'₹50,000 to ₹10 lakh','tenure'=>'12 to 60 months','security_icon'=>'fa-scale-balanced','audience'=>'business','icon'=>'fa-briefcase','name'=>'Business Loan','eyebrow'=>'Funding for enterprises','description'=>'Business finance assessed using turnover, cash flow, continuity, banking and the overall applicant profile.','best'=>'Working capital, inventory, equipment or business expansion','security'=>'Product dependent','learn'=>'business-loan','apply'=>'business-loan-apply'],
+    ['key'=>'shopkeeper','amount'=>'Up to ₹10 lakh','tenure'=>'As per offer','security_icon'=>'fa-scale-balanced','audience'=>'business','icon'=>'fa-store','name'=>'Shopkeeper Business Loan','eyebrow'=>'Designed for retail businesses','description'=>'A focused business-loan journey for eligible shopkeepers and small retail establishments.','best'=>'Stock purchase, store improvement and operating expenses','security'=>'Product dependent','learn'=>'shopkeeper-business-loan','apply'=>'business-loan-apply'],
+    ['key'=>'edi','amount'=>'As per assessment','tenure'=>'Daily instalments','security_icon'=>'fa-scale-balanced','audience'=>'business','icon'=>'fa-building-columns','name'=>'EDI Loan','eyebrow'=>'Structured business application','description'=>'A dedicated application journey for eligible businesses seeking finance through the EDI product process.','best'=>'Eligible enterprise and institutional funding requirements','security'=>'Assessment dependent','learn'=>'edi-loan','apply'=>'edi-loan-apply'],
+    ['key'=>'vehicle','amount'=>'As per assessment','tenure'=>'As per offer','security_icon'=>'fa-lock','audience'=>'secured','icon'=>'fa-car-side','name'=>'Vehicle Loan','eyebrow'=>'Finance for mobility','description'=>'Finance for an eligible vehicle purchase, subject to applicant, vehicle and documentation assessment.','best'=>'New or used eligible vehicle purchase','security'=>'Vehicle-backed','learn'=>'vehicle-loan','apply'=>'vehicle-loan-apply'],
+    ['key'=>'lap','amount'=>'Up to ₹5 crore','tenure'=>'5 to 20 years','security_icon'=>'fa-lock','audience'=>'secured','icon'=>'fa-house-chimney','name'=>'Loan Against Property','eyebrow'=>'Unlock property value','description'=>'A secured loan assessed against an eligible property, income, repayment capacity and legal verification.','best'=>'Larger personal or business funding requirements','security'=>'Property-backed','learn'=>'loan-against-property','apply'=>'loan-against-property-apply'],
 ];
 
 $digital_brands = [
@@ -45,8 +45,8 @@ include 'includes/main-header.php';
             <div class="wf-products-hero-grid">
                 <div class="wf-products-hero-copy">
                     <span class="wf-products-kicker"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Transparent product discovery</span>
-                    <h1 id="products-title">Find a loan journey that fits your goal</h1>
-                    <p>Explore personal, business and secured finance options. Eligibility, amount, pricing and tenure are confirmed only after assessment.</p>
+                    <h1 id="products-title">Find the right loan for your need</h1>
+                    <p>Compare personal, business and secured loans in one place. Your final amount, interest rate and tenure are confirmed after we assess your application.</p>
                     <div class="wf-products-hero-actions"><a href="#loan-products" class="wf-products-btn primary">Explore products <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a><a href="eligibility-calculator" class="wf-products-btn secondary">Check eligibility</a></div>
                 </div>
                 <div class="wf-products-guide" aria-label="How to choose a loan">
@@ -59,7 +59,7 @@ include 'includes/main-header.php';
 
     <section class="wf-products-catalog" id="loan-products" aria-labelledby="catalog-title">
         <div class="container">
-            <div class="wf-products-section-head"><div><span>Loan catalogue</span><h2 id="catalog-title">Choose by borrowing need</h2><p>Use the filters to narrow the catalogue. No filter selection changes your eligibility.</p></div><p id="productCount" aria-live="polite"><?php echo count($loan_products); ?> products</p></div>
+            <div class="wf-products-section-head"><div><span>Loan catalogue</span><h2 id="catalog-title">Choose by borrowing need</h2><p>Filter by what you need the money for. Amounts shown are indicative; your offer depends on assessment.</p></div><p id="productCount" class="wf-products-count" aria-live="polite">Showing <?php echo count($loan_products); ?> products</p></div>
             <div class="wf-products-filters" role="group" aria-label="Filter loan products">
                 <button type="button" class="active" data-product-filter="all" aria-pressed="true">All products</button>
                 <button type="button" data-product-filter="personal" aria-pressed="false"><i class="fa-regular fa-user" aria-hidden="true"></i> Personal needs</button>
@@ -69,11 +69,12 @@ include 'includes/main-header.php';
             <div class="wf-products-grid" id="productGrid">
                 <?php foreach($loan_products as $product): ?>
                 <article class="wf-catalog-card" data-audience="<?php echo htmlspecialchars($product['audience'],ENT_QUOTES,'UTF-8'); ?>" aria-labelledby="product-<?php echo $product['key']; ?>">
-                    <div class="wf-product-card-top"><span class="wf-product-icon"><i class="fa-solid <?php echo $product['icon']; ?>" aria-hidden="true"></i></span><span class="wf-product-security"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> <?php echo htmlspecialchars($product['security'],ENT_QUOTES,'UTF-8'); ?></span></div>
+                    <div class="wf-product-card-top"><span class="wf-product-icon"><i class="fa-solid <?php echo $product['icon']; ?>" aria-hidden="true"></i></span><span class="wf-product-security"><i class="fa-solid <?php echo $product['security_icon']; ?>" aria-hidden="true"></i> <?php echo htmlspecialchars($product['security'],ENT_QUOTES,'UTF-8'); ?></span></div>
                     <span class="wf-product-eyebrow"><?php echo htmlspecialchars($product['eyebrow'],ENT_QUOTES,'UTF-8'); ?></span>
                     <h3 id="product-<?php echo $product['key']; ?>"><?php echo htmlspecialchars($product['name'],ENT_QUOTES,'UTF-8'); ?></h3>
                     <p><?php echo htmlspecialchars($product['description'],ENT_QUOTES,'UTF-8'); ?></p>
-                    <div class="wf-product-best"><span>May suit</span><strong><?php echo htmlspecialchars($product['best'],ENT_QUOTES,'UTF-8'); ?></strong></div>
+                    <dl class="wf-product-facts"><div><dt>Loan amount</dt><dd><?php echo htmlspecialchars($product['amount'],ENT_QUOTES,'UTF-8'); ?></dd></div><div><dt>Tenure</dt><dd><?php echo htmlspecialchars($product['tenure'],ENT_QUOTES,'UTF-8'); ?></dd></div></dl>
+                    <p class="wf-product-best"><span>Good for:</span> <?php echo htmlspecialchars($product['best'],ENT_QUOTES,'UTF-8'); ?></p>
                     <div class="wf-product-actions"><a href="<?php echo $product['learn']; ?>" class="wf-product-learn" aria-label="Learn about <?php echo htmlspecialchars($product['name'],ENT_QUOTES,'UTF-8'); ?>">View details</a><a href="<?php echo $product['apply']; ?>" class="wf-product-apply" aria-label="Apply for <?php echo htmlspecialchars($product['name'],ENT_QUOTES,'UTF-8'); ?>">Start application <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
                 </article>
                 <?php endforeach; ?>
@@ -92,7 +93,8 @@ include 'includes/main-header.php';
 <script>
 document.addEventListener('DOMContentLoaded',function(){
  const buttons=Array.from(document.querySelectorAll('[data-product-filter]')); const cards=Array.from(document.querySelectorAll('.wf-catalog-card')); const count=document.getElementById('productCount');
- buttons.forEach(function(button){button.addEventListener('click',function(){const filter=button.dataset.productFilter;let visible=0;buttons.forEach(function(item){const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});cards.forEach(function(card){card.hidden=filter!=='all'&&card.dataset.audience!==filter;if(!card.hidden)visible++;});count.textContent=visible+(visible===1?' product':' products');});});
+ buttons.forEach(function(button){button.addEventListener('click',function(){const filter=button.dataset.productFilter;let visible=0;buttons.forEach(function(item){const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});cards.forEach(function(card){card.hidden=filter!=='all'&&card.dataset.audience!==filter;if(!card.hidden)visible++;});count.textContent='Showing '+visible+(visible===1?' product':' products');if(history.replaceState)history.replaceState(null,'',filter==='all'?location.pathname+location.search:'#'+filter);});});
+ var fromHash=(location.hash||'').slice(1); var target=buttons.find(function(b){return b.dataset.productFilter===fromHash;}); if(target&&fromHash!=='all') target.click();
 });
 </script>
-<?php include 'includes/footer.php'; ?>
+<?php $footer_cta_hide = true; include 'includes/footer.php'; ?>

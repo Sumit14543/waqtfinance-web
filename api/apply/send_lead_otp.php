@@ -10,7 +10,7 @@ require_valid_csrf();
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh and try again.']);
-    http_response_code(419);
+    http_response_code(403);
     exit;
 }
 
@@ -36,7 +36,7 @@ if ($mobile === '9876543210' || preg_match('/^(\d)\1{9}$/', $mobile)) {
 // Enforce per-mobile rate limit (Max 3 OTPs per hour)
 waqt_enforce_rate_limit('send_lead_otp_mobile', $mobile, 3, 3600, 'Maximum OTP limit reached for this mobile number (Max 3 per hour). Please try again after 1 hour.');
 
-$isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true) || (env_value('APP_ENV') === 'local');
+$isLocal = waqt_is_local_request();
 
 try {
     $conn = db();

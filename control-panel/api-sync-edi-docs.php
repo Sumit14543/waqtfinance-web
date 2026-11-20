@@ -8,11 +8,19 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (admin_session_idle_expired()) {
+    json_response(['status' => 'error', 'message' => 'Your session expired due to inactivity. Please log in again.', 'code' => 'SESSION_EXPIRED'], 401);
+}
 if (empty($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     json_response(['status' => 'error', 'message' => 'Unauthorized access.'], 401);
 }
 
-$appId = trim((string) ($_GET['app_id'] ?? ''));
+// Pushes data to the CRM, so it must be a POST with a CSRF token, by a user allowed to manage documents.
+require_post();
+require_valid_csrf();
+admin_require_capability('lead.document');
+
+$appId = trim((string) ($_POST['app_id'] ?? ''));
 
 if ($appId === '') {
     json_response(['status' => 'error', 'message' => 'Application ID is required.'], 400);
@@ -65,7 +73,7 @@ try {
     error_log("Manual CRM Document Sync Fail ($appId): " . $e->getMessage());
     json_response([
         'status' => 'error',
-        'message' => 'Server error: ' . $e->getMessage()
+        'message' => 'The documents could not be synced. Please try again or check the server log.'
     ], 500);
 }
 ?>

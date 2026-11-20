@@ -1,0 +1,47 @@
+[
+  {
+    "path": "form-actions/submit-contact.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "form-actions/submit-loan.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "form-actions/submit-partner.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "api/apply/step1_identity.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "api/apply/send_otp.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "api/apply/verify_otp.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "api/apply/verify_pan.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "api/apply/upload_shop_photo.php",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "path": "api/apply/save_create_lead.php",
+    "status": 403,
+    "pass": true
+  }
+]

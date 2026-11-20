@@ -3,7 +3,7 @@ $page_title = "Instant Payday & Salary Advance Loan Online | Waqt Finance";
 $meta_description = "Get an instant payday & salary advance loan from ₹3,000 to ₹1.5 Lakh at Waqt Finance. 100% paperless online approval & fast disbursal before payday.";
 $meta_keywords = "payday loan in India, instant salary loan online, salary advance loan online, urgent cash loan India, short term loan online, instant payday loan india, payday loan instant, payday loan, payday loans online india, payday loans online, payday loan online";
 $canonical_url = "https://waqtfinance.com/pay-day-loan";
-$meta_image = "assets/images/payday-loan-img.webp";
+$meta_image = "assets/images/og-pay-day-loan.jpg";
 $meta_image_alt = "Payday loan and instant salary loan in India";
 $breadcrumb_label = "Payday Loan";
 
@@ -673,7 +673,7 @@ include 'includes/header.php';
                         <li>Apply with your main bank</li>
                     </ul>
 
-                    <a href="#" class="btn btn-danger w-100 mt-2">
+                    <a href="eligibility-calculator" class="btn btn-danger w-100 mt-2">
                         Check Your Eligibility →
                     </a>
 
@@ -979,10 +979,10 @@ include 'includes/header.php';
                     <ul class="check-list">
 
                         <li>Age: 21–58 years</li>
-                        <li>regular monthly income.</li>
-                        <li>active bank account.</li>
-                        <li>registered company or organization.</li>
-                        <li>mobile number and email ID.</li>
+                        <li>Regular monthly salary</li>
+                        <li>Active bank account</li>
+                        <li>Employed with a registered company or organisation</li>
+                        <li>Valid mobile number and email ID</li>
 
 
                     </ul>
@@ -997,7 +997,7 @@ include 'includes/header.php';
         <!-- CTA -->
         <div class="text-center mt-5">
 
-            <a href="#" class="apply-btn btn-lg py-3" style="font-size:18px;">
+            <a href="eligibility-calculator" class="apply-btn btn-lg py-3" style="font-size:18px;">
 
                 Check Your Eligibility →
 
@@ -1912,6 +1912,7 @@ include 'includes/header.php';
     </section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+<?php $footer_cta_title = 'Need cash before payday?'; $footer_cta_desc = 'Apply online in a few minutes. All charges are shown before you sign.'; ?>
 <?php include 'includes/footer.php'; ?>
 
 
@@ -1936,11 +1937,16 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <script>
+    // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
     $('.testimonial-slider').slick({
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        autoplaySpeed: 1500,
+        autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
         dots: true,
         arrows: true,
         responsive: [{
@@ -1957,6 +1963,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         ]
     });
+});
 </script>
 
 <script>

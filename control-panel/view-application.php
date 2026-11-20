@@ -844,12 +844,13 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                 <div class="profile-app-id"><?php echo htmlspecialchars($displayId, ENT_QUOTES, 'UTF-8'); ?></div>
                 
                 <div class="profile-badges-row">
-                    <span class="status-badge badge-status badge-<?php echo $app['status'] ?? 'draft'; ?>" id="headerStatusBadge">
+                    <span class="status-badge badge-status badge-<?php echo htmlspecialchars(preg_replace('/[^a-z_-]/', '', strtolower((string) ($app['status'] ?? 'draft'))), ENT_QUOTES, 'UTF-8'); ?>" id="headerStatusBadge">
                         <?php echo htmlspecialchars($app['status'] ?? 'submitted', ENT_QUOTES, 'UTF-8'); ?>
                     </span>
                     <?php if ($type === 'payday'): ?>
                         <?php 
                         $priority = strtolower(trim((string)($app['priority'] ?? 'medium')));
+                        if (!in_array($priority, ['low', 'medium', 'high', 'urgent'], true)) { $priority = 'medium'; }
                         ?>
                         <span class="priority-badge priority-<?php echo $priority; ?>" id="headerPriorityBadge">
                             <?php echo $priority; ?>
@@ -1018,7 +1019,7 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                 </div>
                                 <div class="field-item" style="grid-column: span 2; margin-top:8px;">
                                     <?php if (!empty($cibilReport['pdf_url'])): ?>
-                                        <a href="../<?php echo htmlspecialchars($cibilReport['pdf_url'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="doc-preview-link" style="background:#16a34a; color:#ffffff; border-color:#16a34a;"><i class="fa-solid fa-file-pdf"></i> Download Bureau PDF Report</a>
+                                        <a href="<?php echo htmlspecialchars(waqt_document_url((string) $cibilReport['pdf_url'], '../'), ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener" class="doc-preview-link" style="background:#16a34a; color:#ffffff; border-color:#16a34a;"><i class="fa-solid fa-file-pdf"></i> Download Bureau PDF Report</a>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -1034,7 +1035,7 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                     <div class="grid-fields">
                         <div class="field-item">
                             <div class="field-label"><i class="fa-solid fa-wallet"></i> Requested Loan Amount</div>
-                            <div class="field-value" style="color: var(--primary); font-size: 15px; font-weight: 750;">â‚¹<?php echo $displayAmount; ?></div>
+                            <div class="field-value" style="color: var(--primary); font-size: 15px; font-weight: 750;">₹<?php echo $displayAmount; ?></div>
                         </div>
                         <div class="field-item">
                             <div class="field-label"><i class="fa-solid fa-circle-info"></i> Loan Purpose</div>
@@ -1105,13 +1106,13 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                             </div>
                             <div class="field-item">
                                 <div class="field-label"><i class="fa-solid fa-square-check"></i> Aadhaar Verified</div>
-                                <div class="field-value"><?php echo ($app['aadhaar_verified'] ?? 0) == 1 ? 'Yes âœ…' : 'No âŒ'; ?></div>
+                                <div class="field-value"><?php echo ($app['aadhaar_verified'] ?? 0) == 1 ? 'Yes ✅' : 'No ❌'; ?></div>
                             </div>
                             <div class="field-item" style="grid-column: span 2;">
                                 <div class="field-label"><i class="fa-solid fa-chart-line"></i> Credit Report Link</div>
                                 <div class="field-value">
                                     <?php if (!empty($app['cibil_report_url'])): ?>
-                                        <a href="<?php echo htmlspecialchars((string)$app['cibil_report_url'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="doc-preview-link" style="color: var(--primary); font-weight: 700; text-decoration: underline;"><i class="fa-solid fa-square-poll-vertical"></i> View External Credit Report</a>
+                                        <a href="<?php echo htmlspecialchars(preg_match('#^https?://#i', (string) $app['cibil_report_url']) ? (string) $app['cibil_report_url'] : '#', ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="doc-preview-link" style="color: var(--primary); font-weight: 700; text-decoration: underline;"><i class="fa-solid fa-square-poll-vertical"></i> View External Credit Report</a>
                                     <?php else: ?>
                                         <span class="text-muted" style="font-style: italic; font-size:12.5px;">No Credit Report Linked</span>
                                     <?php endif; ?>
@@ -1144,7 +1145,7 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                         </div>
                         <div class="field-item">
                             <div class="field-label"><i class="fa-solid fa-money-check-dollar"></i> Monthly Net Income</div>
-                            <div class="field-value" style="color: var(--success); font-weight: 750;">â‚¹<?php echo is_numeric($app['monthly_income']) ? number_format((float)$app['monthly_income'], 2) : htmlspecialchars((string)$app['monthly_income'], ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="field-value" style="color: var(--success); font-weight: 750;">₹<?php echo is_numeric($app['monthly_income']) ? number_format((float)$app['monthly_income'], 2) : htmlspecialchars((string)$app['monthly_income'], ENT_QUOTES, 'UTF-8'); ?></div>
                         </div>
                         <?php if ($type === 'payday'): ?>
                             <div class="field-item">
@@ -1174,7 +1175,7 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                         <?php else: ?>
                             <div class="field-item">
                                 <div class="field-label"><i class="fa-solid fa-percent"></i> Existing EMIs</div>
-                                <div class="field-value">â‚¹<?php echo is_numeric($app['existing_emi']) ? number_format((float)$app['existing_emi'], 2) : htmlspecialchars((string)$app['existing_emi'] ?? '0', ENT_QUOTES, 'UTF-8'); ?></div>
+                                <div class="field-value">₹<?php echo is_numeric($app['existing_emi']) ? number_format((float)$app['existing_emi'], 2) : htmlspecialchars((string)$app['existing_emi'] ?? '0', ENT_QUOTES, 'UTF-8'); ?></div>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -1423,21 +1424,21 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                             </div>
                             <div class="field-item">
                                 <div class="field-label">Recommended Amount</div>
-                                <div class="field-value" style="color:var(--primary); font-weight:750;">â‚¹<?php echo number_format((float)$camSheet['recommended_amount'], 2); ?></div>
+                                <div class="field-value" style="color:var(--primary); font-weight:750;">₹<?php echo number_format((float)$camSheet['recommended_amount'], 2); ?></div>
                             </div>
                             <div class="field-item">
                                 <div class="field-label">Approved Amount</div>
-                                <div class="field-value" style="color:var(--success); font-weight:800; font-size:14.5px;">â‚¹<?php echo number_format((float)$camSheet['approved_amount'], 2); ?></div>
+                                <div class="field-value" style="color:var(--success); font-weight:800; font-size:14.5px;">₹<?php echo number_format((float)$camSheet['approved_amount'], 2); ?></div>
                             </div>
 
                             <div class="cam-section-divider">Income & Policy Checks</div>
                             <div class="field-item">
                                 <div class="field-label">Monthly Gross Income</div>
-                                <div class="field-value">â‚¹<?php echo number_format((float)$camSheet['monthly_income'], 2); ?></div>
+                                <div class="field-value">₹<?php echo number_format((float)$camSheet['monthly_income'], 2); ?></div>
                             </div>
                             <div class="field-item">
                                 <div class="field-label">Monthly Obligations</div>
-                                <div class="field-value">â‚¹<?php echo number_format((float)$camSheet['monthly_expenses'], 2); ?></div>
+                                <div class="field-value">₹<?php echo number_format((float)$camSheet['monthly_expenses'], 2); ?></div>
                             </div>
                             <div class="field-item">
                                 <div class="field-label">DTI Ratio</div>
@@ -1495,15 +1496,15 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                             
                             <div class="form-group-grid">
                                 <div class="form-group">
-                                    <label class="field-label">Requested Loan Amt (â‚¹)</label>
+                                    <label class="field-label">Requested Loan Amt (₹)</label>
                                     <input type="number" name="requested_amount" id="camReqAmt" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:600;" value="<?php echo $camSheet ? (float)$camSheet['requested_amount'] : (float)$app['loan_amount']; ?>" readonly>
                                 </div>
                                 <div class="form-group">
-                                    <label class="field-label">Recommended Loan Amt (â‚¹)</label>
+                                    <label class="field-label">Recommended Loan Amt (₹)</label>
                                     <input type="number" name="recommended_amount" id="camRecAmt" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:600;" value="<?php echo $camSheet ? (float)$camSheet['recommended_amount'] : (float)$app['loan_amount']; ?>" oninput="calculateCamFields()">
                                 </div>
                                 <div class="form-group">
-                                    <label class="field-label">Approved Loan Amt (â‚¹)</label>
+                                    <label class="field-label">Approved Loan Amt (₹)</label>
                                     <input type="number" name="approved_amount" id="camApprvAmt" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:600;" value="<?php echo $camSheet ? (float)$camSheet['approved_amount'] : (float)$app['loan_amount']; ?>" oninput="calculateCamFields()">
                                 </div>
                                 <div class="form-group">
@@ -1519,15 +1520,15 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                                     <input type="number" step="0.01" name="processing_fee_rate" id="camProcRate" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:600;" value="<?php echo $camSheet ? (float)$camSheet['processing_fee_rate'] : 2.0; ?>" oninput="calculateCamFields()">
                                 </div>
                                 <div class="form-group">
-                                    <label class="field-label">Total Repayment (â‚¹)</label>
+                                    <label class="field-label">Total Repayment (₹)</label>
                                     <input type="number" name="total_repayment" id="camTotalRepay" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:700; color:var(--primary); background:#e2e8f0;" value="<?php echo $camSheet ? (float)$camSheet['total_repayment'] : 0; ?>" readonly>
                                 </div>
                                 <div class="form-group">
-                                    <label class="field-label">Monthly Gross Income (â‚¹)</label>
+                                    <label class="field-label">Monthly Gross Income (₹)</label>
                                     <input type="number" name="monthly_income" id="camMonthlyInc" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:600;" value="<?php echo $camSheet ? (float)$camSheet['monthly_income'] : (float)($app['monthly_income'] ?? 0); ?>" oninput="calculateCamFields()">
                                 </div>
                                 <div class="form-group">
-                                    <label class="field-label">Monthly Obligations (â‚¹)</label>
+                                    <label class="field-label">Monthly Obligations (₹)</label>
                                     <input type="number" name="monthly_expenses" id="camMonthlyExp" class="form-input-simple" style="height:36px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; width:100%; font-size:13.5px; font-weight:600;" value="<?php echo $camSheet ? (float)$camSheet['monthly_expenses'] : 0; ?>" oninput="calculateCamFields()">
                                 </div>
                                 <div class="form-group">
@@ -1724,15 +1725,15 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                         ?>
                         <div class="field-item">
                             <div class="field-label"><i class="fa-solid fa-check-double"></i> Terms & Conditions</div>
-                            <div class="field-value"><?php echo ($consentObj['terms'] ?? false) ? 'Accepted âœ…' : 'Declined âŒ'; ?></div>
+                            <div class="field-value"><?php echo ($consentObj['terms'] ?? false) ? 'Accepted ✅' : 'Declined ❌'; ?></div>
                         </div>
                         <div class="field-item">
                             <div class="field-label"><i class="fa-solid fa-check-double"></i> Credit Inquiry Consent</div>
-                            <div class="field-value"><?php echo ($consentObj['credit'] ?? false) ? 'Accepted âœ…' : 'Declined âŒ'; ?></div>
+                            <div class="field-value"><?php echo ($consentObj['credit'] ?? false) ? 'Accepted ✅' : 'Declined ❌'; ?></div>
                         </div>
                         <div class="field-item">
                             <div class="field-label"><i class="fa-solid fa-check-double"></i> Communication Opt-in</div>
-                            <div class="field-value"><?php echo ($consentObj['communication'] ?? false) ? 'Accepted âœ…' : 'Declined âŒ'; ?></div>
+                            <div class="field-value"><?php echo ($consentObj['communication'] ?? false) ? 'Accepted ✅' : 'Declined ❌'; ?></div>
                         </div>
                         
                         <div style="grid-column: span 2; border-top: 1px dashed var(--border-color); margin: 6px 0;"></div>
@@ -1845,8 +1846,49 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
     </div>
 </div>
 
+<style>
+    .empty-fields-toggle { margin-top: 12px; background: none; border: 1px dashed var(--border-color, #cbd5e1); color: var(--text-muted, #64748b); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .empty-fields-toggle:hover { color: var(--primary, #18529c); border-color: var(--primary, #18529c); }
+    .field-item[hidden] { display: none !important; }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Value for a quoted-free JS argument inside an HTML attribute: JSON string, then HTML-escaped.
+    function jsArg(value) {
+        return escapeHtml(JSON.stringify(String(value ?? '')));
+    }
+
+    // Each info card hides fields with no value (N/A, -, empty) behind a "Show N empty fields" toggle,
+    // so the information staff need is not buried under blanks.
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.info-card').forEach(function (card) {
+            const empty = [...card.querySelectorAll('.field-item')].filter(function (item) {
+                const value = item.querySelector('.field-value');
+                if (!value || value.querySelector('a, img, button, input, select')) return false;
+                const text = value.textContent.replace(/\s+/g, ' ').trim().toLowerCase();
+                return text === '' || text === 'n/a' || text === '-' || text === 'n/a (n/a) - n/a' || text === '₹0.00';
+            });
+            if (empty.length < 2) return;
+            empty.forEach(function (item) { item.hidden = true; });
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'empty-fields-toggle';
+            toggle.setAttribute('aria-expanded', 'false');
+            const label = function (open) { return (open ? 'Hide ' : 'Show ') + empty.length + ' empty field' + (empty.length === 1 ? '' : 's'); };
+            toggle.textContent = label(false);
+            toggle.addEventListener('click', function () {
+                const open = toggle.getAttribute('aria-expanded') !== 'true';
+                empty.forEach(function (item) { item.hidden = !open; });
+                toggle.setAttribute('aria-expanded', String(open));
+                toggle.textContent = label(open);
+            });
+            card.appendChild(toggle);
+        });
+    });
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
     function toggleCollapseSection() {
         const content = document.getElementById('collapseContent');
         const chevron = document.getElementById('collapseChevron');
@@ -2306,14 +2348,14 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                         creditDays.forEach((row, i) => {
                             const net = row.cr - row.dr;
                             const netColor = net >= 0 ? '#15803d' : '#b91c1c';
-                            const senders = row.txns.map(t => `<div style="font-size:11px; color:#475569; margin-bottom:2px;"><strong style="color:#15803d;">+₹${parseFloat(t.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong> &bull; ${t.narration || 'Credit'}</div>`).join('');
+                            const senders = row.txns.map(t => `<div style="font-size:11px; color:#475569; margin-bottom:2px;"><strong style="color:#15803d;">+₹${parseFloat(t.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong> &bull; ${escapeHtml(t.narration || 'Credit')}</div>`).join('');
 
                             dailyRows += `
                                 <tr style="border-bottom:1px solid #e2e8f0; font-size:12px; background:#f0fdf4;">
                                     <td style="padding:7px 8px; color:#64748b;">${i+1}</td>
-                                    <td style="padding:7px 8px; font-weight:700; color:#0f172a; white-space:nowrap;"><i class="fa-regular fa-calendar text-primary" style="margin-right:4px;"></i>${row.date}</td>
+                                    <td style="padding:7px 8px; font-weight:700; color:#0f172a; white-space:nowrap;"><i class="fa-regular fa-calendar text-primary" style="margin-right:4px;"></i>${escapeHtml(row.date)}</td>
                                     <td style="padding:7px 8px; text-align:right;"><span style="font-weight:800; color:#15803d; background:#dcfce7; padding:3px 7px; border-radius:4px; font-size:13px; border:1px solid #86efac;">+₹${row.cr.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></td>
-                                    <td style="padding:7px 8px; text-align:center;"><span style="background:#bbf7d0; color:#166534; font-weight:700; font-size:11px; padding:2px 6px; border-radius:4px;">${row.count} Credits</span></td>
+                                    <td style="padding:7px 8px; text-align:center;"><span style="background:#bbf7d0; color:#166534; font-weight:700; font-size:11px; padding:2px 6px; border-radius:4px;">${escapeHtml(row.count)} Credits</span></td>
                                     <td style="padding:7px 8px; text-align:right; color:#b91c1c; font-weight:600;">-₹${row.dr.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                                     <td style="padding:7px 8px; text-align:right; color:${netColor}; font-weight:700;">${net >= 0 ? '+' : '-'}₹${Math.abs(net).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                                     <td style="padding:7px 8px; max-width:280px;">${senders}</td>
@@ -2335,9 +2377,9 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                             txnRows += `
                                 <tr style="border-bottom:1px solid #e2e8f0; font-size:11.5px;">
                                     <td style="padding:6px 8px; color:#64748b;">${i+1}</td>
-                                    <td style="padding:6px 8px; white-space:nowrap; font-weight:600;">${t.date || '-'}</td>
-                                    <td style="padding:6px 8px; max-width:260px; word-break:break-word; text-align:left;">${t.narration || '-'}</td>
-                                    <td style="padding:6px 8px; font-family:monospace; font-size:10.5px; color:#475569;">${t.reference || t.transaction_id || '-'}</td>
+                                    <td style="padding:6px 8px; white-space:nowrap; font-weight:600;">${escapeHtml(t.date || '-')}</td>
+                                    <td style="padding:6px 8px; max-width:260px; word-break:break-word; text-align:left;">${escapeHtml(t.narration || '-')}</td>
+                                    <td style="padding:6px 8px; font-family:monospace; font-size:10.5px; color:#475569;">${escapeHtml(t.reference || t.transaction_id || '-')}</td>
                                     <td style="padding:6px 8px;">${badge}</td>
                                     <td style="padding:6px 8px; text-align:right; font-weight:700; color:${amtColor}; white-space:nowrap;">${amtStr}</td>
                                     <td style="padding:6px 8px; text-align:right; font-family:monospace;">${balStr}</td>
@@ -2346,14 +2388,14 @@ $maskedAadhaarUniqueId = mask_admin_sensitive_value((string)($app['aadhaar_uniqu
                         });
 
                         Swal.fire({
-                            title: `${bank.bank || 'Bank'} - Verified Bank Statement`,
+                            title: `${escapeHtml(bank.bank || 'Bank')} - Verified Bank Statement`,
                             width: '1000px',
                             html: `
                                 <div style="text-align:left; font-size:13px;">
                                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                                         <div>
-                                            <div style="font-weight:700; color:#0f172a; font-size:14px;">${holderName}</div>
-                                            <div style="font-size:11.5px; color:#64748b;">A/C: <span style="font-family:monospace; font-weight:700;">${acc.account_number || 'N/A'}</span> | IFSC: <span style="font-family:monospace; font-weight:700;">${acc.ifsc_code || 'N/A'}</span></div>
+                                            <div style="font-weight:700; color:#0f172a; font-size:14px;">${escapeHtml(holderName)}</div>
+                                            <div style="font-size:11.5px; color:#64748b;">A/C: <span style="font-family:monospace; font-weight:700;">${escapeHtml(acc.account_number || 'N/A')}</span> | IFSC: <span style="font-family:monospace; font-weight:700;">${escapeHtml(acc.ifsc_code || 'N/A')}</span></div>
                                         </div>
                                         <div style="text-align:right;">
                                             <div style="font-size:10.5px; color:#64748b; font-weight:700; text-transform:uppercase;">Current Balance</div>

@@ -1,0 +1,148 @@
+/* Location hub (/loan-in-{slug}) and locations index (/locations). Loaded after the older location CSS files. */
+.wf-location-page { overflow-x: clip; }
+
+/* Draft preview banner (admins only) */
+.wf-loc-preview-bar { background: #fef3c7; color: #78350f; border-bottom: 1px solid #fcd34d; padding: 10px 16px; text-align: center; font-size: 14px; }
+
+/* Hero */
+.wf-location-hero.has-image { position: relative; background-image: linear-gradient(110deg, rgba(4, 22, 46, .94) 30%, rgba(7, 31, 60, .72) 65%, rgba(7, 31, 60, .45)), var(--loc-hero-image); background-size: cover; background-position: center; }
+.wf-location-hero-content { max-width: 760px; margin: 0 auto; text-align: center; }
+.wf-location-hero-content > p { color: #dbe7f4; font-size: 17px; line-height: 1.65; margin: 0 auto; max-width: 680px; }
+.wf-location-breadcrumb { justify-content: center; font-size: 13px; }
+.wf-location-kicker { font-size: 12px; }
+.wf-location-actions { justify-content: center; flex-wrap: wrap; }
+.wf-location-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 20px; font-size: 15px; border-radius: 10px; }
+.wf-location-btn:focus-visible { outline: 3px solid #fcd34d; outline-offset: 2px; }
+.wf-location-btn.secondary-dark { border: 1px solid var(--lc-blue); color: var(--lc-blue); background: #fff; margin-top: 6px; }
+.wf-loc-hero-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; list-style: none; margin: 28px 0 0; padding: 0; color: #c7d8ea; font-size: 14px; }
+.wf-loc-hero-facts strong { color: #fff; font-size: 18px; margin-right: 4px; }
+
+/* Readable section text */
+.wf-location-section-head > span { font-size: 12.5px; letter-spacing: .5px; }
+.wf-location-section-head h2 { font-size: clamp(24px, 3vw, 32px); }
+.wf-location-section-head p { font-size: 15.5px; line-height: 1.6; max-width: 680px; margin-left: auto; margin-right: auto; }
+
+/* Area chips */
+.wf-location-area-chips span { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 12px; }
+.wf-location-area-chips span i { font-size: 11px; opacity: .7; }
+
+/* Product cards */
+.wf-location-product-card { padding: 24px; border-radius: 16px; border-color: #e3eaf3; box-shadow: 0 1px 2px rgba(15, 42, 70, .04), 0 8px 24px rgba(15, 42, 70, .05); }
+.wf-location-product-card h3 { font-size: 19px; }
+.wf-location-product-card p { font-size: 14.5px; line-height: 1.6; color: #475569; }
+.wf-loc-product-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0 0 16px; background: #e3eaf3; border: 1px solid #e3eaf3; border-radius: 10px; overflow: hidden; }
+.wf-loc-product-facts { align-items: stretch; }
+.wf-loc-product-facts > div { background: #f8fafc; padding: 10px 12px; height: 100%; display: flex; flex-direction: column; justify-content: flex-start; }
+.wf-loc-product-facts dt { font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .4px; margin: 0 0 2px; }
+.wf-loc-product-facts dd { font-size: 14px; font-weight: 700; color: #0b213a; margin: 0; line-height: 1.35; }
+.wf-location-product-card > div:last-child a { font-size: 14px; padding: 11px 14px; border-radius: 10px; }
+.wf-location-product-card a.wf-location-apply { background: var(--lc-blue); border-color: var(--lc-blue); color: #fff; }
+.wf-location-product-card a:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+/* Scenarios + support */
+.wf-location-scenario-grid h3 { font-size: 16.5px; }
+.wf-location-scenario-grid p { font-size: 14.5px; line-height: 1.6; color: #475569; }
+.wf-loc-support-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; margin-top: 20px; align-items: start; }
+.wf-loc-support-grid .wf-location-note { margin-top: 0; font-size: 14.5px; line-height: 1.6; color: #334155; }
+.wf-loc-support-grid .wf-location-note p { font-size: 14.5px; }
+.wf-loc-contact-card { background: #fff; border: 1px solid #e3eaf3; border-radius: 14px; padding: 20px 22px; }
+.wf-loc-contact-card h3 { font-size: 17px; font-weight: 800; margin: 0 0 12px; color: #0b213a; }
+.wf-loc-contact-card p { display: flex; gap: 10px; font-size: 14.5px; line-height: 1.5; color: #334155; margin: 0 0 10px; overflow-wrap: anywhere; }
+.wf-loc-contact-card p i { color: var(--lc-blue); margin-top: 3px; width: 16px; flex-shrink: 0; }
+.wf-loc-contact-card a { color: var(--lc-blue); font-weight: 700; text-decoration: none; }
+.wf-loc-hours { color: #64748b !important; font-size: 13.5px !important; }
+
+/* Calculator + FAQ text sizes */
+.wf-location-calc-grid h2 { font-size: 24px; }
+.wf-location-calc-grid p, .wf-location-fields label { font-size: 14px; }
+.wf-location-fields input { font-size: 16px; min-height: 46px; }
+.wf-location-result span { font-size: 13px; }
+.wf-location-result small { font-size: 12.5px; }
+.wf-location-faq-list button { font-size: 15.5px; padding: 17px 20px; gap: 12px; }
+.wf-location-faq-list button:focus-visible { outline: 3px solid #93c5fd; outline-offset: -3px; }
+.wf-location-faq-list article > div p { font-size: 14.5px; }
+
+/* Nearby */
+.wf-location-nearby span { font-size: 12.5px; }
+.wf-location-nearby a { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; margin: 0 8px 10px 0; padding: 8px 12px; border: 1px solid #d4e4f5; border-radius: 999px; background: #f8fbff; }
+.wf-location-nearby a.wf-loc-all-link { background: var(--lc-blue); color: #fff; border-color: var(--lc-blue); }
+.wf-location-nearby h2 { font-size: 20px; }
+.wf-location-nearby p { font-size: 14.5px; }
+
+/* Locations index */
+.wf-loc-index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 18px; margin-top: 26px; }
+.wf-loc-index-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e3eaf3; border-radius: 16px; padding: 22px; text-decoration: none; color: inherit; box-shadow: 0 1px 2px rgba(15, 42, 70, .04), 0 8px 24px rgba(15, 42, 70, .05); transition: border-color .2s ease; }
+.wf-loc-index-card:hover { border-color: var(--lc-blue); }
+.wf-loc-index-card:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.wf-loc-index-card span.badge-type { align-self: flex-start; font-size: 12px; font-weight: 700; color: var(--lc-blue); background: #eff6ff; border-radius: 999px; padding: 4px 10px; }
+.wf-loc-index-card h2 { font-size: 21px; font-weight: 800; color: #0b213a; margin: 12px 0 6px; }
+.wf-loc-index-card p { font-size: 14.5px; line-height: 1.6; color: #475569; margin: 0 0 14px; }
+.wf-loc-index-card small { font-size: 13px; color: #64748b; margin-bottom: 14px; }
+.wf-loc-index-card strong { margin-top: auto; color: var(--lc-blue); font-size: 14.5px; }
+
+@media (max-width: 991px) {
+    .wf-loc-support-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+    .wf-location-hero-content > p { font-size: 15.5px; }
+    .wf-location-btn { width: 100%; justify-content: center; }
+    .wf-location-product-card > div:last-child { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .wf-loc-index-card { transition: none; }
+}
+
+/* ---------- Hero, two columns (Nov 2026) ----------
+   Shorter hero so loan products appear sooner; left-aligned copy is easier to read than a centred block;
+   the primary action is white so it stands out on the dark background. */
+.wf-location-page .wf-location-hero { min-height: 0; padding: 40px 0 48px; text-align: left; }
+.wf-loc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .85fr); gap: 40px; align-items: center; }
+.wf-loc-hero-main .wf-location-breadcrumb { justify-content: flex-start; margin-bottom: 18px; }
+.wf-location-page .wf-loc-hero-main h1 { font-size: clamp(30px, 3.1vw, 44px); font-weight: 800; letter-spacing: -0.5px; line-height: 1.15; margin: 14px 0 12px; max-width: 640px; }
+.wf-location-page .wf-loc-hero-intro { color: #d3e0ee; font-size: 16.5px; line-height: 1.65; margin: 0 0 24px; max-width: 600px; }
+.wf-location-page .wf-loc-hero-main .wf-location-actions { justify-content: flex-start; gap: 12px; margin-top: 0; }
+.wf-location-page .wf-location-btn { font-size: 15px; border-radius: 10px; padding: 0 22px; min-height: 48px; }
+.wf-location-page .wf-location-btn.primary { background: #fff; border-color: #fff; color: #0b2c57; }
+.wf-location-page .wf-location-btn.primary:hover { background: #e0ecff; border-color: #e0ecff; color: #0b2c57; transform: none; }
+.wf-location-page .wf-location-btn.secondary { border-color: rgba(255, 255, 255, .45); }
+.wf-location-page .wf-location-btn:focus-visible { outline: 3px solid #fcd34d; outline-offset: 3px; }
+
+.wf-loc-hero-card { background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .16); border-radius: 18px; padding: 22px 24px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.wf-location-page .wf-loc-hero-card .wf-loc-hero-card-title { color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; margin: 0 0 14px; opacity: .85; }
+.wf-loc-hero-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.wf-loc-hero-card li { display: flex; gap: 12px; align-items: flex-start; }
+.wf-loc-hero-card li > i { width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: rgba(255, 255, 255, .12); color: #bfdbfe; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.wf-loc-hero-card strong { display: block; color: #fff; font-size: 15px; font-weight: 700; line-height: 1.35; }
+.wf-loc-hero-card span { display: block; color: #c3d3e6; font-size: 13.5px; line-height: 1.45; margin-top: 2px; overflow-wrap: anywhere; }
+
+@media (max-width: 991px) {
+    .wf-loc-hero-grid { grid-template-columns: 1fr; gap: 26px; }
+    .wf-loc-hero-card { max-width: 560px; }
+}
+@media (max-width: 640px) {
+    .wf-location-page .wf-location-hero { padding: 28px 0 34px; }
+    .wf-location-page .wf-loc-hero-main h1 { font-size: 28px; }
+    .wf-location-page .wf-loc-hero-intro { font-size: 15.5px; }
+    .wf-loc-hero-card { padding: 18px; }
+    .wf-loc-hero-card ul { gap: 12px; }
+}
+@media (max-width: 640px) {
+    .wf-loc-hero-card .wf-loc-hide-sm { display: none; }
+}
+.wf-location-page .wf-location-products { padding: 56px 0 64px; }
+.wf-location-page .wf-location-section-head h2 { letter-spacing: -0.3px; }
+
+/* Product cards: description takes up to 3 lines so the amount/tenure box and buttons line up across cards. */
+.wf-location-page .wf-location-product-card p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(1.6em * 3); }
+.wf-location-page .wf-loc-product-facts { margin-top: auto; }
+
+/* Calmer vertical rhythm */
+.wf-location-page .wf-location-context,
+.wf-location-page .wf-location-faq { padding: 56px 0; }
+.wf-location-page .wf-location-calculator { padding: 48px 0; }
+.wf-location-page .wf-location-nearby { padding: 40px 0 48px; }
+
+/* Calculator: readable labels */
+.wf-location-page .wf-location-fields label { font-size: 13.5px; font-weight: 700; color: #334155; text-transform: none; letter-spacing: 0; }
+.wf-location-page .wf-location-calc-grid > div > span { font-size: 12.5px; }
+.wf-location-page .wf-loc-product-facts dd { min-height: 2.7em; }

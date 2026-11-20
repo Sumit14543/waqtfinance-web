@@ -8,7 +8,7 @@ require_valid_csrf();
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh and try again.']);
-    http_response_code(419);
+    http_response_code(403);
     exit;
 }
 
@@ -17,10 +17,7 @@ waqt_enforce_rate_limit('verify_pan_ip', $clientIp, 60, 600, 'Too many PAN verif
 
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $serverName = $_SERVER['SERVER_NAME'] ?? '';
-$isLocal = in_array($host, ['localhost', '127.0.0.1'], true)
-    || in_array($serverName, ['localhost', '127.0.0.1'], true)
-    || str_contains($host, 'localhost')
-    || PHP_SAPI === 'cli';
+$isLocal = waqt_is_local_request();
 
 // 1. Mandatory Session Gate: Mobile OTP verification required before paid PAN lookup
 $verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';
@@ -61,10 +58,7 @@ $payload = [
 $token = env_value('PAN_API_KEY') ?: env_value('BIFROST_API_TOKEN', '');
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $serverName = $_SERVER['SERVER_NAME'] ?? '';
-$isLocal = in_array($host, ['localhost', '127.0.0.1'], true)
-    || in_array($serverName, ['localhost', '127.0.0.1'], true)
-    || str_contains($host, 'localhost')
-    || PHP_SAPI === 'cli';
+$isLocal = waqt_is_local_request();
 
 $result = null;
 

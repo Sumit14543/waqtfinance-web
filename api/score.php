@@ -160,6 +160,12 @@ function extract_score(array $responseData): ?int
         ['data', 'result', 'SCORES', 'SCORE', 'SCORE-VALUE'],
     ];
 
+    // TransUnion TrueLink format (Borrower.CreditScore.riskScore)
+    $trueLink = function_exists('waqt_truelink_credit_score') ? waqt_truelink_credit_score($responseData) : null;
+    if ($trueLink !== null) {
+        return $trueLink;
+    }
+
     foreach ($paths as $path) {
         $value = nested_value($responseData, $path);
         if (is_numeric($value)) {

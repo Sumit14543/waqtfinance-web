@@ -3,7 +3,7 @@ $page_title = "Commercial & Personal Vehicle Loan Online | Waqt Finance";
 $meta_description = "Finance your new or used car with low interest vehicle loans from Waqt Finance. Up to 90% funding, minimal documentation & fast approval. Apply today!";
 $meta_keywords = "vehicle loan in India, car loan online, bike loan India, vehicle finance online, commercial vehicle loan, auto loan India";
 $canonical_url = "https://waqtfinance.com/vehicle-loan";
-$meta_image = "assets/images/carloan1.webp";
+$meta_image = "assets/images/og-vehicle-loan.jpg";
 $meta_image_alt = "Vehicle loan in India for car and bike finance";
 $breadcrumb_label = "Vehicle Loan";
 
@@ -468,7 +468,7 @@ include 'includes/header.php';
                             <li>Apply with your main bank</li>
                         </ul>
 
-                        <a href="#" class="btn btn-danger w-100 mt-2">
+                        <a href="eligibility-calculator" class="btn btn-danger w-100 mt-2">
                             Check Your Eligibility →
                         </a>
 
@@ -818,7 +818,7 @@ include 'includes/header.php';
             <!-- CTA -->
             <div class="text-center mt-5">
 
-                <a href="#" class="apply-btn btn-lg py-3" style="font-size:18px;">
+                <a href="eligibility-calculator" class="apply-btn btn-lg py-3" style="font-size:18px;">
 
                     Check Your Eligibility →
 
@@ -1389,13 +1389,19 @@ include 'includes/header.php';
         </section>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php $footer_cta_title = 'Planning to buy a vehicle?'; $footer_cta_desc = 'Apply online for a vehicle loan. All charges are shown before you sign.'; ?>
+<?php include 'includes/footer.php'; ?>
     <script>
-        $('.testimonial-slider').slick({
+        // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
+    $('.testimonial-slider').slick({
             slidesToShow: 3,
             slidesToScroll: 1,
             autoplay: true,
-            autoplaySpeed: 1500,
+            autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
             dots: true,
             arrows: true,
             responsive: [{
@@ -1412,6 +1418,7 @@ include 'includes/header.php';
                 }
             ]
         });
+});
     </script>
 
 <script>

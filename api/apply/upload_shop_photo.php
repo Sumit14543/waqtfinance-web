@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 
-require_once '../config.php';
+require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../../includes/loan_flow.php';
 
 header('Content-Type: application/json; charset=utf-8');
+require_post();
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -14,7 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 $sessionCsrf = $_SESSION['csrf_token'] ?? '';
 if (!$csrf || !hash_equals((string)$sessionCsrf, (string)$csrf)) {
-    http_response_code(419);
+    http_response_code(403);
     echo json_encode([
         'status' => 'error',
         'message' => 'Security token expired. Please refresh the page and try again.'
@@ -64,12 +65,20 @@ if (isset($_FILES['photo']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
         exit;
     }
 
+    if (@getimagesize($file['tmp_name']) === false) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Upload a valid image file.']);
+        exit;
+    }
+
     $ext = $allowed[$mime];
     $filename = 'shop_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
     $targetPath = $uploadDir . '/' . $filename;
 
     if (move_uploaded_file($file['tmp_name'], $targetPath)) {
         @chmod($targetPath, 0644);
+        // Copy to Cloud Storage as well when FILE_STORAGE_PROVIDER=GCS (the public file stays for the CRM link).
+        waqt_mirror_file_to_gcs($targetPath, 'uploads/shop_photos/' . $filename, $mime);
         echo json_encode([
             'status' => 'success',
             'url' => 'uploads/shop_photos/' . $filename,
@@ -92,11 +101,18 @@ $imageData = $jsonBody['image_data'] ?? $_POST['image_data'] ?? '';
 if (!empty($imageData) && is_string($imageData)) {
     if (preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i', $imageData, $matches)) {
         $ext = strtolower($matches[1]) === 'png' ? 'png' : (strtolower($matches[1]) === 'webp' ? 'webp' : 'jpg');
-        $decoded = base64_decode($matches[2]);
+        $decoded = base64_decode($matches[2], true);
         if ($decoded !== false && strlen($decoded) > 0) {
             if (strlen($decoded) > 12 * 1024 * 1024) {
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Image size exceeds 12MB.']);
+                exit;
+            }
+
+            $imageInfo = @getimagesizefromstring($decoded);
+            if ($imageInfo === false || !in_array($imageInfo['mime'] ?? '', ['image/jpeg', 'image/png', 'image/webp'], true)) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Upload a valid JPG, PNG or WEBP image.']);
                 exit;
             }
 
@@ -105,6 +121,7 @@ if (!empty($imageData) && is_string($imageData)) {
 
             if (@file_put_contents($targetPath, $decoded)) {
                 @chmod($targetPath, 0644);
+                waqt_mirror_file_to_gcs($targetPath, 'uploads/shop_photos/' . $filename, (string) $imageInfo['mime']);
                 echo json_encode([
                     'status' => 'success',
                     'url' => 'uploads/shop_photos/' . $filename,

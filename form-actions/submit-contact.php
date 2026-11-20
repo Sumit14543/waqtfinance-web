@@ -1,14 +1,16 @@
 <?php
 header("Content-Type: application/json");
-require_once '../config/db.php';
+require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/email_helper.php';
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
     echo json_encode(["success" => false, "message" => "Invalid request"]);
     exit;
 }
 
 require_valid_csrf();
+waqt_enforce_rate_limit('contact_enquiry_ip', waqt_client_ip(), 10, 600, 'Too many enquiries. Please wait a few minutes before trying again.');
 
 // Sanitize inputs
 $name = trim($_POST["name"] ?? "");
@@ -16,11 +18,12 @@ $email = trim($_POST["email"] ?? "");
 $phone = trim($_POST["phone"] ?? "");
 $subject = trim($_POST["subject"] ?? "");
 $message = trim($_POST["message"] ?? "");
-$consent = isset($_POST["consent"]) ? 1 : 0;
+$consent = in_array($_POST["consent"] ?? null, ["1", "on", "true"], true) ? 1 : 0;
 
 // Server-side validation (IMPORTANT)
 if (
-    strlen($name) < 3 ||
+    strlen($name) < 3 || mb_strlen($name) > 150 || strlen($email) > 254 ||
+    mb_strlen($subject) > 200 || mb_strlen($message) > 5000 ||
     !filter_var($email, FILTER_VALIDATE_EMAIL) ||
     !preg_match("/^[0-9]{10}$/", $phone) ||
     empty($subject) ||

@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-$pageTitle = 'Dashboard Overview';
-$pageSubtitle = 'Real-time metrics and system operations analytics';
+$pageTitle = 'Dashboard';
+$pageSubtitle = 'Lead intake, pipeline and recent activity at a glance';
 
 include 'header.php';
 
@@ -22,22 +22,68 @@ function get_table_count(mysqli $conn, string $table, string $condition = ''): i
     return 0;
 }
 
+// Indian digit grouping: 1234567 -> 12,34,567
+function dash_inr(float $amount): string {
+    $neg = $amount < 0;
+    $num = (string) (int) round(abs($amount));
+    if (strlen($num) > 3) {
+        $last3 = substr($num, -3);
+        $rest = substr($num, 0, -3);
+        $rest = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', $rest);
+        $num = $rest . ',' . $last3;
+    }
+    return ($neg ? '-' : '') . $num;
+}
+
+function dash_e($value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+// Short relative time ("5 min ago", "Yesterday", "18 Nov"); the exact timestamp is on hover.
+function dash_when(?string $datetime): string {
+    $ts = $datetime ? strtotime($datetime) : false;
+    if (!$ts) {
+        return '—';
+    }
+    $diff = time() - $ts;
+    if ($diff < 60) {
+        $short = 'Just now';
+    } elseif ($diff < 3600) {
+        $short = (int) floor($diff / 60) . ' min ago';
+    } elseif (date('Y-m-d', $ts) === date('Y-m-d')) {
+        $short = (int) floor($diff / 3600) . ' h ago';
+    } elseif (date('Y-m-d', $ts) === date('Y-m-d', strtotime('yesterday'))) {
+        $short = 'Yesterday';
+    } elseif (date('Y', $ts) === date('Y')) {
+        $short = date('d M', $ts);
+    } else {
+        $short = date('d M Y', $ts);
+    }
+    return '<span title="' . date('d M Y, g:i A', $ts) . '">' . $short . '</span>';
+}
+
+// Applicant name, or a muted placeholder for drafts saved before the name step.
+function dash_name($name): string {
+    $name = trim((string) $name);
+    if ($name === '' || strtoupper($name) === 'N/A') {
+        return '<span style="color: var(--text-muted); font-weight: 500;">Name not provided</span>';
+    }
+    return dash_e($name);
+}
+
 // 🧮 Gather Metrics
 $totalApplications = get_table_count($conn, 'loan_applications'); // Payday
 $pendingApplications = get_table_count($conn, 'loan_applications', "status = 'submitted'");
-$reviewApplications = get_table_count($conn, 'loan_applications', "status = 'review'");
-$approvedApplications = get_table_count($conn, 'loan_applications', "status = 'approved'");
 
 $totalMasterLoans = get_table_count($conn, 'loan_applied_master');
 $totalEdiLoans = get_table_count($conn, 'edi_loan_applications');
 $totalLandingLeads = get_table_count($conn, 'loan_leads');
 $totalCibilChecks = get_table_count($conn, 'cibil_reports');
 $totalMessages = get_table_count($conn, 'contact_messages');
-$totalBlogs = get_table_count($conn, 'blogs');
 $totalPartners = get_table_count($conn, 'partner_registrations');
 $totalGeneralLoans = get_table_count($conn, 'apply_loan_applications');
 
-// Payday status counts for charts
+// Payday status counts for the pipeline
 $statusCounts = [
     'draft' => get_table_count($conn, 'loan_applications', "status = 'draft'"),
     'submitted' => get_table_count($conn, 'loan_applications', "status = 'submitted'"),
@@ -48,542 +94,682 @@ $statusCounts = [
 ];
 
 // Recent payday applications
-$recentAppsQuery = "SELECT application_id, full_name, mobile, loan_amount, status, created_at FROM loan_applications ORDER BY id DESC LIMIT 5";
-$recentApps = $conn->query($recentAppsQuery)->fetch_all(MYSQLI_ASSOC);
+$recentApps = [];
+$appsRes = $conn->query("SELECT id, application_id, full_name, mobile, loan_amount, status, created_at FROM loan_applications ORDER BY id DESC LIMIT 5");
+if ($appsRes) {
+    $recentApps = $appsRes->fetch_all(MYSQLI_ASSOC);
+}
 
 // Recent general wizard applications
-$recentGeneralQuery = "SELECT application_ref, full_name, mobile, loan_amount, loan_type, created_at FROM apply_loan_applications ORDER BY id DESC LIMIT 5";
 $recentGeneral = [];
-$genRes = $conn->query($recentGeneralQuery);
+$genRes = $conn->query("SELECT id, application_ref, full_name, mobile, loan_amount, loan_type, created_at FROM apply_loan_applications ORDER BY id DESC LIMIT 5");
 if ($genRes) {
     $recentGeneral = $genRes->fetch_all(MYSQLI_ASSOC);
 }
 
 // Recent partner registrations
-$recentPartnersQuery = "SELECT full_name, email_or_mobile, status, created_at FROM partner_registrations ORDER BY id DESC LIMIT 5";
 $recentPartners = [];
-$partnersRes = $conn->query($recentPartnersQuery);
+$partnersRes = $conn->query("SELECT full_name, email_or_mobile, status, created_at FROM partner_registrations ORDER BY id DESC LIMIT 5");
 if ($partnersRes) {
     $recentPartners = $partnersRes->fetch_all(MYSQLI_ASSOC);
 }
 
 // Recent messages
-$recentMsgsQuery = "SELECT name, phone, subject, created_at FROM contact_messages ORDER BY id DESC LIMIT 5";
-$recentMsgs = $conn->query($recentMsgsQuery)->fetch_all(MYSQLI_ASSOC);
+$recentMsgs = [];
+$msgsRes = $conn->query("SELECT name, phone, subject, created_at FROM contact_messages ORDER BY id DESC LIMIT 5");
+if ($msgsRes) {
+    $recentMsgs = $msgsRes->fetch_all(MYSQLI_ASSOC);
+}
 
-// Calculate Today's and Yesterday's Leads across all platforms
+// Top cities across payday + general applications
+$geoData = [];
+$geoRes = $conn->query("
+    SELECT COALESCE(NULLIF(TRIM(city), ''), 'Unknown') AS city_name, COUNT(*) AS count
+    FROM (
+        SELECT city FROM loan_applications WHERE city IS NOT NULL
+        UNION ALL
+        SELECT city FROM apply_loan_applications WHERE city IS NOT NULL
+    ) AS combined
+    GROUP BY city_name
+    ORDER BY count DESC
+    LIMIT 6
+");
+if ($geoRes) {
+    $geoData = $geoRes->fetch_all(MYSQLI_ASSOC);
+}
+
+// Today's and yesterday's leads across all platforms
 $todayLeads = 0;
 $yesterdayLeads = 0;
+$yesterdaySameTime = 0; // yesterday's leads up to the current time of day
 $leadTables = ['loan_applications', 'apply_loan_applications', 'loan_applied_master', 'edi_loan_applications', 'loan_leads'];
 
 foreach ($leadTables as $tbl) {
-    // Today
-    $tRes = $conn->query("SELECT COUNT(*) FROM $tbl WHERE DATE(created_at) = CURDATE()");
+    $tRes = $conn->query("SELECT COUNT(*) FROM $tbl WHERE created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY");
     if ($tRes) {
         $row = $tRes->fetch_row();
         $todayLeads += (int) ($row[0] ?? 0);
     }
-    // Yesterday
-    $yRes = $conn->query("SELECT COUNT(*) FROM $tbl WHERE DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)");
+    $yRes = $conn->query("SELECT COUNT(*), SUM(created_at <= NOW() - INTERVAL 1 DAY) FROM $tbl WHERE created_at >= CURDATE() - INTERVAL 1 DAY AND created_at < CURDATE()");
     if ($yRes) {
         $row = $yRes->fetch_row();
         $yesterdayLeads += (int) ($row[0] ?? 0);
+        $yesterdaySameTime += (int) ($row[1] ?? 0);
     }
 }
 
-// Calculate Trend
-$leadTrendHtml = '';
-if ($yesterdayLeads > 0) {
-    $diff = $todayLeads - $yesterdayLeads;
-    $pct = round(($diff / $yesterdayLeads) * 100, 1);
-    if ($pct > 0) {
-        $leadTrendHtml = '<span style="color: #22c55e; font-weight: 600; font-size: 13px; margin-left: 8px;"><i class="fa-solid fa-arrow-trend-up"></i> +' . $pct . '%</span>';
-    } elseif ($pct < 0) {
-        $leadTrendHtml = '<span style="color: #ef4444; font-weight: 600; font-size: 13px; margin-left: 8px;"><i class="fa-solid fa-arrow-trend-down"></i> ' . $pct . '%</span>';
-    } else {
-        $leadTrendHtml = '<span style="color: #64748b; font-weight: 600; font-size: 13px; margin-left: 8px;">0% change</span>';
-    }
-} else {
-    if ($todayLeads > 0) {
-        $leadTrendHtml = '<span style="color: #22c55e; font-weight: 600; font-size: 13px; margin-left: 8px;"><i class="fa-solid fa-arrow-trend-up"></i> +100%</span>';
-    } else {
-        $leadTrendHtml = '<span style="color: #64748b; font-weight: 600; font-size: 13px; margin-left: 8px;">No change</span>';
-    }
+// Payday drafts are forms the customer started but never submitted; show them separately.
+$todayDrafts = 0;
+$draftRes = $conn->query("SELECT COUNT(*) FROM loan_applications WHERE status = 'draft' AND created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY");
+if ($draftRes) {
+    $todayDrafts = (int) ($draftRes->fetch_row()[0] ?? 0);
 }
+
+// Trend: today so far against yesterday up to this same time, not against the whole of yesterday.
+if ($yesterdaySameTime > 0) {
+    $pct = round((($todayLeads - $yesterdaySameTime) / $yesterdaySameTime) * 100);
+    if ($pct > 0) {
+        $trend = ['tone' => 'up', 'icon' => 'fa-arrow-up', 'text' => '+' . $pct . '%'];
+    } elseif ($pct < 0) {
+        $trend = ['tone' => 'down', 'icon' => 'fa-arrow-down', 'text' => $pct . '%'];
+    } else {
+        $trend = ['tone' => 'flat', 'icon' => 'fa-minus', 'text' => '0%'];
+    }
+} elseif ($todayLeads > 0) {
+    $trend = ['tone' => 'up', 'icon' => 'fa-arrow-up', 'text' => 'New'];
+} else {
+    $trend = ['tone' => 'flat', 'icon' => 'fa-minus', 'text' => 'No change'];
+}
+
+// All-time volume tiles (each links to where the records live)
+$volumeTiles = [
+    ['label' => 'Payday Loans', 'value' => $totalApplications, 'sub' => dash_inr($statusCounts['draft']) . ' incomplete drafts', 'icon' => 'fa-file-invoice-dollar', 'href' => 'applications.php?tab=payday'],
+    ['label' => 'General Loans', 'value' => $totalGeneralLoans, 'sub' => 'Loan wizard applications', 'icon' => 'fa-wand-magic-sparkles', 'href' => 'applications.php?tab=wizard'],
+    ['label' => 'Quick Loan Inquiries', 'value' => $totalMasterLoans, 'sub' => 'Personal, Business, LAP, Vehicle', 'icon' => 'fa-layer-group', 'href' => 'master-loans.php?tab=general'],
+    ['label' => 'Shopkeeper EDI Loans', 'value' => $totalEdiLoans, 'sub' => 'Small business & shopkeepers', 'icon' => 'fa-shop', 'href' => 'master-loans.php?tab=edi'],
+    ['label' => 'Website Quick Quotes', 'value' => $totalLandingLeads, 'sub' => 'Landing page lead forms', 'icon' => 'fa-list-check', 'href' => 'leads.php?tab=landing'],
+    ['label' => 'CIBIL Checks', 'value' => $totalCibilChecks, 'sub' => 'Credit score inquiries', 'icon' => 'fa-gauge-high', 'href' => 'cibil.php'],
+    ['label' => 'DSA Partners', 'value' => $totalPartners, 'sub' => 'Registered DSA agents', 'icon' => 'fa-handshake', 'href' => 'leads.php?tab=partners'],
+    ['label' => 'Contact Messages', 'value' => $totalMessages, 'sub' => 'Website inbox', 'icon' => 'fa-envelope-open-text', 'href' => 'leads.php?tab=contact'],
+];
+
+$statusLabels = [
+    'draft' => 'Draft',
+    'submitted' => 'Submitted',
+    'review' => 'In review',
+    'approved' => 'Approved',
+    'rejected' => 'Rejected',
+    'disbursed' => 'Disbursed',
+];
+$statusMax = max(1, max($statusCounts));
+$statusTotal = max(1, array_sum($statusCounts));
+$geoMax = !empty($geoData) ? max(1, (int) max(array_column($geoData, 'count'))) : 1;
 ?>
 
-<!-- Main Leads Intake Overview -->
-<div class="stat-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 25px;" data-aos="fade-up">
-    <div class="stat-card" style="border-left: 4px solid #22c55e;">
-        <div>
-            <div class="stat-label">Today's Total Leads</div>
-            <div class="stat-val"><?php echo $todayLeads; ?><?php echo $leadTrendHtml; ?></div>
-            <small class="text-muted">Intake on <?php echo date('d M Y'); ?></small>
+<style>
+    /* ---------- Dashboard layout ---------- */
+    .dash-section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 8px 0 12px;
+    }
+    .dash-section-head h2 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    .dash-section-head span { font-size: 12.5px; color: var(--text-muted); }
+
+    .dash-grid { display: grid; gap: 16px; margin-bottom: 28px; }
+    .dash-grid.kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dash-grid.tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dash-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 20px; }
+
+    /* ---------- KPI cards ---------- */
+    .kpi {
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        box-shadow: var(--shadow-xs);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+    }
+    a.kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+    .kpi.primary {
+        background: linear-gradient(135deg, #18529c 0%, #0f3a73 100%);
+        border-color: transparent;
+        color: #ffffff;
+    }
+    .kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .kpi-label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+    .kpi.primary .kpi-label { color: rgba(255, 255, 255, 0.78); }
+    .kpi-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+    .kpi.primary .kpi-icon { background: rgba(255, 255, 255, 0.14); color: #ffffff; }
+    .kpi.alert .kpi-icon { background: #fef2f2; color: #dc2626; }
+    .kpi.warn .kpi-icon { background: #fffbeb; color: #b45309; }
+    .kpi-value-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .kpi-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        font-variant-numeric: tabular-nums;
+    }
+    .kpi-sub { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
+    .kpi.primary .kpi-sub { color: rgba(255, 255, 255, 0.75); }
+    .kpi-cta {
+        margin-top: auto;
+        padding-top: 4px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .kpi-cta i { font-size: 10px; transition: transform 0.15s var(--ease); }
+    a.kpi:hover .kpi-cta i { transform: translateX(3px); }
+
+    .trend-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+    .trend-pill i { font-size: 10px; }
+    .trend-pill.up { background: #dcfce7; color: #166534; }
+    .trend-pill.down { background: #fee2e2; color: #991b1b; }
+    .trend-pill.flat { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
+    .kpi:not(.primary) .trend-pill.flat { background: #f1f5f9; color: #475569; }
+
+    /* ---------- Volume tiles ---------- */
+    .tile {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+        min-width: 0;
+    }
+    .tile:hover { border-color: #b9cbe3; box-shadow: var(--shadow-sm); }
+    .tile-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .tile-body { min-width: 0; flex: 1; }
+    .tile-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tile-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--text-main);
+        font-variant-numeric: tabular-nums;
+    }
+    .tile-sub { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tile-arrow { color: #cbd5e1; font-size: 12px; transition: color 0.15s var(--ease), transform 0.15s var(--ease); }
+    .tile:hover .tile-arrow { color: var(--primary); transform: translateX(2px); }
+
+    /* ---------- Panels ---------- */
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xs);
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .panel-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    .panel-hint { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .panel-link {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--primary);
+        text-decoration: none;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        transition: background-color 0.15s var(--ease);
+    }
+    .panel-link:hover { background: var(--primary-soft); }
+    .panel-link i { font-size: 10px; }
+    .panel-body { padding: 16px 20px 20px; }
+
+    /* Ranked horizontal bars (one hue; the label carries identity) */
+    .bar-list { display: flex; flex-direction: column; gap: 14px; }
+    .bar-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+    .bar-name { font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-num { font-weight: 600; color: var(--text-main); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .bar-num small { font-weight: 500; color: var(--text-muted); margin-left: 6px; font-size: 12px; }
+    .bar-track { height: 8px; background: #eef1f6; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; background: #2a78d6; border-radius: 4px; min-width: 2px; }
+    .bar-fill.zero { min-width: 0; }
+
+    .pipeline-total {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .pipeline-total strong {
+        font-family: 'Outfit', sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+    .pipeline-total span { font-size: 12.5px; color: var(--text-muted); }
+
+    /* Activity tables */
+    .panel .admin-table th:first-child, .panel .admin-table td:first-child { padding-left: 20px; }
+    .panel .admin-table th:last-child, .panel .admin-table td:last-child { padding-right: 20px; }
+    .panel .admin-table th { background: var(--bg-subtle); }
+    .panel .admin-table td { padding-top: 12px; padding-bottom: 12px; vertical-align: middle; }
+    .panel .table-responsive { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+    .cell-main { font-weight: 600; color: var(--text-main); }
+    .cell-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .cell-ref { font-size: 12.5px; font-weight: 600; color: var(--primary); text-decoration: none; font-variant-numeric: tabular-nums; }
+    a.cell-ref:hover { text-decoration: underline; }
+    .cell-amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .cell-time { font-size: 12.5px; color: var(--text-muted); }
+    .cell-clip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+    .chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .empty-state {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 36px 16px !important;
+        white-space: normal !important;
+    }
+    .empty-state i { display: block; font-size: 20px; color: #cbd5e1; margin-bottom: 8px; }
+
+    @media (max-width: 1280px) {
+        .dash-grid.kpis, .dash-grid.tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1024px) {
+        .dash-grid.two { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 640px) {
+        .dash-grid.kpis, .dash-grid.tiles { grid-template-columns: minmax(0, 1fr); }
+        .dash-section-head { flex-wrap: wrap; }
+        .panel-head { padding: 14px 16px; }
+        .panel-body { padding: 14px 16px 16px; }
+    }
+</style>
+
+<!-- ===== Today at a glance ===== -->
+<div class="dash-grid kpis">
+    <div class="kpi primary">
+        <div class="kpi-top">
+            <span class="kpi-label">Today's leads</span>
+            <span class="kpi-icon"><i class="fa-solid fa-bolt"></i></span>
         </div>
-        <div class="stat-icon-wrapper" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; width: 48px; height: 48px; font-size: 20px;">
-            <i class="fa-solid fa-calendar-day"></i>
+        <div class="kpi-value-row">
+            <span class="kpi-value"><?php echo dash_inr($todayLeads); ?></span>
+            <span class="trend-pill <?php echo $trend['tone']; ?>" title="Compared with leads received yesterday up to <?php echo date('g:i A'); ?>">
+                <i class="fa-solid <?php echo $trend['icon']; ?>"></i><?php echo $trend['text']; ?>
+            </span>
+        </div>
+        <div class="kpi-sub">
+            vs <?php echo dash_inr($yesterdaySameTime); ?> by <?php echo date('g:i A'); ?> yesterday<?php if ($todayDrafts > 0): ?> · incl. <?php echo dash_inr($todayDrafts); ?> payday draft<?php echo $todayDrafts === 1 ? '' : 's'; ?><?php endif; ?>
         </div>
     </div>
-    
-    <div class="stat-card" style="border-left: 4px solid #6366f1;">
-        <div>
-            <div class="stat-label">Yesterday's Total Leads</div>
-            <div class="stat-val"><?php echo $yesterdayLeads; ?></div>
-            <small class="text-muted">Intake on <?php echo date('d M Y', strtotime('yesterday')); ?></small>
+
+    <div class="kpi">
+        <div class="kpi-top">
+            <span class="kpi-label">Yesterday's leads</span>
+            <span class="kpi-icon"><i class="fa-solid fa-calendar-day"></i></span>
         </div>
-        <div class="stat-icon-wrapper" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; width: 48px; height: 48px; font-size: 20px;">
-            <i class="fa-solid fa-calendar-minus"></i>
+        <div class="kpi-value-row">
+            <span class="kpi-value"><?php echo dash_inr($yesterdayLeads); ?></span>
         </div>
+        <div class="kpi-sub">Full day · <?php echo date('D, d M', strtotime('yesterday')); ?></div>
     </div>
+
+    <a class="kpi <?php echo $pendingApplications > 0 ? 'alert' : ''; ?>" href="applications.php?tab=payday&amp;status=submitted">
+        <div class="kpi-top">
+            <span class="kpi-label">Payday awaiting review</span>
+            <span class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></span>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-value"><?php echo dash_inr($pendingApplications); ?></span>
+        </div>
+        <div class="kpi-sub">Submitted applications not yet actioned</div>
+        <span class="kpi-cta">Review queue <i class="fa-solid fa-arrow-right"></i></span>
+    </a>
+
+    <a class="kpi <?php echo $pendingPartnersCount > 0 ? 'warn' : ''; ?>" href="leads.php?tab=partners">
+        <div class="kpi-top">
+            <span class="kpi-label">DSA awaiting approval</span>
+            <span class="kpi-icon"><i class="fa-solid fa-user-clock"></i></span>
+        </div>
+        <div class="kpi-value-row">
+            <span class="kpi-value"><?php echo dash_inr($pendingPartnersCount); ?></span>
+        </div>
+        <div class="kpi-sub">Partner registrations pending</div>
+        <span class="kpi-cta">Open partners <i class="fa-solid fa-arrow-right"></i></span>
+    </a>
 </div>
 
-<!-- Statistics Overview Row 1 -->
-<div class="stat-grid" data-aos="fade-up">
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">Payday Loans</div>
-            <div class="stat-val"><?php echo $totalApplications; ?></div>
-            <small class="text-muted"><?php echo $pendingApplications; ?> pending review</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(255, 184, 0, 0.1); color: var(--primary);">
-            <i class="fa-solid fa-file-invoice-dollar"></i>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">General Loans</div>
-            <div class="stat-val"><?php echo $totalGeneralLoans; ?></div>
-            <small class="text-muted">General wizard entries</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">Quick Loan Inquiries</div>
-            <div class="stat-val"><?php echo $totalMasterLoans; ?></div>
-            <small class="text-muted">Personal, Business, LAP, Vehicle</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-            <i class="fa-solid fa-layer-group"></i>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">Shopkeeper EDI Loans</div>
-            <div class="stat-val"><?php echo $totalEdiLoans; ?></div>
-            <small class="text-muted">Small business & shopkeepers</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(6, 182, 212, 0.1); color: var(--info);">
-            <i class="fa-solid fa-shop"></i>
-        </div>
-    </div>
+<!-- ===== All-time volume ===== -->
+<div class="dash-section-head">
+    <h2>All-time volume</h2>
+    <span>Total records by channel · click a tile to open it</span>
+</div>
+<div class="dash-grid tiles">
+    <?php foreach ($volumeTiles as $tile): ?>
+        <a class="tile" href="<?php echo dash_e($tile['href']); ?>">
+            <span class="tile-icon"><i class="fa-solid <?php echo $tile['icon']; ?>"></i></span>
+            <span class="tile-body">
+                <span class="tile-label" style="display:block;"><?php echo dash_e($tile['label']); ?></span>
+                <span class="tile-value" style="display:block;"><?php echo dash_inr((float) $tile['value']); ?></span>
+                <span class="tile-sub" style="display:block;"><?php echo dash_e($tile['sub']); ?></span>
+            </span>
+            <i class="fa-solid fa-chevron-right tile-arrow"></i>
+        </a>
+    <?php endforeach; ?>
 </div>
 
-<!-- Statistics Overview Row 2 -->
-<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 25px;" data-aos="fade-up" data-aos-delay="50">
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">CIBIL Inquiries</div>
-            <div class="stat-val"><?php echo $totalCibilChecks; ?></div>
-            <small class="text-muted">Credit score inspections</small>
+<!-- ===== Pipeline & geography ===== -->
+<div class="dash-grid two">
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <div class="panel-title">Payday loan pipeline</div>
+                <div class="panel-hint">Applications by current status</div>
+            </div>
+            <a class="panel-link" href="applications.php?tab=payday">Open <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        <div class="stat-icon-wrapper" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
-            <i class="fa-solid fa-gauge-high"></i>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">Website Lead Captures</div>
-            <div class="stat-val"><?php echo $totalLandingLeads; ?></div>
-            <small class="text-muted">Quick landing pages leads</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">
-            <i class="fa-solid fa-user-tag"></i>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">DSA Partners</div>
-            <div class="stat-val"><?php echo $totalPartners; ?></div>
-            <small class="text-muted">Registered DSA agents</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
-            <i class="fa-solid fa-handshake"></i>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">Contact Inquiries</div>
-            <div class="stat-val"><?php echo $totalMessages; ?></div>
-            <small class="text-muted">Inbox inquiries</small>
-        </div>
-        <div class="stat-icon-wrapper" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
-            <i class="fa-solid fa-envelope-open-text"></i>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Row -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; margin-top: 30px;" data-aos="fade-up" data-aos-delay="100">
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-right: 8px;"></i> Payday Loan Status</h2>
-        </div>
-        <div style="height: 250px; position: relative; display: flex; align-items: center; justify-content: center; padding: 10px;">
-            <canvas id="statusChart"></canvas>
-        </div>
-    </div>
-    
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-chart-bar" style="color: var(--success); margin-right: 8px;"></i> volume by category</h2>
-        </div>
-        <div style="height: 250px; position: relative; display: flex; align-items: center; justify-content: center; padding: 10px;">
-            <canvas id="categoryChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Geographic Distribution Widget -->
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-map-location-dot" style="color: #6366f1; margin-right: 8px;"></i> Geographic Distribution</h2>
-        </div>
-        <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-            <?php
-            $geoQuery = "
-                SELECT COALESCE(NULLIF(TRIM(city), ''), 'Unknown') as city_name, COUNT(*) AS count 
-                FROM (
-                    SELECT city FROM loan_applications WHERE city IS NOT NULL
-                    UNION ALL
-                    SELECT city FROM apply_loan_applications WHERE city IS NOT NULL
-                ) as combined 
-                GROUP BY city_name 
-                ORDER BY count DESC 
-                LIMIT 5
-            ";
-            $geoRes = $conn->query($geoQuery);
-            $geoData = $geoRes ? $geoRes->fetch_all(MYSQLI_ASSOC) : [];
-            $maxCount = !empty($geoData) ? max(array_column($geoData, 'count')) : 1;
-            
-            if (empty($geoData)):
-            ?>
-                <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">No geographic data available.</div>
-            <?php
-            else:
-                foreach ($geoData as $geo):
-                    $percentage = round(($geo['count'] / $maxCount) * 100);
-            ?>
-                <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">
-                        <span><?php echo htmlspecialchars(ucwords(strtolower($geo['city_name']))); ?></span>
-                        <span style="color: var(--primary);"><?php echo $geo['count']; ?> Leads</span>
+        <div class="panel-body">
+            <div class="pipeline-total">
+                <strong><?php echo dash_inr($totalApplications); ?></strong>
+                <span>payday applications in total</span>
+            </div>
+            <div class="bar-list">
+                <?php foreach ($statusLabels as $key => $label):
+                    $count = (int) $statusCounts[$key];
+                    $width = round(($count / $statusMax) * 100, 1);
+                    $share = round(($count / $statusTotal) * 100, 1);
+                ?>
+                    <div title="<?php echo $label . ': ' . dash_inr($count) . ' (' . $share . '% of all)'; ?>">
+                        <div class="bar-row-top">
+                            <span class="badge-status badge-<?php echo $key; ?>"><?php echo $label; ?></span>
+                            <span class="bar-num"><?php echo dash_inr($count); ?><small><?php echo $share; ?>%</small></span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill<?php echo $count === 0 ? ' zero' : ''; ?>" style="width: <?php echo $width; ?>%;"></div></div>
                     </div>
-                    <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
-                        <div style="width: <?php echo $percentage; ?>%; height: 100%; background: linear-gradient(90deg, #6366f1, #4f46e5); border-radius: 4px;"></div>
-                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <div class="panel-title">Top cities</div>
+                <div class="panel-hint">Payday + general applications by city</div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <?php if (empty($geoData)): ?>
+                <div class="empty-state"><i class="fa-solid fa-map-location-dot"></i>No city data yet.</div>
+            <?php else: ?>
+                <div class="bar-list">
+                    <?php foreach ($geoData as $geo):
+                        $count = (int) $geo['count'];
+                        $width = round(($count / $geoMax) * 100, 1);
+                        $city = ucwords(strtolower((string) $geo['city_name']));
+                    ?>
+                        <div title="<?php echo dash_e($city) . ': ' . dash_inr($count) . ' applications'; ?>">
+                            <div class="bar-row-top">
+                                <span class="bar-name"><?php echo dash_e($city); ?></span>
+                                <span class="bar-num"><?php echo dash_inr($count); ?></span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill" style="width: <?php echo $width; ?>%;"></div></div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-            <?php
-                endforeach;
-            endif;
-            ?>
+            <?php endif; ?>
         </div>
-    </div>
+    </section>
 </div>
 
-<!-- Activity Feeds Row 1: Recent Payday Applications & General Wizard Applications -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-top: 30px;" data-aos="fade-up" data-aos-delay="150">
-    
+<!-- ===== Recent activity ===== -->
+<div class="dash-section-head" style="margin-top: 8px;">
+    <h2>Recent activity</h2>
+    <span>Latest 5 in each channel</span>
+</div>
+
+<div class="dash-grid two">
     <!-- Recent Payday Applications -->
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i> Recent Payday Loan Applications</h2>
-            <a href="applications.php?tab=payday" class="btn-primary-adm" style="padding: 6px 12px; font-size: 11px; box-shadow: none; text-decoration: none;">View All</a>
+    <section class="panel">
+        <div class="panel-head">
+            <div class="panel-title">Payday applications</div>
+            <a class="panel-link" href="applications.php?tab=payday">View all <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        
         <div class="table-responsive">
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>App ID</th>
                         <th>Applicant</th>
                         <th>Amount</th>
                         <th>Status</th>
+                        <th>Received</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($recentApps)): ?>
-                        <tr>
-                            <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 30px 0;">No applications found.</td>
-                        </tr>
+                        <tr><td colspan="4" class="empty-state"><i class="fa-solid fa-inbox"></i>No applications yet.</td></tr>
                     <?php else: ?>
-                        <?php foreach ($recentApps as $app): 
-                            $appId = htmlspecialchars((string)($app['application_id'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $fullName = htmlspecialchars((string)($app['full_name'] ?? 'N/A'), ENT_QUOTES, 'UTF-8');
-                            $mobile = htmlspecialchars((string)($app['mobile'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $appAmount = is_numeric($app['loan_amount']) ? number_format((float)$app['loan_amount'], 2) : '0.00';
-                            $status = htmlspecialchars((string)($app['status'] ?? 'draft'), ENT_QUOTES, 'UTF-8');
+                        <?php foreach ($recentApps as $app):
+                            $status = (string) ($app['status'] ?? 'draft');
+                            $statusKey = array_key_exists($status, $statusLabels) ? $status : 'draft';
                         ?>
                             <tr>
-                                <td><span style="font-weight: 700; color: var(--primary);"><?php echo $appId; ?></span></td>
                                 <td>
-                                    <div><?php echo $fullName; ?></div>
-                                    <small class="text-muted"><?php echo $mobile; ?></small>
+                                    <div class="cell-main"><?php echo dash_name($app['full_name']); ?></div>
+                                    <div class="cell-sub">
+                                        <a class="cell-ref" href="view-application.php?id=<?php echo (int) $app['id']; ?>&amp;type=payday"><?php echo dash_e($app['application_id']); ?></a>
+                                        <?php if (!empty($app['mobile'])): ?> · <?php echo dash_e($app['mobile']); ?><?php endif; ?>
+                                    </div>
                                 </td>
-                                <td>₹<?php echo $appAmount; ?></td>
-                                <td><span class="badge-status badge-<?php echo $status; ?>"><?php echo $status; ?></span></td>
+                                <td class="cell-amount"><?php echo is_numeric($app['loan_amount']) ? '₹' . dash_inr((float) $app['loan_amount']) : '—'; ?></td>
+                                <td><span class="badge-status badge-<?php echo $statusKey; ?>"><?php echo dash_e($statusLabels[$status] ?? $status); ?></span></td>
+                                <td class="cell-time"><?php echo dash_when($app['created_at'] ?? null); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </div>
-    
+    </section>
+
     <!-- Recent General Wizard Applications -->
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7; margin-right: 8px;"></i> Recent General Loan Applications</h2>
-            <a href="applications.php?tab=wizard" class="btn-primary-adm" style="padding: 6px 12px; font-size: 11px; box-shadow: none; text-decoration: none;">View All</a>
+    <section class="panel">
+        <div class="panel-head">
+            <div class="panel-title">General loan applications</div>
+            <a class="panel-link" href="applications.php?tab=wizard">View all <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        
         <div class="table-responsive">
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>App ID</th>
                         <th>Applicant</th>
                         <th>Amount</th>
-                        <th>Loan Category</th>
+                        <th>Loan type</th>
+                        <th>Received</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($recentGeneral)): ?>
-                        <tr>
-                            <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 30px 0;">No general applications found.</td>
-                        </tr>
+                        <tr><td colspan="4" class="empty-state"><i class="fa-solid fa-inbox"></i>No general applications yet.</td></tr>
                     <?php else: ?>
-                        <?php foreach ($recentGeneral as $app): 
-                            $appRef = htmlspecialchars((string)($app['application_ref'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $fullName = htmlspecialchars((string)($app['full_name'] ?? 'N/A'), ENT_QUOTES, 'UTF-8');
-                            $mobile = htmlspecialchars((string)($app['mobile'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $appAmount = is_numeric($app['loan_amount']) ? number_format((float)$app['loan_amount'], 2) : htmlspecialchars((string)$app['loan_amount'], ENT_QUOTES, 'UTF-8');
-                            $loanType = htmlspecialchars((string)($app['loan_type'] ?? 'N/A'), ENT_QUOTES, 'UTF-8');
-                        ?>
+                        <?php foreach ($recentGeneral as $app): ?>
                             <tr>
-                                <td><span style="font-weight: 700; color: #a855f7;"><?php echo $appRef; ?></span></td>
                                 <td>
-                                    <div><?php echo $fullName; ?></div>
-                                    <small class="text-muted"><?php echo $mobile; ?></small>
+                                    <div class="cell-main"><?php echo dash_name($app['full_name']); ?></div>
+                                    <div class="cell-sub">
+                                        <a class="cell-ref" href="view-application.php?id=<?php echo (int) $app['id']; ?>&amp;type=wizard"><?php echo dash_e($app['application_ref']); ?></a>
+                                        <?php if (!empty($app['mobile'])): ?> · <?php echo dash_e($app['mobile']); ?><?php endif; ?>
+                                    </div>
                                 </td>
-                                <td>₹<?php echo $appAmount; ?></td>
-                                <td><span style="background: rgba(168, 85, 247, 0.08); padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #a855f7;"><?php echo $loanType; ?></span></td>
+                                <td class="cell-amount"><?php echo is_numeric($app['loan_amount']) ? '₹' . dash_inr((float) $app['loan_amount']) : dash_e($app['loan_amount'] ?: '—'); ?></td>
+                                <td><span class="chip"><?php echo dash_e($app['loan_type'] ?: 'N/A'); ?></span></td>
+                                <td class="cell-time"><?php echo dash_when($app['created_at'] ?? null); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
 
-<!-- Activity Feeds Row 2: Recent DSA Registrations & Support Inquiries -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; margin-top: 30px; margin-bottom: 30px;" data-aos="fade-up" data-aos-delay="200">
-    
+<div class="dash-grid two">
     <!-- Recent DSA Registrations -->
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-handshake" style="color: #10b981; margin-right: 8px;"></i> Newly Registered DSA Partners</h2>
-            <a href="leads.php?tab=dsa" class="btn-primary-adm" style="padding: 6px 12px; font-size: 11px; box-shadow: none; text-decoration: none;">View All</a>
+    <section class="panel">
+        <div class="panel-head">
+            <div class="panel-title">New DSA partners</div>
+            <a class="panel-link" href="leads.php?tab=partners">View all <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        
         <div class="table-responsive">
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>Partner Name</th>
-                        <th>Mobile / Email</th>
+                        <th>Partner</th>
                         <th>Status</th>
-                        <th>Joined Date</th>
+                        <th>Joined</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($recentPartners)): ?>
-                        <tr>
-                            <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 30px 0;">No registered partners found.</td>
-                        </tr>
+                        <tr><td colspan="3" class="empty-state"><i class="fa-solid fa-handshake"></i>No partner registrations yet.</td></tr>
                     <?php else: ?>
-                        <?php foreach ($recentPartners as $partner): 
-                            $fullName = htmlspecialchars((string)($partner['full_name'] ?? 'N/A'), ENT_QUOTES, 'UTF-8');
-                            $contact = htmlspecialchars((string)($partner['email_or_mobile'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $status = htmlspecialchars((string)($partner['status'] ?? 'pending'), ENT_QUOTES, 'UTF-8');
-                            $dateStr = date('d M, h:i A', strtotime($partner['created_at']));
+                        <?php foreach ($recentPartners as $partner):
+                            $pStatus = strtolower(trim((string) ($partner['status'] ?? ''))) ?: 'pending';
+                            $pBadge = $pStatus === 'approved' ? 'approved' : ($pStatus === 'rejected' ? 'rejected' : 'review');
                         ?>
                             <tr>
-                                <td><span style="font-weight: 700; color: #10b981;"><?php echo $fullName; ?></span></td>
-                                <td><?php echo $contact; ?></td>
-                                <td><span class="badge-status badge-<?php echo ($status === 'approved') ? 'approved' : (($status === 'rejected') ? 'rejected' : 'review'); ?>"><?php echo $status; ?></span></td>
-                                <td><?php echo $dateStr; ?></td>
+                                <td>
+                                    <div class="cell-main"><?php echo dash_name($partner['full_name']); ?></div>
+                                    <div class="cell-sub"><?php echo dash_e($partner['email_or_mobile']); ?></div>
+                                </td>
+                                <td><span class="badge-status badge-<?php echo $pBadge; ?>"><?php echo dash_e($pStatus); ?></span></td>
+                                <td class="cell-time"><?php echo dash_when($partner['created_at'] ?? null); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 
     <!-- Recent Support Inquiries -->
-    <div class="data-card">
-        <div class="card-header-flex">
-            <h2 class="card-title-text"><i class="fa-solid fa-comments" style="color: var(--danger); margin-right: 8px;"></i> Recent Support Messages</h2>
-            <a href="leads.php?tab=messages" class="btn-primary-adm" style="padding: 6px 12px; font-size: 11px; box-shadow: none; text-decoration: none;">View All</a>
+    <section class="panel">
+        <div class="panel-head">
+            <div class="panel-title">Contact messages</div>
+            <a class="panel-link" href="leads.php?tab=contact">View all <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        
         <div class="table-responsive">
             <table class="admin-table">
                 <thead>
                     <tr>
                         <th>Contact</th>
                         <th>Subject</th>
-                        <th>Date</th>
+                        <th>Received</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($recentMsgs)): ?>
-                        <tr>
-                            <td colspan="3" class="text-center" style="color: var(--text-muted); padding: 30px 0;">No messages received.</td>
-                        </tr>
+                        <tr><td colspan="3" class="empty-state"><i class="fa-solid fa-envelope-open"></i>No messages yet.</td></tr>
                     <?php else: ?>
-                        <?php foreach ($recentMsgs as $msg): 
-                            $name = htmlspecialchars((string)($msg['name'] ?? 'N/A'), ENT_QUOTES, 'UTF-8');
-                            $phone = htmlspecialchars((string)($msg['phone'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $subject = htmlspecialchars((string)($msg['subject'] ?? 'N/A'), ENT_QUOTES, 'UTF-8');
-                            $dateStr = date('d M, h:i A', strtotime($msg['created_at']));
-                        ?>
+                        <?php foreach ($recentMsgs as $msg): ?>
                             <tr>
                                 <td>
-                                    <div><?php echo $name; ?></div>
-                                    <small class="text-muted"><?php echo $phone; ?></small>
+                                    <div class="cell-main"><?php echo dash_name($msg['name']); ?></div>
+                                    <div class="cell-sub"><?php echo dash_e($msg['phone']); ?></div>
                                 </td>
-                                <td><span style="color: var(--text-main);"><?php echo $subject; ?></span></td>
-                                <td><?php echo $dateStr; ?></td>
+                                <td><div class="cell-clip" title="<?php echo dash_e($msg['subject']); ?>"><?php echo dash_e($msg['subject'] ?: '—'); ?></div></td>
+                                <td class="cell-time"><?php echo dash_when($msg['created_at'] ?? null); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
-
-<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    AOS.init({ duration: 800, once: true });
-
-    // 📊 Status distribution Doughnut Chart
-    const statusData = {
-        labels: ['Draft', 'Submitted', 'Review', 'Approved', 'Rejected', 'Disbursed'],
-        datasets: [{
-            data: [
-                <?php echo $statusCounts['draft']; ?>,
-                <?php echo $statusCounts['submitted']; ?>,
-                <?php echo $statusCounts['review']; ?>,
-                <?php echo $statusCounts['approved']; ?>,
-                <?php echo $statusCounts['rejected']; ?>,
-                <?php echo $statusCounts['disbursed']; ?>
-            ],
-            backgroundColor: [
-                '#94a3b8', // Draft - Slate
-                '#3b82f6', // Submitted - Blue
-                '#ca8a04', // Review - Yellow
-                '#16a34a', // Approved - Green
-                '#dc2626', // Rejected - Red
-                '#0d9488'  // Disbursed - Teal
-            ],
-            borderWidth: 0
-        }]
-    };
-
-    const statusConfig = {
-        type: 'doughnut',
-        data: statusData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        boxWidth: 12,
-                        font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
-                        color: '#64748b'
-                    }
-                }
-            },
-            cutout: '65%'
-        }
-    };
-
-    new Chart(document.getElementById('statusChart'), statusConfig);
-
-    // 📊 Category volume Bar Chart
-    const categoryData = {
-        labels: ['Payday', 'General', 'Quick Inq', 'EDI Loans', 'DSA Partners'],
-        datasets: [{
-            label: 'Total Records',
-            data: [
-                <?php echo $totalApplications; ?>,
-                <?php echo $totalGeneralLoans; ?>,
-                <?php echo $totalMasterLoans; ?>,
-                <?php echo $totalEdiLoans; ?>,
-                <?php echo $totalPartners; ?>
-            ],
-            backgroundColor: 'rgba(24, 82, 156, 0.85)',
-            hoverBackgroundColor: '#18529c',
-            borderRadius: 6,
-            borderWidth: 0
-        }]
-    };
-
-    const categoryConfig = {
-        type: 'bar',
-        data: categoryData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#f1f5f9' },
-                    ticks: {
-                        precision: 0,
-                        font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
-                        color: '#64748b'
-                    }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: {
-                        font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
-                        color: '#64748b'
-                    }
-                }
-            }
-        }
-    };
-
-    new Chart(document.getElementById('categoryChart'), categoryConfig);
-</script>
 
 <?php include 'footer.php'; ?>

@@ -30,7 +30,7 @@ $input = is_array($jsonInput) ? $jsonInput : $_POST;
 $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $input['csrf_token'] ?? '';
 $sessionToken = $_SESSION['csrf_token'] ?? '';
 if (!empty($sessionToken) && !empty($csrfToken) && !hash_equals($sessionToken, $csrfToken)) {
-    http_response_code(419);
+    http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh the page and try again.']);
     exit;
 }
@@ -274,6 +274,12 @@ function extractCreditScore(?array $data, string $pan): ?int
         }
     }
 
+    // TransUnion TrueLink format (Borrower.CreditScore.riskScore) used by the current bureau partner
+    $trueLink = function_exists('waqt_truelink_credit_score') ? waqt_truelink_credit_score($data) : null;
+    if ($trueLink !== null) {
+        return $trueLink;
+    }
+
     // Deep search for numeric SCORE / score_value
     $deepScore = null;
     array_walk_recursive($data, function ($val, $key) use (&$deepScore) {
@@ -326,10 +332,7 @@ function callBifrostCibilApi(string $mobile, string $fullName, string $pan): ?ar
     return null;
 }
 
-$isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true)
-    || in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'], true)
-    || str_contains((string)($_SERVER['HTTP_HOST'] ?? ''), 'localhost')
-    || (env_value('APP_ENV') === 'local');
+$isLocal = waqt_is_local_request();
 
 $extractedScore = extractCreditScore($responseData, $pan);
 $resultCode = $responseData['result_code'] ?? null;
@@ -729,10 +732,9 @@ $rawPdf = $responseData['result']['result_pdf']
     ?? $responseData['result_json']['report_pdf']
     ?? null;
 
-$uploadDir = __DIR__ . '/../../uploads/cibil';
-if (!is_dir($uploadDir)) {
-    @mkdir($uploadDir, 0755, true);
-}
+// Credit reports are private documents: stored as private:// (Cloud Storage when FILE_STORAGE_PROVIDER=GCS),
+// never in the public uploads folder. Admin and customers open them through download-file.php.
+$cibilFilePrefix = 'cibil_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $clientRefNum);
 
 if (!empty($rawPdf) && is_string($rawPdf)) {
     if (filter_var($rawPdf, FILTER_VALIDATE_URL)) {
@@ -742,12 +744,8 @@ if (!empty($rawPdf) && is_string($rawPdf)) {
         // Base64 encoded PDF returned
         $cleanedBase64 = preg_replace('#^data:application/\w+;base64,#i', '', trim($rawPdf));
         $decodedPdf = base64_decode($cleanedBase64, true);
-        if ($decodedPdf !== false && strlen($decodedPdf) > 100) {
-            $pdfFilename = 'cibil_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $clientRefNum) . '.pdf';
-            $targetPath = $uploadDir . '/' . $pdfFilename;
-            if (file_put_contents($targetPath, $decodedPdf) !== false) {
-                $pdfUrl = 'uploads/cibil/' . $pdfFilename;
-            }
+        if ($decodedPdf !== false && strlen($decodedPdf) > 100 && str_starts_with($decodedPdf, '%PDF')) {
+            $pdfUrl = waqt_save_private_binary($decodedPdf, 'cibil', $cibilFilePrefix, 'pdf', 'application/pdf') ?: null;
         }
     }
 }
@@ -755,8 +753,7 @@ if (!empty($rawPdf) && is_string($rawPdf)) {
 // Generate high-fidelity CRIF High Mark credit assessment PDF matching exact bureau layout
 if (empty($pdfUrl)) {
     $pdfGen = new CibilPdfGenerator();
-    $pdfFilename = 'cibil_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $clientRefNum) . '.pdf';
-    $targetPath = $uploadDir . '/' . $pdfFilename;
+    $targetPath = tempnam(sys_get_temp_dir(), 'wfcibil');
 
     $pdfData = [
         'full_name' => $fullName,
@@ -783,8 +780,12 @@ if (empty($pdfUrl)) {
         'tradelines' => $tradelinesList
     ];
 
-    if ($pdfGen->generate($pdfData, $targetPath)) {
-        $pdfUrl = 'uploads/cibil/' . $pdfFilename;
+    if ($targetPath !== false && $pdfGen->generate($pdfData, $targetPath)) {
+        $generatedPdf = (string) @file_get_contents($targetPath);
+        $pdfUrl = waqt_save_private_binary($generatedPdf, 'cibil', $cibilFilePrefix, 'pdf', 'application/pdf') ?: null;
+    }
+    if ($targetPath !== false) {
+        @unlink($targetPath);
     }
 }
 
@@ -814,7 +815,24 @@ try {
         $insertStmt->execute();
     }
 } catch (Throwable $dbErr) {
-    error_log('CIBIL Database Log Error: ' . $dbErr->getMessage());
+    // Older databases have no user_id column; save the report without it rather than losing it.
+    if (stripos($dbErr->getMessage(), "user_id") !== false) {
+        try {
+            $retry = $db->prepare(
+                'INSERT INTO cibil_reports (lead_id, application_id, full_name, email, mobile, pan, score, pdf_url, ref_id, raw_response, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())'
+            );
+            if ($retry) {
+                $dbScore = $finalScore ?? 0;
+                $retry->bind_param('ssssssisss', $leadId, $applicationId, $fullName, $email, $mobile, $pan, $dbScore, $pdfUrl, $clientRefNum, $rawResponseForDb);
+                $retry->execute();
+            }
+        } catch (Throwable $retryErr) {
+            error_log('CIBIL Database Log Error (retry without user_id): ' . $retryErr->getMessage());
+        }
+    } else {
+        error_log('CIBIL Database Log Error: ' . $dbErr->getMessage());
+    }
 }
 
 // 8. Return JSON Response to Client with AUTHENTIC Bureau Data
@@ -827,7 +845,8 @@ echo json_encode([
     'bureau_description' => $scoreDesc,
     'rating' => $rating,
     'risk_band' => $riskBand,
-    'pdf_url' => $pdfUrl,
+    // Private reports are returned as a signed link that works for one hour.
+    'pdf_url' => ($pdfUrl !== null && waqt_is_private_file_path((string) $pdfUrl)) ? waqt_signed_private_file_url((string) $pdfUrl, 3600) : $pdfUrl,
     'client_ref_num' => $clientRefNum,
     'bre_credit_check' => $breCreditCheck,
     'summary' => [

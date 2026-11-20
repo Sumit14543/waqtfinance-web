@@ -41,12 +41,15 @@ if (!$blog) {
     exit;
 }
 
+$blog['image_url'] = waqt_blog_cover_url($blog['image_url'] ?? null);
+$coverUrl = preg_match('#^https://#i', $blog['image_url']) ? $blog['image_url'] : '../' . $blog['image_url'];
+
 // Map SEO details
 $page_title = !empty($blog['meta_title']) ? $blog['meta_title'] : ($blog['title'] . " | Waqt Finance Blog");
 $meta_description = !empty($blog['meta_description']) ? $blog['meta_description'] : ($blog['excerpt'] ?? substr(strip_tags($blog['content']), 0, 160));
 $meta_keywords = !empty($blog['meta_keywords']) ? $blog['meta_keywords'] : "waqt finance blog, finance tips, " . $blog['category'] . " loan";
 $canonical_url = "https://waqtfinance.com/blog/" . $blog['slug'];
-$meta_image = "https://waqtfinance.com/" . ltrim((string)$blog['image_url'], '/');
+$meta_image = preg_match('#^https://#i', $blog['image_url']) ? $blog['image_url'] : 'https://waqtfinance.com/' . $blog['image_url'];
 
 // Structured Data Schema for Blog Posting
 ob_start();
@@ -55,10 +58,10 @@ ob_start();
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "<?php echo htmlspecialchars($blog['title'], ENT_QUOTES, 'UTF-8'); ?>",
-  "image": "https://www.waqtfinance.com/<?php echo htmlspecialchars($blog['image_url'], ENT_QUOTES, 'UTF-8'); ?>",
-  "genre": "<?php echo htmlspecialchars($blog['category'], ENT_QUOTES, 'UTF-8'); ?>",
-  "keywords": "<?php echo htmlspecialchars($meta_keywords, ENT_QUOTES, 'UTF-8'); ?>",
+  "headline": <?php echo json_encode((string) ($blog['title']), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>,
+  "image": <?php echo json_encode($meta_image, JSON_HEX_TAG | JSON_HEX_AMP); ?>,
+  "genre": <?php echo json_encode((string) ($blog['category']), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>,
+  "keywords": <?php echo json_encode((string) ($meta_keywords), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>,
   "wordcount": "<?php echo str_word_count(strip_tags($blog['content'])); ?>",
   "publisher": {
     "@type": "Organization",
@@ -70,17 +73,17 @@ ob_start();
   },
   "datePublished": "<?php echo date('c', strtotime($blog['created_at'])); ?>",
   "dateModified": "<?php echo date('c', strtotime($blog['updated_at'])); ?>",
-  "description": "<?php echo htmlspecialchars($meta_description, ENT_QUOTES, 'UTF-8'); ?>",
-  "articleBody": "<?php echo htmlspecialchars(strip_tags($blog['content']), ENT_QUOTES, 'UTF-8'); ?>",
+  "description": <?php echo json_encode((string) ($meta_description), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>,
+  "articleBody": <?php echo json_encode((string) (strip_tags($blog['content'])), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>,
   "author": {
     "@type": "Person",
-    "name": "<?php echo htmlspecialchars($blog['author_name'] ?? 'Waqt Finance Team', ENT_QUOTES, 'UTF-8'); ?>",
-    "jobTitle": "<?php echo htmlspecialchars($blog['author_designation'] ?? 'Financial Writer', ENT_QUOTES, 'UTF-8'); ?>"
+    "name": <?php echo json_encode((string) ($blog['author_name'] ?? 'Waqt Finance Team'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>,
+    "jobTitle": <?php echo json_encode((string) ($blog['author_designation'] ?? 'Financial Writer'), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>
   }
   <?php if (!empty($blog['reviewed_by'])): ?>,
   "editor": {
     "@type": "Person",
-    "name": "<?php echo htmlspecialchars($blog['reviewed_by'], ENT_QUOTES, 'UTF-8'); ?>"
+    "name": <?php echo json_encode((string) ($blog['reviewed_by']), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>
   }
   <?php endif; ?>
 }
@@ -108,7 +111,8 @@ if (!empty($blog_faqs)):
             ];
         }
     }
-    echo substr(json_encode($faq_entities, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), 1, -1);
+    // JSON_HEX_TAG keeps a "</script>" inside an FAQ from closing this script block.
+    echo substr(json_encode($faq_entities, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_PRETTY_PRINT), 1, -1);
     ?>
   ]
 }
@@ -382,7 +386,7 @@ include 'includes/main-header.php';
         <!-- Featured Image -->
         <?php if (!empty($blog['image_url'])): ?>
             <div style="margin-bottom: 30px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03); border: 1px solid #f1f5f9; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.01)';" onmouseout="this.style.transform='none';">
-                <img src="../<?php echo htmlspecialchars($blog['image_url'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($blog['title'], ENT_QUOTES, 'UTF-8'); ?>" class="feature-img-x92" style="width: 100%; max-height: 420px; object-fit: cover; display: block;">
+                <img src="<?php echo htmlspecialchars($coverUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($blog['title'], ENT_QUOTES, 'UTF-8'); ?>" class="feature-img-x92" style="width: 100%; max-height: 420px; object-fit: cover; display: block;">
             </div>
         <?php endif; ?>
 
@@ -406,7 +410,7 @@ include 'includes/main-header.php';
                     </div>
                 </div>
                 <div style="display: flex; align-items: center;">
-                    <a href="<?php echo htmlspecialchars($blog['cta_link'], ENT_QUOTES, 'UTF-8'); ?>" style="text-decoration: none; padding: 12px 26px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #FFB800, #FF8A00); color: #0c1a30; border-radius: 8px; border: none; font-size: 14px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(255, 184, 0, 0.3);" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
+                    <a href="<?php $ctaHref = (string) $blog['cta_link']; echo htmlspecialchars(preg_match('#^(https?://|/(?!/)|[a-z0-9-]+(\?|$))#i', $ctaHref) ? $ctaHref : 'apply', ENT_QUOTES, 'UTF-8'); ?>" style="text-decoration: none; padding: 12px 26px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #FFB800, #FF8A00); color: #0c1a30; border-radius: 8px; border: none; font-size: 14px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(255, 184, 0, 0.3);" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='none';">
                         Apply Online <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i>
                     </a>
                 </div>

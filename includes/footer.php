@@ -557,32 +557,21 @@ $footer_desc = isset($footer_cta_desc) ? $footer_cta_desc : "Apply today and rec
             <div class="wf-footer-col-content">
                 <nav aria-label="Rates and Areas Links">
                     <a href="<?php echo $prefix; ?>interest-rate-policy">Interest Rates</a>
-                    <a href="<?php echo $prefix; ?>policies">Fees & Charges</a>
+                    <a href="<?php echo $prefix; ?>interest-rate-policy">Fees & Charges</a>
                     <hr style="border-color: rgba(0,0,0,0.06); margin: 8px 0;">
                     <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px; letter-spacing: 0.5px;">Areas Served</span>
                     <?php
                     $footer_locations = [];
-                    if (function_exists('db')) {
-                        try {
-                            $footer_loc_res = db()->query("SELECT name, slug FROM location_pages WHERE status = 'published' ORDER BY name ASC");
-                            if ($footer_loc_res) {
-                                $footer_locations = $footer_loc_res->fetch_all(MYSQLI_ASSOC);
-                            }
-                        } catch (Throwable $e) {
-                            error_log($e->getMessage());
-                        }
-                    }
-                    if (empty($footer_locations)) {
-                        $footer_locations = [
-                            ['slug' => 'delhi-ncr', 'name' => 'Delhi NCR'],
-                            ['slug' => 'delhi', 'name' => 'Delhi'],
-                            ['slug' => 'noida', 'name' => 'Noida & Greater Noida'],
-                            ['slug' => 'gurugram', 'name' => 'Gurugram']
-                        ];
+                    try {
+                        require_once __DIR__ . '/location_data.php';
+                        $footer_locations = array_map(static fn(array $l): array => ['slug' => $l['slug'], 'name' => $l['name']], waqt_list_locations());
+                    } catch (Throwable $e) {
+                        error_log('Footer locations: ' . $e->getMessage());
                     }
                     foreach ($footer_locations as $loc): ?>
                         <a href="<?php echo $prefix; ?>loan-in-<?php echo htmlspecialchars($loc['slug']); ?>"><?php echo htmlspecialchars($loc['name']); ?></a>
                     <?php endforeach; ?>
+                        <a href="<?php echo $prefix; ?>locations">All locations</a>
                 </nav>
             </div>
         </div>
@@ -594,6 +583,8 @@ $footer_desc = isset($footer_cta_desc) ? $footer_cta_desc : "Apply today and rec
                 <nav aria-label="Legal Links">
                     <a href="<?php echo $prefix; ?>privacy-policy">Privacy Policy</a>
                     <a href="<?php echo $prefix; ?>terms-condition">Terms & Conditions</a>
+                    <a href="<?php echo $prefix; ?>digital-lending">Digital Lending Disclosures</a>
+                    <a href="<?php echo $prefix; ?>delete-account">Delete Account &amp; Data</a>
                     <a href="<?php echo $prefix; ?>#"><i class="fas fa-lock" style="font-size: 10px; margin-right: 4px;"></i> Admin Login</a>
                 </nav>
                 
@@ -655,15 +646,30 @@ $footer_desc = isset($footer_cta_desc) ? $footer_cta_desc : "Apply today and rec
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const accordionTitles = document.querySelectorAll(".wf-footer-col-title");
-    accordionTitles.forEach(title => {
-        title.addEventListener("click", function() {
-            if (window.innerWidth <= 568) {
-                const parentCol = this.closest(".wf-footer-col");
-                parentCol.classList.toggle("active");
-            }
-        });
+    // Mobile footer accordion: works with touch, mouse and keyboard, and tells screen readers whether it is open.
+    const accordionTitles = document.querySelectorAll(".accordion-col .wf-footer-col-title");
+    const isMobileFooter = () => window.matchMedia("(max-width: 568px)").matches;
+    const syncFooterA11y = () => accordionTitles.forEach(title => {
+        const col = title.closest(".wf-footer-col");
+        if (isMobileFooter()) {
+            title.setAttribute("role", "button");
+            title.setAttribute("tabindex", "0");
+            title.setAttribute("aria-expanded", col.classList.contains("active") ? "true" : "false");
+        } else {
+            title.removeAttribute("role"); title.removeAttribute("tabindex"); title.removeAttribute("aria-expanded");
+        }
     });
+    accordionTitles.forEach(title => {
+        const toggle = () => {
+            if (!isMobileFooter()) return;
+            title.closest(".wf-footer-col").classList.toggle("active");
+            syncFooterA11y();
+        };
+        title.addEventListener("click", toggle);
+        title.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+    });
+    syncFooterA11y();
+    window.addEventListener("resize", syncFooterA11y);
 });
 </script>
 
@@ -705,6 +711,9 @@ if ($load_chart):
 <?php endif; ?>
 
 <script src="<?php echo $prefix; ?>assets/js/script.js" defer></script>
+<?php if (!empty($load_policy_doc)): ?>
+<script src="<?php echo $prefix; ?>assets/js/policy-doc.js?v=<?php echo get_asset_version('assets/js/policy-doc.js'); ?>" defer></script>
+<?php endif; ?>
 
 
 <!-- Optimized JS Synchronization -->

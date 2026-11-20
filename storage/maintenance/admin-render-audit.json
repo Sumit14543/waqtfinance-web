@@ -1,0 +1,68 @@
+[
+  {
+    "page": "dashboard.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "applications.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "master-loans.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "leads.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "cibil.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "blogs.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "locations.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "location-products.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "search-results.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "view-application.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  },
+  {
+    "page": "edit-application.php",
+    "render": true,
+    "duplicate_ids": [],
+    "errors": []
+  }
+]

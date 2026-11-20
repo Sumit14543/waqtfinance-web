@@ -202,7 +202,7 @@ try {
 } catch (Throwable $e) {
     error_log('Database connection failed: ' . $e->getMessage());
     $host = $_SERVER['HTTP_HOST'] ?? '';
-    $isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || str_contains($host, 'localhost');
+    $isLocal = waqt_is_local_request();
     if (!$isLocal) {
         if (PHP_SAPI === 'cli') {
             throw $e;
@@ -225,10 +225,7 @@ if (!function_exists('waqt_generate_sitemap_file')) {
 
         $static_pages = [
             "" => "1.00",
-            "loan-in-delhi-ncr" => "0.90",
-            "loan-in-delhi" => "0.80",
-            "loan-in-noida" => "0.80",
-            "loan-in-gurugram" => "0.80",
+            "locations" => "0.80",
             "about-us" => "0.80",
             "contact-us" => "0.80",
             "products" => "0.80",
@@ -252,7 +249,9 @@ if (!function_exists('waqt_generate_sitemap_file')) {
             "privacy-policy" => "0.70",
             "terms-condition" => "0.70",
             "refund-cancellation" => "0.70",
-            "anti-money-laundering" => "0.70"
+            "anti-money-laundering" => "0.70",
+            "digital-lending" => "0.70",
+            "delete-account" => "0.50"
         ];
 
         foreach ($static_pages as $path => $priority) {
@@ -267,19 +266,40 @@ if (!function_exists('waqt_generate_sitemap_file')) {
             $xml .= "  </url>\n";
         }
 
-        $sitemap_products = ['personal-loan', 'business-loan', 'pay-day-loan', 'edi-loan', 'vehicle-loan', 'loan-against-property'];
-        $sitemap_cities = ['delhi-ncr', 'delhi', 'noida', 'gurugram'];
+        // Location hubs and product + city pages come from Admin > Location CMS (published, active only).
+        try {
+            require_once __DIR__ . '/../includes/location_data.php';
+            $sitemap_locations = waqt_list_locations();
+            $sitemap_products = array_keys(waqt_location_product_templates());
+        } catch (Throwable $e) {
+            $sitemap_locations = [];
+            $sitemap_products = [];
+        }
         $template_path = __DIR__ . '/../includes/location-page-template.php';
-        $dynamic_lastmod = is_file($template_path) ? date('c', filemtime($template_path)) : $current_date;
-
-        foreach ($sitemap_products as $p_key) {
-            foreach ($sitemap_cities as $c_key) {
-                $path = $p_key . "-in-" . $c_key;
-                $xml .= "  <url>\n";
-                $xml .= "    <loc>" . htmlspecialchars($base_url . $path, ENT_XML1, 'UTF-8') . "</loc>\n";
-                $xml .= "    <lastmod>" . $dynamic_lastmod . "</lastmod>\n";
-                $xml .= "    <priority>0.80</priority>\n";
-                $xml .= "  </url>\n";
+        $template_lastmod = is_file($template_path) ? date('c', filemtime($template_path)) : $current_date;
+        foreach ($sitemap_locations as $loc) {
+            $lastmod = !empty($loc['updated_at']) && strtotime($loc['updated_at']) ? date('c', strtotime($loc['updated_at'])) : $template_lastmod;
+            $xml .= "  <url>
+";
+            $xml .= "    <loc>" . htmlspecialchars($base_url . 'loan-in-' . $loc['slug'], ENT_XML1, 'UTF-8') . "</loc>
+";
+            $xml .= "    <lastmod>" . $lastmod . "</lastmod>
+";
+            $xml .= "    <priority>0.85</priority>
+";
+            $xml .= "  </url>
+";
+            foreach ($sitemap_products as $p_key) {
+                $xml .= "  <url>
+";
+                $xml .= "    <loc>" . htmlspecialchars($base_url . $p_key . '-in-' . $loc['slug'], ENT_XML1, 'UTF-8') . "</loc>
+";
+                $xml .= "    <lastmod>" . $lastmod . "</lastmod>
+";
+                $xml .= "    <priority>0.80</priority>
+";
+                $xml .= "  </url>
+";
             }
         }
 

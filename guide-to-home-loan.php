@@ -12,7 +12,7 @@ include 'includes/main-header.php';
 <div class="container" style="margin-top:10px;">
     <div class="cs-blog-detail box-shadow-card">
         <div class="cs-main-post">
-            <figure><img onload="pagespeed.CriticalImages.checkImageForCriticality(this);" data-pagespeed-url-hash="2714250504" alt="jobline-blog (8)" src="assets/images/blog-1.webp"></figure>
+            <figure><img alt="jobline-blog (8)" src="assets/images/blog-1.webp"></figure>
         </div>
         <div class="cs-post-option-panel">
             <div class="rich-editor-text">

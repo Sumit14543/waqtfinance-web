@@ -20,6 +20,7 @@ function admin_website_lead_tabs(): array
             'empty' => 'No support inquiries received yet.',
             'icon' => 'fa-envelope-open-text',
             'search_columns' => ['name', 'email', 'phone', 'subject', 'message'],
+            'category_column' => 'subject',
         ],
         'cibil' => [
             'table' => 'cibil_reports',
@@ -65,8 +66,14 @@ function admin_website_clean_filters(string $tab, array $input): array
         }
     }
 
-    if ($tab !== 'landing') {
+    // Category means loan type on Quick Quotes and subject on Contact Inquiries.
+    if (!in_array($tab, ['landing', 'contact'], true)) {
         $filters['category'] = '';
+    }
+
+    // A reversed range is almost always a typo; swap it instead of returning nothing.
+    if ($filters['date_from'] !== '' && $filters['date_to'] !== '' && $filters['date_from'] > $filters['date_to']) {
+        [$filters['date_from'], $filters['date_to']] = [$filters['date_to'], $filters['date_from']];
     }
 
     if ($tab !== 'partners' || !in_array($filters['status'], ['pending', 'approved', 'rejected'], true)) {
@@ -114,16 +121,21 @@ function admin_website_build_filters(string $tab, array $filters): array
         $types .= 's';
     }
 
-    if ($tab === 'landing' && $filters['category'] !== '') {
-        $conditions[] = 'loan_type = ?';
+    if (!empty($config['category_column']) && $filters['category'] !== '') {
+        $conditions[] = '`' . $config['category_column'] . '` = ?';
         $params[] = $filters['category'];
         $types .= 's';
     }
 
     if ($tab === 'partners' && $filters['status'] !== '') {
-        $conditions[] = 'status = ?';
-        $params[] = $filters['status'];
-        $types .= 's';
+        if ($filters['status'] === 'pending') {
+            // Rows saved before statuses existed have NULL/empty status; they are pending too (matches the sidebar badge).
+            $conditions[] = "(status = 'pending' OR status IS NULL OR status = '')";
+        } else {
+            $conditions[] = 'status = ?';
+            $params[] = $filters['status'];
+            $types .= 's';
+        }
     }
 
     if ($tab === 'cibil') {
@@ -226,6 +238,13 @@ function admin_website_fetch_filter_options(mysqli $conn, string $tab, string $k
         }
     }
 
+    if ($kind === 'category' && $tab === 'contact') {
+        $result = $conn->query("SELECT subject AS option_value, COUNT(*) AS c FROM contact_messages WHERE subject IS NOT NULL AND subject != '' GROUP BY subject ORDER BY c DESC LIMIT 40");
+        while ($result && ($row = $result->fetch_assoc())) {
+            $options[] = (string) $row['option_value'];
+        }
+    }
+
     if ($kind === 'status' && $tab === 'partners') {
         $options = ['pending', 'approved', 'rejected'];
         $result = $conn->query("SELECT DISTINCT status AS option_value FROM partner_registrations WHERE status IS NOT NULL AND status != '' ORDER BY status ASC LIMIT 20");
@@ -291,7 +310,7 @@ function admin_website_kpi_cards(mysqli $conn): array
             COUNT(*) total_count, 
             SUM(CASE WHEN created_at >= CURDATE() THEN 1 ELSE 0 END) today_count,
             SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND created_at < CURDATE() THEN 1 ELSE 0 END) yesterday_count,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) pending_count 
+            SUM(CASE WHEN status = 'pending' OR status IS NULL OR status = '' THEN 1 ELSE 0 END) pending_count
         FROM partner_registrations
     ");
 
@@ -303,7 +322,7 @@ function admin_website_kpi_cards(mysqli $conn): array
             'key' => 'today_inquiries',
             'label' => "Today's Inquiries",
             'value' => number_format($todayTotal),
-            'sub' => date('d M Y'),
+            'sub' => 'Across all four channels · ' . date('d M'),
             'icon' => 'fa-calendar-day',
             'tone' => 'green',
         ],
@@ -311,7 +330,7 @@ function admin_website_kpi_cards(mysqli $conn): array
             'key' => 'yesterday_inquiries',
             'label' => "Yesterday's Inquiries",
             'value' => number_format($yesterdayTotal),
-            'sub' => date('d M Y', strtotime('yesterday')),
+            'sub' => 'Across all four channels · ' . date('d M', strtotime('yesterday')),
             'icon' => 'fa-calendar-minus',
             'tone' => 'blue',
         ],
@@ -335,7 +354,7 @@ function admin_website_kpi_cards(mysqli $conn): array
             'key' => 'cibil',
             'label' => 'CIBIL Checks',
             'value' => number_format((int) ($cibil['total_count'] ?? 0)),
-            'sub' => number_format((int) ($cibil['strong_scores'] ?? 0)) . ' strong scores',
+            'sub' => number_format((int) ($cibil['strong_scores'] ?? 0)) . ' with score 750+',
             'icon' => 'fa-gauge-high',
             'tone' => 'yellow',
         ],

@@ -297,3 +297,102 @@
     .wf-products-page .wf-brand-card { min-height: 190px; }
     .wf-products-page .wf-brand-logo { height: 122px; min-height: 122px; }
 }
+
+/* ===================================================================
+   Refinements (Nov 2026): readable type, key facts on every card,
+   centred last rows, neutral security badge, scrollable filters.
+   =================================================================== */
+
+/* Grids: centre an incomplete last row instead of leaving a gap on the right. */
+.wf-products-page .wf-products-grid,
+.wf-products-page .wf-brands-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+.wf-products-page .wf-products-grid > .wf-catalog-card { flex: 0 1 calc((100% - 40px) / 3); min-width: 0; }
+.wf-products-page .wf-brands-grid > .wf-brand-card { flex: 0 1 calc((100% - 60px) / 4); min-width: 0; }
+
+/* Cards are not one big link, so they should not lift on hover. */
+.wf-products-page .wf-catalog-card {
+    min-height: 0; padding: 24px; border-radius: 16px; border-color: #e3eaf3;
+    box-shadow: 0 1px 2px rgba(15, 42, 70, .04), 0 8px 24px rgba(15, 42, 70, .05);
+}
+.wf-products-page .wf-catalog-card:hover { transform: none; border-color: #e3eaf3; box-shadow: 0 1px 2px rgba(15, 42, 70, .04), 0 8px 24px rgba(15, 42, 70, .05); }
+.wf-products-page .wf-catalog-card .wf-product-card-top { margin-bottom: 16px; }
+
+/* Neutral badge: a green tick suggested "approved" even for "Assessment dependent". */
+.wf-products-page .wf-catalog-card .wf-product-security {
+    background: #f1f5f9; border-radius: 999px; padding: 5px 10px;
+    color: #334155; font-size: 12px; font-weight: 700;
+}
+.wf-products-page .wf-catalog-card .wf-product-security i { color: #18529c; font-size: 11px; }
+
+.wf-products-page .wf-catalog-card .wf-product-eyebrow { font-size: 11.5px; margin-bottom: 6px; }
+.wf-products-page .wf-catalog-card h3 { font-size: 22px; margin-bottom: 8px; }
+.wf-products-page .wf-catalog-card > p { font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 18px; }
+
+/* Key facts: what people compare first. */
+.wf-products-page .wf-product-facts {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: auto 0 14px;
+    background: #e3eaf3; border: 1px solid #e3eaf3; border-radius: 12px; overflow: hidden;
+}
+.wf-products-page .wf-product-facts > div { background: #f8fafc; padding: 12px 14px; }
+.wf-products-page .wf-product-facts dt { font-size: 11.5px; font-weight: 700; color: #64748b; margin: 0 0 3px; text-transform: uppercase; letter-spacing: .4px; }
+.wf-products-page .wf-product-facts dd { font-size: 15px; font-weight: 800; color: #0b213a; margin: 0; line-height: 1.35; }
+
+.wf-products-page .wf-catalog-card .wf-product-best {
+    background: none; border: 0; border-radius: 0; padding: 0; margin: 0 0 4px;
+    font-size: 14px; line-height: 1.55; color: #475569;
+}
+.wf-products-page .wf-catalog-card .wf-product-best span {
+    display: inline; font-size: 14px; font-weight: 700; color: #0b213a;
+    letter-spacing: 0; text-transform: none; margin: 0;
+}
+
+.wf-products-page .wf-catalog-card .wf-product-actions { margin-top: 16px; gap: 10px; }
+.wf-products-page .wf-catalog-card .wf-product-actions a { font-size: 14.5px; min-height: 46px; border-radius: 10px; padding: 10px 16px; }
+
+/* Section head: product count sits under the intro on small screens. */
+.wf-products-page .wf-products-section-head > div > p { font-size: 15px; }
+.wf-products-page .wf-products-count { font-size: 14px; font-weight: 600; color: #475569; white-space: nowrap; }
+.wf-products-page .wf-products-filters button { font-size: 14px; min-height: 42px; padding: 8px 16px; }
+
+/* Brand cards: readable labels. */
+.wf-products-page .wf-brand-meta strong { font-size: 15px; }
+.wf-products-page .wf-brand-meta small { font-size: 12px; }
+.wf-products-page .wf-brand-visit { font-size: 13px; }
+
+@media (max-width: 991px) {
+    .wf-products-page .wf-products-grid > .wf-catalog-card { flex-basis: calc((100% - 20px) / 2); }
+    .wf-products-page .wf-brands-grid > .wf-brand-card { flex-basis: calc((100% - 20px) / 2); }
+}
+@media (max-width: 640px) {
+    .wf-products-page .wf-products-grid { gap: 16px; }
+    .wf-products-page .wf-products-grid > .wf-catalog-card,
+    .wf-products-page .wf-brands-grid > .wf-brand-card { flex-basis: 100%; }
+    .wf-products-page .wf-catalog-card { padding: 20px; }
+    .wf-products-page .wf-catalog-card .wf-product-actions { grid-template-columns: auto minmax(0, 1fr); }
+    .wf-products-page .wf-catalog-card .wf-product-actions a { white-space: nowrap; font-size: 14px; padding: 10px 14px; }
+    .wf-products-page .wf-products-section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+    /* Filters scroll sideways instead of wrapping into a tall block; the fade shows there is more. */
+    .wf-products-page .wf-products-filters {
+        flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-left: -16px; margin-right: -16px;
+        padding: 2px 16px; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+        mask-image: linear-gradient(to right, #000 85%, transparent);
+    }
+    .wf-products-page .wf-products-filters::-webkit-scrollbar { display: none; }
+    .wf-products-page .wf-products-filters button { flex-shrink: 0; }
+}
+.wf-products-page .wf-catalog-card .wf-product-actions a { white-space: nowrap; }
+@media (max-width: 1199px) {
+    .wf-products-page .wf-catalog-card .wf-product-actions a { font-size: 14px; padding: 10px 12px; }
+}
+@media (max-width: 1099px) and (min-width: 641px) {
+    .wf-products-page .wf-products-grid > .wf-catalog-card { flex-basis: calc((100% - 20px) / 2); }
+}
+@media (max-width: 1199px) and (min-width: 641px) {
+    .wf-products-page .wf-products-grid > .wf-catalog-card { flex-basis: calc((100% - 20px) / 2); }
+}
+@media (max-width: 380px) {
+    .wf-products-page .wf-catalog-card .wf-product-actions { grid-template-columns: 1fr; }
+}
+@media (max-width: 719px) {
+    .wf-products-page .wf-products-grid > .wf-catalog-card { flex-basis: 100%; }
+}

@@ -9,7 +9,7 @@ require_valid_csrf();
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh and try again.']);
-    http_response_code(419);
+    http_response_code(403);
     exit;
 }
 
@@ -19,7 +19,7 @@ if (function_exists('waqt_enforce_rate_limit')) {
 }
 
 $host = $_SERVER['HTTP_HOST'] ?? '';
-$isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || PHP_SAPI === 'cli';
+$isLocal = waqt_is_local_request();
 
 // 1. Mandatory Session Gate: Mobile OTP verification required before paid business lookup
 $verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';
@@ -131,7 +131,7 @@ $logEntry = [
 ];
 error_log('Digitap verification summary: ' . json_encode($logEntry, JSON_UNESCAPED_SLASHES));
 
-$isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true) || (env_value('APP_ENV') === 'local');
+$isLocal = waqt_is_local_request();
 $isIpBlocked = ($http_code === 403 && stripos((string)($res_data['message'] ?? ''), 'IP not allowed') !== false);
 
 if ($http_code !== 200) {

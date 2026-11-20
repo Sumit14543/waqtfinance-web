@@ -4,13 +4,20 @@ require_once __DIR__ . '/../config/db.php';
 
 // Auth check
 start_secure_session();
+admin_session_idle_expired();
 if (empty($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     http_response_code(403);
     echo "Unauthorized access";
     exit;
 }
 
-$type = $_GET['type'] ?? 'payday';
+admin_require_capability('export.leads');
+
+$type = (string) ($_GET['type'] ?? 'payday');
+if (!in_array($type, ['payday', 'general', 'landing', 'cibil', 'partners'], true)) {
+    http_response_code(400);
+    exit('Unknown export type');
+}
 $conn = db();
 
 $filename = $type . "_export_" . date("Ymd_His") . ".csv";
@@ -25,7 +32,7 @@ if ($type === 'payday') {
     $res = $conn->query($query);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
-            fputcsv($output, $row);
+            fputcsv($output, waqt_csv_safe_row($row));
         }
     }
 } elseif ($type === 'general') {
@@ -34,7 +41,7 @@ if ($type === 'payday') {
     $res = $conn->query($query);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
-            fputcsv($output, $row);
+            fputcsv($output, waqt_csv_safe_row($row));
         }
     }
 } elseif ($type === 'landing') {
@@ -43,7 +50,7 @@ if ($type === 'payday') {
     $res = $conn->query($query);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
-            fputcsv($output, $row);
+            fputcsv($output, waqt_csv_safe_row($row));
         }
     }
 } elseif ($type === 'cibil') {
@@ -52,7 +59,7 @@ if ($type === 'payday') {
     $res = $conn->query($query);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
-            fputcsv($output, $row);
+            fputcsv($output, waqt_csv_safe_row($row));
         }
     }
 } elseif ($type === 'partners') {
@@ -61,7 +68,7 @@ if ($type === 'payday') {
     $res = $conn->query($query);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
-            fputcsv($output, $row);
+            fputcsv($output, waqt_csv_safe_row($row));
         }
     }
 }

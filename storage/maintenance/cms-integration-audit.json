@@ -1,0 +1,47 @@
+[
+  {
+    "case": "blog save",
+    "pass": true,
+    "status": 200
+  },
+  {
+    "case": "empty normalized slug",
+    "pass": true,
+    "status": 422
+  },
+  {
+    "case": "missing article",
+    "pass": true,
+    "status": 404
+  },
+  {
+    "case": "invalid category",
+    "pass": true,
+    "status": 422
+  },
+  {
+    "case": "location save",
+    "pass": true,
+    "status": 200
+  },
+  {
+    "case": "office needs address",
+    "pass": true,
+    "status": 422
+  },
+  {
+    "case": "invalid location slug",
+    "pass": true,
+    "status": 422
+  },
+  {
+    "case": "product save",
+    "pass": true,
+    "status": 200
+  },
+  {
+    "case": "CSRF rejected",
+    "pass": true,
+    "status": 403
+  }
+]

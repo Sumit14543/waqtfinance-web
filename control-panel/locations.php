@@ -5,21 +5,42 @@ $pageTitle = 'Locations CMS Control';
 $pageSubtitle = 'Create, update, and manage dynamic location pages for the website';
 
 include 'header.php';
+require_once __DIR__ . '/../includes/location_data.php';
 
 $conn = db();
+// Fresh installs: the CMS table has to exist before locations can be listed or edited.
+if (!waqt_location_table_exists($conn, 'location_pages')) {
+    echo '<div class="data-card" style="max-width:760px;"><h2 class="card-title-text"><i class="fa-solid fa-database" style="color:var(--warning); margin-right:8px;"></i> Location CMS needs a one-time setup</h2>'
+        . '<p style="margin:12px 0 0; line-height:1.6;">The website is showing the default locations from <code>config/location-pages.php</code>. To manage locations here, run <code>storage/migrations/2026_11_19_location_cms.sql</code> on the database, then <code>php storage/maintenance/seed_location_data.php --apply</code>.</p></div>';
+    include 'footer.php';
+    return;
+}
+$locHasExtras = waqt_location_column_exists($conn, 'location_pages', 'phone');
+$locHasSort = waqt_location_column_exists($conn, 'location_pages', 'sort_order');
 
-// Pagination Config
+// Apply filters before pagination so search covers every location.
 $limit = 10;
-$page = (int) ($_GET['page'] ?? 1);
-if ($page < 1) $page = 1;
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$search = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 150);
+$typeFilter = in_array($_GET['type'] ?? '', ['region', 'office', 'service-area'], true) ? $_GET['type'] : '';
+$statusFilter = in_array($_GET['status'] ?? '', ['draft', 'published'], true) ? $_GET['status'] : '';
+$where = []; $params = []; $types = '';
+if ($search !== '') {
+    $where[] = '(LOCATE(?, name) > 0 OR LOCATE(?, slug) > 0 OR LOCATE(?, title) > 0)';
+    array_push($params, $search, $search, $search); $types .= 'sss';
+}
+foreach (['type' => $typeFilter, 'status' => $statusFilter] as $column => $value) {
+    if ($value !== '') { $where[] = "$column = ?"; $params[] = $value; $types .= 's'; }
+}
+$whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
+$countStmt = $conn->prepare('SELECT COUNT(*) FROM location_pages' . $whereSql);
+if ($params) $countStmt->bind_param($types, ...$params);
+$countStmt->execute();
+$totalRecords = (int) $countStmt->get_result()->fetch_row()[0];
+$totalPages = max(1, (int) ceil($totalRecords / $limit));
+$page = min($page, $totalPages);
 $offset = ($page - 1) * $limit;
-
-// Count total
-$countRes = $conn->query("SELECT COUNT(*) FROM location_pages");
-$totalRecords = (int) ($countRes->fetch_row()[0] ?? 0);
-$totalPages = (int) ceil($totalRecords / $limit);
-if ($totalPages < 1) $totalPages = 1;
-
+$pageUrl = static fn(int $number): string => '?' . htmlspecialchars(http_build_query(['q' => $search, 'type' => $typeFilter, 'status' => $statusFilter, 'page' => $number]), ENT_QUOTES, 'UTF-8');
 // Stats
 $activeRecords = (int) ($conn->query("SELECT COUNT(*) FROM location_pages WHERE status = 'published'")->fetch_row()[0] ?? 0);
 $inactiveRecords = (int) ($conn->query("SELECT COUNT(*) FROM location_pages WHERE status = 'draft'")->fetch_row()[0] ?? 0);
@@ -29,8 +50,9 @@ $serviceAreasCount = (int) ($conn->query("SELECT COUNT(*) FROM location_pages WH
 
 // Fetch locations
 $locationsList = [];
-$stmt = $conn->prepare("SELECT * FROM location_pages ORDER BY id DESC LIMIT ? OFFSET ?");
-$stmt->bind_param('ii', $limit, $offset);
+$stmt = $conn->prepare("SELECT * FROM location_pages $whereSql ORDER BY id DESC LIMIT ? OFFSET ?");
+$listParams = [...$params, $limit, $offset];
+$stmt->bind_param($types . 'ii', ...$listParams);
 $stmt->execute();
 $res = $stmt->get_result();
 if ($res) {
@@ -425,6 +447,29 @@ if ($res) {
         background: #f1f5f9;
         color: var(--text-main);
     }
+
+    .stats-grid.hidden { display: none !important; }
+    .stats-grid { gap: 14px !important; margin-bottom: 20px !important; }
+    .stats-grid > div { padding: 18px !important; }
+    .cms-results, .cms-editor-help { color: #64748b; font-size: 13px; margin: 12px 0 18px; line-height: 1.6; }
+    #editorContainer .form-grid { grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 24px; }
+    #editorContainer .form-grid > div { min-width: 0; }
+    #editorContainer .form-grid > div:last-child { padding: 18px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; align-self: start; }
+    .form-label { text-transform: none; letter-spacing: 0; font-size: 13px; color: #334155; }
+    .form-control-adm { min-height: 44px; font-size: 14px; }
+    .cms-tabs-header { flex-wrap: wrap; gap: 4px; padding-bottom: 8px; }
+    .cms-tab-btn { min-height: 44px; font-size: 13px; padding: 10px 14px; }
+    .cms-tab-btn.active { background: #eff6ff; border-radius: 8px 8px 0 0; }
+    #locationErrors { padding: 14px; border: 1px solid #fca5a5; border-radius: 8px; background: #fef2f2; color: #991b1b; margin-bottom: 16px; }
+    [aria-invalid="true"] { border-color: #dc2626 !important; }
+    :is(.cms-tab-btn, .btn-action, .btn-primary-adm, .btn-secondary-adm):focus-visible { outline: 3px solid #18529c; outline-offset: 3px; }
+    .list-controls-flex { flex-wrap: wrap; }
+    .admin-table { min-width: 850px; }
+    .admin-table th { white-space: nowrap; }
+    .row-actions { flex-wrap: nowrap; }
+    @media(max-width: 950px) { #editorContainer .form-grid { grid-template-columns: minmax(0, 1fr); } }
+    @media(max-width: 600px) { .card-adm { padding: 16px; } .card-header-flex { flex-wrap: wrap; gap: 12px; } .cms-tab-btn { flex: 1 1 140px; } .cms-search-input { flex-basis: 100%; } }
+
 </style>
 
 <!-- Stats overview grid cards -->
@@ -432,7 +477,7 @@ if ($res) {
     <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04); display: flex; align-items: center; gap: 15px;">
         <div class="stat-icon" style="width: 48px; height: 48px; background: var(--primary-glow); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;"><i class="fa-solid fa-map-location-dot"></i></div>
         <div>
-            <h3 style="font-size: 24px; font-weight: 800; font-family: 'Outfit', sans-serif; color: var(--text-main);"><?php echo $totalRecords; ?></h3>
+            <h3 style="font-size: 24px; font-weight: 800; font-family: 'Outfit', sans-serif; color: var(--text-main);"><?php echo $activeRecords + $inactiveRecords; ?></h3>
             <p style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Total Locations</p>
         </div>
     </div>
@@ -456,32 +501,39 @@ if ($res) {
 <div class="card-adm" id="listContainer">
     <div class="card-header-flex">
         <h2 class="card-title-text"><i class="fa-solid fa-location-arrow" style="color: var(--primary); margin-right: 8px;"></i> Location Pages</h2>
-        <button type="button" class="btn-primary-adm" id="createLocationBtn">
-            <i class="fa-solid fa-plus"></i> Add New Location
-        </button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="location-products.php" class="btn-secondary-adm" style="text-decoration:none;"><i class="fa-solid fa-layer-group"></i> Product content</a>
+            <a href="../locations" class="btn-secondary-adm" style="text-decoration:none;" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> View locations page</a>
+            <button type="button" class="btn-primary-adm" id="createLocationBtn">
+                <i class="fa-solid fa-plus"></i> Add New Location
+            </button>
+        </div>
     </div>
 
     <!-- Controls -->
-    <div class="list-controls-flex">
+    <form class="list-controls-flex" method="get" role="search">
         <div class="cms-search-input">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="cmsSearch" placeholder="Search by name, slug or title...">
+            <input type="text" id="cmsSearch" name="q" aria-label="Search all locations" value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Search by name, slug or title...">
         </div>
         
-        <select id="cmsTypeFilter" class="cms-filter-select">
+        <select id="cmsTypeFilter" name="type" aria-label="Location type" class="cms-filter-select">
             <option value="">All Types</option>
             <option value="region">Region</option>
             <option value="office">Office Location</option>
             <option value="service-area">Online Service Area</option>
         </select>
         
-        <select id="cmsStatusFilter" class="cms-filter-select">
+        <select id="cmsStatusFilter" name="status" aria-label="Publication status" class="cms-filter-select">
             <option value="">All Statuses</option>
             <option value="published">Active</option>
             <option value="draft">Draft</option>
         </select>
-    </div>
+        <button class="btn-primary-adm" type="submit">Apply filters</button>
+        <a class="btn-secondary-adm" href="locations.php">Reset</a>
+    </form>
 
+    <p class="cms-results" role="status"><?php echo number_format($totalRecords); ?> matching locations | Page <?php echo $page; ?> of <?php echo $totalPages; ?></p>
     <!-- Table -->
     <div style="width: 100%; overflow-x: auto;">
         <table class="admin-table">
@@ -498,7 +550,7 @@ if ($res) {
             <tbody id="locationsTableBody">
                 <?php if (empty($locationsList)): ?>
                     <tr>
-                        <td colspan="6" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No location pages configured yet. Click "Add New Location" to get started!</td>
+                        <td colspan="6" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No locations match this view. Reset filters or add a new location.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($locationsList as $loc): ?>
@@ -534,7 +586,7 @@ if ($res) {
                             </td>
                             <td>
                                 <div class="row-actions">
-                                    <a class="btn-action view-live-btn" href="../loan-in-<?php echo htmlspecialchars($loc['slug'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" title="View Live Page">
+                                    <a class="btn-action view-live-btn" href="../loan-in-<?php echo htmlspecialchars($loc['slug'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener" title="View Live Page">
                                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                     </a>
                                     <button type="button" class="btn-action edit-btn" data-location='<?php echo htmlspecialchars(json_encode($loc, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8'); ?>' title="Edit Location">
@@ -566,7 +618,7 @@ if ($res) {
                 <?php if ($page <= 1): ?>
                     <span style="opacity:0.5; cursor:not-allowed;">&laquo; Prev</span>
                 <?php else: ?>
-                    <a href="?page=<?php echo $page - 1; ?>">&laquo; Prev</a>
+                    <a href="<?php echo $pageUrl($page - 1); ?>">&laquo; Prev</a>
                 <?php endif; ?>
             </li>
             
@@ -575,7 +627,7 @@ if ($res) {
                     <?php if ($p === $page): ?>
                         <span><?php echo $p; ?></span>
                     <?php else: ?>
-                        <a href="?page=<?php echo $p; ?>"><?php echo $p; ?></a>
+                        <a href="<?php echo $pageUrl($p); ?>"><?php echo $p; ?></a>
                     <?php endif; ?>
                 </li>
             <?php endfor; ?>
@@ -584,7 +636,7 @@ if ($res) {
                 <?php if ($page >= $totalPages): ?>
                     <span style="opacity:0.5; cursor:not-allowed;">Next &raquo;</span>
                 <?php else: ?>
-                    <a href="?page=<?php echo $page + 1; ?>">Next &raquo;</a>
+                    <a href="<?php echo $pageUrl($page + 1); ?>">Next &raquo;</a>
                 <?php endif; ?>
             </li>
         </ul>
@@ -600,7 +652,9 @@ if ($res) {
         </button>
     </div>
 
-    <form id="locationForm" method="POST">
+    <p class="cms-editor-help">Create a local page, then add optional FAQs and product overrides. Required fields are marked *.</p>
+    <div id="locationErrors" role="alert" tabindex="-1" hidden></div>
+    <form id="locationForm" novalidate method="POST">
         <input type="hidden" name="id" id="locationId" value="0">
         
         <div class="cms-tabs-header">
@@ -617,25 +671,25 @@ if ($res) {
                 <!-- TAB 1: BASIC INFO -->
                 <div class="tab-content active" id="tabContent-basic">
                     <div class="form-group">
-                        <label class="form-label" for="loc_name">Location Name</label>
-                        <input type="text" id="loc_name" name="name" class="form-control-adm" placeholder="e.g. Delhi NCR, Noida & Greater Noida" required>
+                        <label class="form-label" for="loc_name">Location name *</label>
+                        <input type="text" id="loc_name" maxlength="120" name="name" class="form-control-adm" placeholder="e.g. Delhi NCR, Noida & Greater Noida" required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="loc_slug">URL Slug</label>
-                        <input type="text" id="loc_slug" name="slug" class="form-control-adm" placeholder="e.g. delhi-ncr, noida" required>
+                        <label class="form-label" for="loc_slug">URL slug *</label>
+                        <input type="text" id="loc_slug" maxlength="80" pattern="[a-z0-9]+(-[a-z0-9]+)*" name="slug" class="form-control-adm" placeholder="e.g. delhi-ncr, noida" required>
                         <div class="field-support-row">
-                            <span class="field-help-text">This will create the page URL: <strong>https://waqtfinance.com/loan-in-[slug]</strong></span>
+                            <span class="field-help-text">This will create the page URL: <strong><span id="locationUrlPreview">/loan-in-[slug]</span></strong></span>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="loc_title">Page Main Title / Heading (H1)</label>
-                        <input type="text" id="loc_title" name="title" class="form-control-adm" placeholder="e.g. Loan Options Across Delhi NCR" required>
+                        <label class="form-label" for="loc_title">Page heading (H1) *</label>
+                        <input type="text" id="loc_title" maxlength="255" name="title" class="form-control-adm" placeholder="e.g. Loan Options Across Delhi NCR" required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="loc_intro">Introductory Text</label>
+                        <label class="form-label" for="loc_intro">Introduction *</label>
                         <textarea id="loc_intro" name="intro" class="form-control-adm" placeholder="Brief introduction text appearing under the heading..." required></textarea>
                     </div>
 
@@ -677,7 +731,7 @@ if ($res) {
                 <div class="tab-content" id="tabContent-seo">
                     <div class="form-group">
                         <label class="form-label" for="loc_meta_title">SEO Meta Title</label>
-                        <input type="text" id="loc_meta_title" name="meta_title" class="form-control-adm" placeholder="e.g. Loans in Noida & Greater Noida | Waqt Finance">
+                        <input type="text" id="loc_meta_title" maxlength="255" name="meta_title" class="form-control-adm" placeholder="e.g. Loans in Noida & Greater Noida | Waqt Finance">
                         <div class="field-support-row">
                             <span class="field-help-text">Title tag for Google search results page. Recommendation: 50-60 characters.</span>
                             <span class="field-counter-text" id="meta-title-counter">0/60</span>
@@ -686,7 +740,7 @@ if ($res) {
 
                     <div class="form-group">
                         <label class="form-label" for="loc_meta_desc">SEO Meta Description</label>
-                        <textarea id="loc_meta_desc" name="meta_description" class="form-control-adm" placeholder="Provide a meta description summarized for Search engines (Google recommendation: 150-160 characters)..."></textarea>
+                        <textarea id="loc_meta_desc" maxlength="1000" name="meta_description" class="form-control-adm" placeholder="Provide a meta description summarized for Search engines (Google recommendation: 150-160 characters)..."></textarea>
                         <div class="field-support-row">
                             <span class="field-help-text">Brief page summary appearing under the link.</span>
                             <span class="field-counter-text" id="meta-desc-counter">0/160</span>
@@ -816,8 +870,8 @@ if ($res) {
                 <div class="form-group">
                     <label class="form-label" for="loc_status">Status</label>
                     <select id="loc_status" name="status" class="form-control-adm">
-                        <option value="draft">Draft (Hidden from header/footer dropdowns)</option>
-                        <option value="published">Published (Live & Linked)</option>
+                        <option value="draft">Draft - hidden</option>
+                        <option value="published">Published - live</option>
                     </select>
                 </div>
 
@@ -835,12 +889,37 @@ if ($res) {
                     <textarea id="loc_address" name="address" class="form-control-adm" placeholder="e.g. BSI Business Park, Sector 63, Noida, Uttar Pradesh 201301"></textarea>
                 </div>
 
+                <?php if ($locHasExtras): ?>
+                <div class="form-group">
+                    <label class="form-label" for="loc_phone">Support phone for this page</label>
+                    <input type="text" id="loc_phone" name="phone" class="form-control-adm" placeholder="Leave empty to use +91 92170 86610" maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loc_map_url">Google Maps link (offices)</label>
+                    <input type="url" id="loc_map_url" name="map_url" class="form-control-adm" placeholder="https://maps.google.com/..." maxlength="500">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loc_hero_image">Hero background image</label>
+                    <input type="text" id="loc_hero_image" name="hero_image" class="form-control-adm" placeholder="e.g. assets/images/noida-office.webp" maxlength="255">
+                    <small style="color:var(--text-muted);">Path of an image already uploaded to the site, or an https link. Leave empty for the plain blue hero.</small>
+                </div>
+                <?php else: ?>
+                <p style="font-size:12.5px; color:var(--text-muted); margin:8px 0 0;">Run <code>storage/migrations/2026_11_19_location_cms.sql</code> to add the phone, map link, hero image and display-order fields.</p>
+                <?php endif; ?>
+                <?php if ($locHasSort): ?>
+                <div class="form-group">
+                    <label class="form-label" for="loc_sort_order">Display order</label>
+                    <input type="number" id="loc_sort_order" name="sort_order" class="form-control-adm" value="0" step="1" min="0" max="9999">
+                    <small style="color:var(--text-muted);">Lower numbers appear first in the menu, footer and locations page.</small>
+                </div>
+                <?php endif; ?>
+
                 <div style="margin-top: 30px;">
                     <button type="submit" class="btn-primary-adm" style="width:100%; justify-content:center;" id="saveLocationBtn">
-                        <i class="fa-solid fa-floppy-disk"></i> Save Location Page
+                        <i class="fa-solid fa-floppy-disk"></i> Save location page
                     </button>
                     <button type="button" class="btn-action-premium" style="width:100%; justify-content:center; margin-top:10px; padding: 10px; display: none; align-items: center; gap: 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; color: #1e293b; font-weight: 600; font-size: 13.5px; cursor: pointer; transition: all 0.2s;" id="previewLocationBtn">
-                        <i class="fa-solid fa-eye"></i> Preview Draft Page
+                        <i class="fa-solid fa-eye"></i> View saved page
                     </button>
                     <button type="button" class="btn-secondary-adm" style="width:100%; justify-content:center; margin-top:10px;" id="cancelBtn">
                         Cancel
@@ -852,6 +931,10 @@ if ($res) {
 </div>
 
 <script>
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
     const csrfToken = <?php echo json_encode($_SESSION['csrf_token'] ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
 
     // Initialize TinyMCE Rich Text Editor
@@ -918,7 +1001,7 @@ if ($res) {
             activeBtn.style.color = '#fff';
             activeBtn.style.border = 'none';
         }
-        sessionStorage.setItem('activeProductOverride', prodId);
+        try { sessionStorage.setItem('activeProductOverride', prodId); } catch (error) {}
     }
 
     // Tab switching controller
@@ -932,7 +1015,7 @@ if ($res) {
             tabBtn.classList.add('active');
             tabContent.classList.add('active');
         }
-        sessionStorage.setItem('activeTab', tabId);
+        document.querySelectorAll('.cms-tab-btn').forEach(btn => { const active = btn.classList.contains('active'); btn.setAttribute('aria-selected', String(active)); btn.tabIndex = active ? 0 : -1; });
     }
 
     // Toggle address input field based on selection
@@ -979,13 +1062,14 @@ if ($res) {
         
         row.innerHTML = `
             <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
-                <input type="text" class="form-control-adm scenario-title-input" value="${title}" placeholder="Step Label (e.g. Salaried applicants)" required>
-                <textarea class="form-control-adm scenario-text-input" placeholder="Guidance notes..." required>${text}</textarea>
+                <input type="text" class="form-control-adm scenario-title-input" value="${escapeHtml(title)}" placeholder="Step Label (e.g. Salaried applicants)" required>
+                <textarea class="form-control-adm scenario-text-input" placeholder="Guidance notes..." required>${escapeHtml(text)}</textarea>
             </div>
-            <button type="button" class="btn-remove-row" onclick="removeRow('scenario-row-${randId}')">
+            <button type="button" class="btn-remove-row" aria-label="Remove row" onclick="removeRow('scenario-row-${randId}')">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         `;
+        row.querySelectorAll('input, textarea').forEach(el => { if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', el.placeholder || 'Row content'); });
         container.appendChild(row);
     }
 
@@ -1020,13 +1104,14 @@ if ($res) {
         
         row.innerHTML = `
             <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
-                <input type="text" class="form-control-adm faq-question-input" value="${q}" placeholder="Question (e.g. Is parking available?)" required>
-                <textarea class="form-control-adm faq-answer-input" placeholder="Answer..." required>${a}</textarea>
+                <input type="text" class="form-control-adm faq-question-input" value="${escapeHtml(q)}" placeholder="Question about this location" aria-label="FAQ question" required>
+                <textarea class="form-control-adm faq-answer-input" placeholder="Answer..." required aria-label="FAQ answer">${escapeHtml(a)}</textarea>
             </div>
-            <button type="button" class="btn-remove-row" onclick="removeRow('faq-row-${randId}')">
+            <button type="button" class="btn-remove-row" aria-label="Remove row" onclick="removeRow('faq-row-${randId}')">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         `;
+        row.querySelectorAll('input, textarea').forEach(el => { if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', el.placeholder || 'Row content'); });
         container.appendChild(row);
     }
 
@@ -1060,12 +1145,13 @@ if ($res) {
         row.id = 'nearby-row-' + randId;
         
         row.innerHTML = `
-            <input type="text" class="form-control-adm nearby-slug-input" value="${slug}" placeholder="URL Slug (e.g. gurugram)" style="flex:1;" required>
-            <input type="text" class="form-control-adm nearby-label-input" value="${label}" placeholder="Label (e.g. Gurugram)" style="flex:1;" required>
-            <button type="button" class="btn-remove-row" onclick="removeRow('nearby-row-${randId}')">
+            <input type="text" class="form-control-adm nearby-slug-input" value="${escapeHtml(slug)}" placeholder="URL Slug (e.g. gurugram)" style="flex:1;" required>
+            <input type="text" class="form-control-adm nearby-label-input" value="${escapeHtml(label)}" placeholder="Label (e.g. Gurugram)" style="flex:1;" required>
+            <button type="button" class="btn-remove-row" aria-label="Remove row" onclick="removeRow('nearby-row-${randId}')">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         `;
+        row.querySelectorAll('input, textarea').forEach(el => { if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', el.placeholder || 'Row content'); });
         container.appendChild(row);
     }
 
@@ -1091,34 +1177,51 @@ if ($res) {
 
         row.innerHTML = `
             <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                <input type="text" class="form-control-adm prod-faq-q-input" placeholder="FAQ Question" value="${qText.replace(/"/g, '&quot;')}" style="font-weight:600;">
-                <textarea class="form-control-adm prod-faq-a-input" placeholder="FAQ Answer" rows="2">${aText}</textarea>
+                <input type="text" class="form-control-adm prod-faq-q-input" placeholder="FAQ Question" required aria-label="Product FAQ question" value="${escapeHtml(qText)}" style="font-weight:600;">
+                <textarea class="form-control-adm prod-faq-a-input" placeholder="FAQ Answer" rows="2" required aria-label="Product FAQ answer">${escapeHtml(aText)}</textarea>
             </div>
-            <button type="button" class="btn-remove-row" onclick="removeRow('${rowId}')" title="Delete Row" style="align-self: center;">
+            <button type="button" class="btn-remove-row" aria-label="Remove row" onclick="removeRow('${rowId}')" title="Delete Row" style="align-self: center;">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         `;
+        row.querySelectorAll('input, textarea').forEach(el => { if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', el.placeholder || 'Row content'); });
         container.appendChild(row);
     }
 
+    let locationSnapshot = '';
+    function locationState() {
+        if (window.tinymce) tinymce.triggerSave();
+        return JSON.stringify(Array.from(document.querySelectorAll('#locationForm input, #locationForm textarea, #locationForm select')).map(el => el.value));
+    }
+    function locationDirty() { return !document.getElementById('editorContainer').classList.contains('hidden') && locationSnapshot && locationSnapshot !== locationState(); }
+    function requestList() {
+        if (locationDirty() && !confirm('Discard unsaved location changes?')) return;
+        showList();
+    }
+    window.addEventListener('beforeunload', e => { if (locationDirty()) { e.preventDefault(); e.returnValue = ''; } });
     // UI State switching
     function showList() {
+        locationSnapshot = '';
+        document.querySelector('.stats-grid').classList.remove('hidden');
         document.getElementById('listContainer').classList.remove('hidden');
         document.getElementById('editorContainer').classList.add('hidden');
         if (location.hash) {
-            history.pushState("", document.title, window.location.pathname + window.location.search);
+            history.replaceState("", document.title, window.location.pathname + window.location.search);
         }
     }
 
     function showEditor(titleText) {
+        document.querySelector('.stats-grid').classList.add('hidden');
         document.getElementById('listContainer').classList.add('hidden');
         document.getElementById('editorContainer').classList.remove('hidden');
-        document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-nib" style="color: var(--primary); margin-right: 8px;"></i> ${titleText}`;
+        document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-nib" style="color: var(--primary); margin-right: 8px;"></i> ${escapeHtml(titleText)}`;
         
-        const activeTab = sessionStorage.getItem('activeTab') || 'basic';
+        setTimeout(() => { locationSnapshot = locationState(); }, 250);
+        document.getElementById('locationUrlPreview').textContent = '/loan-in-' + (document.getElementById('loc_slug').value || '[slug]');
+        const activeTab = 'basic';
         switchTab(activeTab);
 
-        const activeProd = sessionStorage.getItem('activeProductOverride') || 'personal-loan';
+        const activeProd = 'personal-loan';
         switchProductOverride(activeProd);
     }
 
@@ -1151,6 +1254,10 @@ if ($res) {
         initCharCounter(metaTitleInput, document.getElementById('meta-title-counter'), 60);
         initCharCounter(metaDescInput, document.getElementById('meta-desc-counter'), 160);
 
+        const customFields = new Set();
+        [slugInput, titleInput, metaTitleInput].forEach(field => field.addEventListener('input', e => { if (e.isTrusted) customFields.add(field.id); }));
+        const refreshUrl = () => { document.getElementById('locationUrlPreview').textContent = '/loan-in-' + (slugInput.value || '[slug]'); };
+        slugInput.addEventListener('input', refreshUrl);
         // Slug Auto-generation logic
         nameInput.addEventListener('input', function() {
             if (document.getElementById('locationId').value === "0") {
@@ -1160,9 +1267,10 @@ if ($res) {
                     .replace(/\s+/g, '-')
                     .replace(/-+/g, '-')
                     .trim();
-                slugInput.value = slugified;
-                titleInput.value = "Loan Options Across " + nameInput.value;
-                metaTitleInput.value = "Loans in " + nameInput.value + " | Waqt Finance";
+                if (!customFields.has('loc_slug')) slugInput.value = slugified.replace(/^-+|-+$/g, '');
+                refreshUrl();
+                if (!customFields.has('loc_title')) titleInput.value = 'Loan Options Across ' + nameInput.value;
+                if (!customFields.has('loc_meta_title')) metaTitleInput.value = 'Loans in ' + nameInput.value + ' | Waqt Finance';
                 // Trigger counter events manually
                 metaTitleInput.dispatchEvent(new Event('input'));
             }
@@ -1182,7 +1290,7 @@ if ($res) {
             previewBtn.addEventListener('click', function() {
                 const slug = document.getElementById('loc_slug').value.trim();
                 if (slug) {
-                    window.open(`../loan-in-${slug}`, '_blank');
+                    window.open(`../loan-in-${encodeURIComponent(slug)}`, '_blank', 'noopener');
                 }
             });
         }
@@ -1191,7 +1299,8 @@ if ($res) {
         const insertTplBtn = document.getElementById('btnInsertTemplate');
         if (insertTplBtn) {
             insertTplBtn.addEventListener('click', function() {
-                const templateHtml = `<h3>Why choose Waqt Finance:</h3>\n<ul>\n  <li><strong>Fast Disbursal:</strong> Funds are processed and disbursed within 24-48 business hours.</li>\n  <li><strong>100% Digital Process:</strong> Complete security checks and document verification online.</li>\n  <li><strong>Flexible Terms:</strong> Choose loan repayment terms tailored to your salary or business sales.</li>\n</ul>\n<p><strong>Note:</strong> We currently operate online-only services in this area. Our regional customer service team is available 24/7 for guidance.</p>`;
+                if (document.getElementById('loc_local_note').value.trim() && !confirm('Replace the existing local guidance with the template?')) return;
+                const templateHtml = `<h3>Why choose Waqt Finance:</h3>\n<ul>\n  <li><strong>Fast Disbursal:</strong> Processing time depends on verification, product eligibility and lender assessment.</li>\n  <li><strong>100% Digital Process:</strong> Complete security checks and document verification online.</li>\n  <li><strong>Flexible Terms:</strong> Choose loan repayment terms tailored to your salary or business sales.</li>\n</ul>\n<p><strong>Note:</strong> We currently operate online-only services in this area. Contact our customer service team for current service hours and assistance.</p>`;
                 if (tinymce.get('loc_local_note')) {
                     tinymce.get('loc_local_note').setContent(templateHtml);
                     tinymce.get('loc_local_note').save();
@@ -1207,39 +1316,18 @@ if ($res) {
         const cmsStatusFilter = document.getElementById('cmsStatusFilter');
         const rows = document.querySelectorAll('#locationsTableBody tr');
 
-        function filterRows() {
-            const searchVal = cmsSearch.value.toLowerCase().trim();
-            const typeVal = cmsTypeFilter.value;
-            const statusVal = cmsStatusFilter.value;
-
-            rows.forEach(row => {
-                if (row.cells.length < 2) return; // skip no records
-                
-                const name = row.cells[0].textContent.toLowerCase();
-                const slug = row.cells[1].textContent.toLowerCase();
-                
-                const matchesSearch = name.includes(searchVal) || slug.includes(searchVal);
-                const matchesType = typeVal === '' || row.getAttribute('data-type') === typeVal;
-                const matchesStatus = statusVal === '' || row.getAttribute('data-status') === statusVal;
-
-                if (matchesSearch && matchesType && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        cmsSearch.addEventListener('input', filterRows);
-        cmsTypeFilter.addEventListener('change', filterRows);
-        cmsStatusFilter.addEventListener('change', filterRows);
+        cmsTypeFilter.value = <?php echo json_encode($typeFilter); ?>;
+        cmsStatusFilter.value = <?php echo json_encode($statusFilter); ?>;
 
         // CREATE NEW BUTTON
         document.getElementById('createLocationBtn').addEventListener('click', () => {
+            customFields.clear();
             sessionStorage.removeItem('activeTab');
             sessionStorage.removeItem('activeProductOverride');
+            document.getElementById('locationErrors').hidden = true;
             document.getElementById('locationForm').reset();
             document.getElementById('locationId').value = "0";
+            document.querySelectorAll('#locationForm [aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
             if (document.getElementById('previewLocationBtn')) document.getElementById('previewLocationBtn').style.display = 'none';
             document.getElementById('scenariosRowContainer').innerHTML = '';
             document.getElementById('nearbyRowContainer').innerHTML = '';
@@ -1275,14 +1363,8 @@ if ($res) {
             showEditor("Create New Location Page");
         });
 
-        document.getElementById('backToListBtn').addEventListener('click', () => {
-            location.hash = '';
-            showList();
-        });
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            location.hash = '';
-            showList();
-        });
+        document.getElementById('backToListBtn').addEventListener('click', requestList);
+        document.getElementById('cancelBtn').addEventListener('click', requestList);
 
         // EDIT BUTTON CLICK
         document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -1305,6 +1387,10 @@ if ($res) {
                 
                 document.getElementById('loc_address').value = loc.address || '';
                 document.getElementById('loc_status').value = loc.status;
+                ['phone', 'map_url', 'hero_image', 'sort_order'].forEach(function (field) {
+                    const input = document.getElementById('loc_' + field);
+                    if (input) input.value = loc[field] ?? (field === 'sort_order' ? 0 : '');
+                });
 
                 // Load Areas
                 const areasArr = JSON.parse(loc.areas || '[]');
@@ -1338,75 +1424,7 @@ if ($res) {
                 const cityName = loc.name || 'City';
                 const topAreas = areasArr.slice(0, 5).join(', ') || cityName;
 
-                const productsMeta = {
-                    'personal-loan': {
-                        name: 'Personal Loan',
-                        min_amount: '₹50,000',
-                        tenure: '12 to 60 Months',
-                        faqs: [
-                            { q: "How quickly is a Personal Loan approved?", a: "After documents are uploaded, the application moves through eligibility, verification and policy checks. Timelines vary by applicant profile and document completeness." },
-                            { q: "Do I need any security or collateral?", a: "No. Personal Loans at Waqt Finance are unsecured, meaning you do not need to pledge any property, vehicle, or assets." },
-                            { q: "Can a short-term personal loan be approved without a high credit score?", a: "Yes, applicants with moderate credit scores can get approved, though a credit score above 700 helps secure the best interest rates." },
-                            { q: "Is a 12-month loan better than a 36-month loan?", a: "A 12-month loan saves you significant total interest but carries a higher monthly EMI. Choose based on your monthly cash flow comfort." },
-                            { q: "Will prepaying my loan improve my credit score?", a: "Paying off a loan early shows positive repayment behavior, though regular timely monthly payments have the strongest positive impact on your CIBIL profile." }
-                        ]
-                    },
-                    'business-loan': {
-                        name: 'Business Loan',
-                        min_amount: '₹1,00,000',
-                        tenure: '12 to 72 Months',
-                        faqs: [
-                            { q: "Is a GST registration mandatory for a Business Loan?", a: "While GST registration is preferred and helps secure higher loan amounts, small businesses with valid local establishment licenses or Udyam certificates can also apply." },
-                            { q: "How can I use the business loan funds?", a: "Funds can be used for any legitimate business activity, including buying raw materials, paying salaries, scaling inventory, or upgrading equipment." },
-                            { q: "Do business loans require a guarantor?", a: "Our unsecured business loans do not require third-party guarantors, though promoters must provide personal guarantees." },
-                            { q: "What is the maximum business loan amount available?", a: "Waqt Finance provides unsecured business loans up to ₹25 Lakhs based on turnover, bank transaction volumes, and repayment history." }
-                        ]
-                    },
-                    'pay-day-loan': {
-                        name: 'Payday Loan',
-                        min_amount: '₹5,000',
-                        tenure: '3 to 12 Months',
-                        faqs: [
-                            { q: "How does a Payday Loan work?", a: "It is a salary advance. You borrow a small amount (₹3,00,000 max) to cover a temporary cash shortage and repay it in a single payment when your next salary is credited." },
-                            { q: "Will applying affect my credit score?", a: "We perform soft credit checks for initial eligibility which do not hurt your credit rating. Repaying on time will help build your credit profile." },
-                            { q: "How is a payday loan different from a standard personal loan?", a: "Standard personal loans are repaid over 12-60 months in equal monthly installments, while payday loans are repaid in a single installment within 7 to 30 days." },
-                            { q: "Can self-employed individuals apply for a payday loan?", a: "No. Payday loans are designed strictly for salaried individuals with steady payroll credits. Self-employed owners can explore our Business or EDI loans instead." },
-                            { q: "What happens if I cannot pay on time?", a: "Late payment interest and administrative penalty fees will apply. Also, it will be reported to credit bureaus, hurting your future borrowing capabilities." }
-                        ]
-                    },
-                    'edi-loan': {
-                        name: 'EDI Loan',
-                        min_amount: '₹10,000',
-                        tenure: '3 to 12 Months',
-                        faqs: [
-                            { q: "What is an EDI Loan?", a: "EDI stands for Easy Daily Installment. Instead of paying a heavy monthly EMI, a small installment is collected daily, matching the daily revenue cycle of shopkeepers." },
-                            { q: "How is the daily payment collected?", a: "Collection is automated through secure e-NACH/Auto-debit from your registered bank account daily, making the cycle hassle-free." },
-                            { q: "Are there any pre-payment charges?", a: "Yes, traders can pay off the outstanding principal early to save interest, subject to standard foreclosure terms." },
-                            { q: "Is a physical office visit necessary?", a: "No. The entire process, from KYC submission to e-mandate registration, is managed completely online." }
-                        ]
-                    },
-                    'vehicle-loan': {
-                        name: 'Vehicle Loan',
-                        min_amount: '₹50,000',
-                        tenure: '12 to 60 Months',
-                        faqs: [
-                            { q: "Can I get a loan for a used car or bike?", a: "Yes, Waqt Finance offers pre-owned vehicle loans subject to valuation and fitness checks of the vehicle." },
-                            { q: "Is a guarantor required for a vehicle loan?", a: "Generally, no guarantor is required if you meet our credit score and income eligibility rules." },
-                            { q: "What is hypothecation?", a: "Hypothecation means the vehicle acts as collateral. The registration certificate (RC) will mention Waqt Finance as the mortgagee until the loan is fully repaid." }
-                        ]
-                    },
-                    'loan-against-property': {
-                        name: 'Loan Against Property (LAP)',
-                        min_amount: '₹2,00,000',
-                        tenure: '36 to 120 Months',
-                        faqs: [
-                            { q: "What types of properties are eligible for LAP?", a: "Residential houses, flats, commercial offices, shops, and registered industrial plots are eligible, provided they have clear titles and approved layouts." },
-                            { q: "How much loan amount can I expect?", a: "You can secure up to 60-70% of the market valuation of the property, subject to income assessment checks." },
-                            { q: "Can I continue using the property during the loan tenure?", a: "Yes, you retain full operational usage, tenancy, or occupancy rights of the mortgaged property during the loan cycle." },
-                            { q: "What is the processing time for a Loan Against Property?", a: "Because LAP involves detailed physical verification, valuation, and legal title search, processing typically takes 7 to 10 working days." }
-                        ]
-                    }
-                };
+                const productsMeta = <?php echo json_encode(waqt_location_product_templates(true), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
                 // Reset and calculate placeholders for all override fields
                 document.querySelectorAll('.override-field').forEach(field => {
@@ -1435,7 +1453,7 @@ if ($res) {
                         defaultVal = productsMeta[prod] ? (prod === 'personal-loan' ? 'Starting at 10.99% p.a.' : 'Competitive rates') : 'Competitive rates';
                     }
                     
-                    field.setAttribute('placeholder', defaultVal);
+                    field.setAttribute('placeholder', 'Inherits shared product content; leave blank to keep inheritance.');
                     
                     if (field.classList.contains('rich-override-editor') && tinymce.get('override_desc_' + prod)) {
                         tinymce.get('override_desc_' + prod).setContent('');
@@ -1477,7 +1495,7 @@ if ($res) {
                     productContent = {};
                 }
 
-                // Populate override inputs from saved JSON, falling back to dynamic defaults
+                // Load only saved overrides. Shared content remains inherited until explicitly edited.
                 document.querySelectorAll('.override-field').forEach(field => {
                     const prod = field.getAttribute('data-prod');
                     const prop = field.getAttribute('data-field');
@@ -1503,7 +1521,7 @@ if ($res) {
                         defaultVal = productsMeta[prod] ? (prod === 'personal-loan' ? 'Starting at 10.99% p.a.' : 'Competitive rates') : 'Competitive rates';
                     }
 
-                    let val = defaultVal;
+                    let val = ''; // Empty means inherit shared product content.
                     if (productContent[prod] && productContent[prod][prop] !== undefined && productContent[prod][prop] !== '') {
                         val = productContent[prod][prop];
                     }
@@ -1519,8 +1537,7 @@ if ($res) {
                     let faqsToLoad = [];
                     if (productContent[prod] && Array.isArray(productContent[prod]['faqs'])) {
                         faqsToLoad = productContent[prod]['faqs'];
-                    } else if (productsMeta[prod] && Array.isArray(productsMeta[prod].faqs)) {
-                        faqsToLoad = productsMeta[prod].faqs;
+
                     }
                     
                     faqsToLoad.forEach(faq => {
@@ -1537,6 +1554,8 @@ if ($res) {
                 
                 location.hash = 'edit-' + loc.id;
                 showEditor("Edit Location: " + loc.name);
+                document.getElementById('locationErrors').hidden = true;
+                document.querySelectorAll('#locationForm [aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
             });
         });
 
@@ -1664,13 +1683,20 @@ if ($res) {
             const metaTitle = document.getElementById('loc_meta_title').value.trim();
             const metaDesc = document.getElementById('loc_meta_desc').value.trim();
 
-            if (!name || !slug || !title || !intro || !localNote || !metaTitle || !metaDesc) {
-                Swal.fire({
-                    title: 'Validation Error',
-                    text: 'Please fill in all required fields. Make sure to check both the "Basic Info" and "SEO & Connections" tabs.',
-                    icon: 'warning'
-                });
-                return;
+            const errors = [];
+            this.querySelectorAll('[aria-invalid]').forEach(el => el.removeAttribute('aria-invalid'));
+            const candidates = Array.from(this.querySelectorAll('input, select, textarea')).filter(el => el.id !== 'loc_local_note' && !el.classList.contains('rich-override-editor'));
+            candidates.forEach(el => { if (!el.checkValidity() || (el.required && !el.value.trim())) { errors.push(el); el.setAttribute('aria-invalid', 'true'); } });
+            const errorBox = document.getElementById('locationErrors');
+            errorBox.hidden = !errors.length;
+            if (errors.length) {
+                errorBox.textContent = 'Please complete or correct the highlighted fields. Slugs use lowercase letters, numbers and single hyphens.';
+                const first = errors[0];
+                const panel = first.closest('.tab-content');
+                if (panel) switchTab(panel.id.replace('tabContent-', ''));
+                const prodBox = first.closest('[id^="overrideBox-"]');
+                if (prodBox) switchProductOverride(prodBox.id.replace('overrideBox-', ''));
+                first.focus(); return;
             }
 
             // Prepare Areas array
@@ -1763,6 +1789,7 @@ if ($res) {
 
             // Visual feedback loading
             const saveBtn = document.getElementById('saveLocationBtn');
+            if (saveBtn.disabled) return;
             const origHTML = saveBtn.innerHTML;
             saveBtn.disabled = true;
             saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Location...';
@@ -1784,6 +1811,8 @@ if ($res) {
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
+                        locationSnapshot = '';
+                        history.replaceState(null, '', location.pathname + location.search);
                         location.reload();
                     });
                 } else {
@@ -1806,7 +1835,7 @@ if ($res) {
             }
 
             if (hash === '#create') {
-                showEditor("Create New Location Page");
+                if (document.getElementById('editorContainer').classList.contains('hidden')) document.getElementById('createLocationBtn').click();
             } else if (hash.startsWith('#edit-')) {
                 const locId = hash.substring(6);
                 const row = document.getElementById('loc-row-' + locId);
@@ -1829,10 +1858,29 @@ if ($res) {
             if (hash === '#create' || hash.startsWith('#edit-')) {
                 checkUrlHash();
             } else if (!hash || hash === '#') {
+                if (locationDirty() && !confirm('Discard unsaved location changes?')) { history.replaceState(null, '', location.pathname + location.search + (document.getElementById('locationId').value === '0' ? '#create' : '#edit-' + document.getElementById('locationId').value)); return; }
                 showList();
             }
         });
 
+        document.querySelectorAll('.cms-tab-btn').forEach((btn, i, buttons) => {
+            const key = btn.id.replace('tabBtn-', '');
+            btn.setAttribute('role', 'tab'); btn.setAttribute('aria-controls', 'tabContent-' + key);
+            const panel = document.getElementById('tabContent-' + key);
+            panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', btn.id);
+            btn.addEventListener('keydown', e => {
+                let next = i;
+                if (e.key === 'ArrowRight') next = (i + 1) % buttons.length;
+                else if (e.key === 'ArrowLeft') next = (i + buttons.length - 1) % buttons.length;
+                else if (e.key === 'Home') next = 0;
+                else if (e.key === 'End') next = buttons.length - 1;
+                else return;
+                e.preventDefault(); buttons[next].click(); buttons[next].focus();
+            });
+        });
+        document.querySelector('.cms-tabs-header').setAttribute('role', 'tablist');
+        document.querySelector('.cms-tabs-header').setAttribute('aria-label', 'Location content sections');
+        document.querySelectorAll('.dynamic-row-item input, .dynamic-row-item textarea').forEach(el => el.setAttribute('aria-label', el.placeholder || 'Row content'));
         // Run check on initial load to restore view state
         checkUrlHash();
     });

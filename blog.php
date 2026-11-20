@@ -11,10 +11,13 @@ if ($res) {
     $all_blogs = $res->fetch_all(MYSQLI_ASSOC);
 }
 
+foreach ($all_blogs as &$article) $article['image_url'] = waqt_blog_cover_url($article['image_url'] ?? null);
+unset($article);
+
 // 1. Separate Featured Post (the latest post with a cover image)
 $featured_post = null;
 foreach ($all_blogs as $b) {
-    if (!empty($b['image_url']) && strpos($b['image_url'], 'assets/') !== false) {
+    if (!empty($b['image_url'])) {
         $featured_post = $b;
         break;
     }
@@ -586,7 +589,7 @@ include 'includes/main-header.php';
             <?php if ($featured_post): ?>
                 <div class="featured-card">
                     <div class="featured-img-container">
-                        <img src="<?php echo htmlspecialchars($featured_post['image_url'] ?? 'assets/images/default-blog.jpg', ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($featured_post['title'], ENT_QUOTES, 'UTF-8'); ?>" class="featured-img">
+                        <img src="<?php echo htmlspecialchars($featured_post['image_url'] ?? 'assets/images/og-default.jpg', ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($featured_post['title'], ENT_QUOTES, 'UTF-8'); ?>" class="featured-img">
                     </div>
                     <div class="featured-content">
                         <span class="tag-category"><?php echo htmlspecialchars($featured_post['category'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -654,7 +657,7 @@ include 'includes/main-header.php';
                         <div class="blog-card-wrapper" data-title="<?php echo htmlspecialchars(strtolower($b['title'] . ' ' . ($b['excerpt'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                             <article class="modern-blog-card">
                                 <div class="card-img-container">
-                                    <img src="<?php echo htmlspecialchars($b['image_url'] ?? 'assets/images/default-blog.jpg', ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($b['title'], ENT_QUOTES, 'UTF-8'); ?>" class="card-img" loading="lazy">
+                                    <img src="<?php echo htmlspecialchars($b['image_url'] ?? 'assets/images/og-default.jpg', ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($b['title'], ENT_QUOTES, 'UTF-8'); ?>" class="card-img" loading="lazy">
                                 </div>
                                 <div class="card-body-content">
                                     <span class="tag-category" style="background: rgba(24, 82, 156, 0.05); color: #18529c; margin-bottom: 12px; font-size: 10px;"><?php echo htmlspecialchars($b['category'], ENT_QUOTES, 'UTF-8'); ?></span>

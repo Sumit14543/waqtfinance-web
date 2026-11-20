@@ -4,7 +4,7 @@ $page_title = "Instant Online Loans in India | Quick Approval | Waqt Finance";
 $meta_description = "Apply for fast personal, business, payday & vehicle loans up to 10 Lakh with Waqt Finance. Minimal paperwork & 24-hr disbursal. Apply online today!";
 $meta_keywords = "loan in India, instant personal loan India, business loan India, payday loan online, best NBFC loan India, quick loans online, instant loan for salaried, instant loan for salaried employee, instant loan for womens, apply for payday loan online, personal loan apply online";
 $canonical_url = "https://waqtfinance.com/";
-$meta_image = "assets/images/loan-hero.webp";
+$meta_image = "assets/images/og-default.jpg";
 $meta_image_alt = "Waqt Finance loan services in India";
 $breadcrumb_label = "Home";
 $seo_schema = [
@@ -491,7 +491,10 @@ include 'includes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
 
 <script>
-    var swiper = new Swiper(".blogSwiper", {
+    // swiper-bundle is loaded with defer, so create the slider once the page has parsed.
+    document.addEventListener("DOMContentLoaded", function () {
+    if (!window.Swiper || !document.querySelector(".blogSwiper")) return;
+    window.swiper = new Swiper(".blogSwiper", {
         slidesPerView: 1,
         spaceBetween: 20,
         loop: true,
@@ -505,6 +508,7 @@ include 'includes/header.php';
             el: ".swiper-pagination",
             clickable: true,
         },
+    });
     });
 
     // Home Page Instant Loan Calculator Slider

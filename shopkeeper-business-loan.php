@@ -1794,11 +1794,16 @@ include 'includes/header.php';
 
 <?php include 'includes/footer.php'; ?>
 <script>
+    // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
     $('.testimonial-slider').slick({
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        autoplaySpeed: 1500,
+        autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
         dots: true,
         arrows: true,
         responsive: [{
@@ -1815,4 +1820,5 @@ include 'includes/header.php';
             }
         ]
     });
+});
 </script>

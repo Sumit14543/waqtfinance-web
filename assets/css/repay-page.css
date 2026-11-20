@@ -1,0 +1,106 @@
+/* Repay loan page (repay.php) */
+.wf-repay { --rp-navy: #062b5d; --rp-blue: #18529c; --rp-ink: #0b213a; --rp-text: #475569; --rp-line: #e2e8f0; --rp-soft: #f8fafc; font-family: 'Inter', sans-serif; color: var(--rp-ink); }
+.wf-repay *, .wf-repay *::before, .wf-repay *::after { box-sizing: border-box; }
+.wf-repay-wrap { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+.wf-repay-narrow { max-width: 820px; }
+.wf-repay h1, .wf-repay h2, .wf-repay h3 { font-family: inherit; letter-spacing: 0; }
+
+/* Hero */
+.wf-repay-hero { background: radial-gradient(circle at 20% 20%, #0d3f7b 0%, var(--rp-navy) 45%, #031530 100%); color: #fff; padding: 48px 0 56px; }
+.wf-repay-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: 48px; align-items: center; }
+.wf-repay-crumb { display: flex; gap: 8px; font-size: 13px; color: #c9d9ea; margin-bottom: 18px; }
+.wf-repay-crumb a { color: #fff; text-decoration: none; }
+.wf-repay-crumb a:hover { text-decoration: underline; }
+.wf-repay-kicker { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; background: rgba(255,255,255,.08); font-size: 12.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #dbeafe; }
+.wf-repay-kicker i { color: #93c5fd; }
+.wf-repay-hero h1 { color: #fff; font-size: clamp(32px, 4.4vw, 50px); font-weight: 800; line-height: 1.12; margin: 18px 0 16px; }
+.wf-repay-lead { color: rgba(255,255,255,.9); font-size: 17px; line-height: 1.7; margin: 0 0 24px; max-width: 560px; }
+.wf-repay-points { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.wf-repay-points li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(255,255,255,.08); font-size: 13.5px; font-weight: 600; color: #fff; }
+.wf-repay-points i { color: #93c5fd; }
+
+/* Payment options card */
+.wf-repay-card { background: #fff; color: var(--rp-ink); border-radius: 18px; padding: 26px; box-shadow: 0 24px 48px -16px rgba(2, 12, 32, .45); }
+.wf-repay-card h2 { font-size: 22px; font-weight: 800; color: var(--rp-ink); margin: 0 0 4px; }
+.wf-repay-card-sub { color: var(--rp-text); font-size: 14px; margin: 0 0 18px; }
+.wf-repay-option { display: grid; grid-template-columns: 44px 1fr; gap: 14px; padding: 16px; border: 1px solid var(--rp-line); border-radius: 14px; margin-top: 12px; }
+.wf-repay-option.is-primary { border-color: #bfdbfe; background: #f0f7ff; }
+.wf-repay-option-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #e0ecfb; color: var(--rp-blue); font-size: 18px; }
+.wf-repay-option.is-primary .wf-repay-option-icon { background: var(--rp-blue); color: #fff; }
+.wf-repay-option h3 { font-size: 16px; font-weight: 800; margin: 2px 0 6px; color: var(--rp-ink); }
+.wf-repay-option p { font-size: 14px; line-height: 1.55; color: var(--rp-text); margin: 0 0 10px; }
+.wf-repay-text-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--rp-blue); text-decoration: none; word-break: break-word; }
+.wf-repay-text-link:hover { text-decoration: underline; }
+.wf-repay-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border-radius: 10px; background: var(--rp-blue); color: #fff !important; font-size: 14px; font-weight: 700; text-decoration: none !important; border: 1px solid var(--rp-blue); transition: background .2s ease; }
+.wf-repay-btn:hover { background: #0d3f7b; }
+.wf-repay-btn.is-whatsapp { background: #128c4a; border-color: #128c4a; }
+.wf-repay-btn.is-whatsapp:hover { background: #0e6f3a; }
+.wf-repay-btn.is-ghost { background: #fff; color: var(--rp-blue) !important; border-color: #bfdbfe; }
+.wf-repay-btn.is-ghost:hover { background: #f0f7ff; }
+.wf-repay-contact-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.wf-repay a:focus-visible, .wf-repay summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; border-radius: 8px; }
+
+/* Sections */
+.wf-repay-section { padding: 56px 0; background: #fff; }
+.wf-repay-section.is-band { background: var(--rp-soft); border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+.wf-repay-h2 { text-align: center; font-size: clamp(26px, 3vw, 32px); font-weight: 800; color: var(--rp-navy); margin: 0 0 10px; }
+.wf-repay-sub { text-align: center; color: var(--rp-text); font-size: 16px; margin: 0 auto 30px; }
+
+/* Security alert */
+.wf-repay-alert { border: 1px solid #fde2c4; background: #fffaf3; border-radius: 18px; padding: 26px; }
+.wf-repay-alert-head { display: grid; grid-template-columns: 48px 1fr; gap: 16px; }
+.wf-repay-alert-icon { width: 48px; height: 48px; border-radius: 12px; background: #fde7cc; color: #b45309; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.wf-repay-alert h2 { font-size: 22px; font-weight: 800; color: #7c2d12; margin: 0 0 6px; }
+.wf-repay-alert h2 span { font-weight: 700; }
+.wf-repay-alert-head p { margin: 0 0 4px; color: #57534e; font-size: 15px; line-height: 1.6; }
+.wf-repay-alert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+.wf-repay-alert-grid > div { background: #fff; border: 1px solid var(--rp-line); border-radius: 14px; padding: 18px 20px; }
+.wf-repay-alert-grid h3 { font-size: 16px; font-weight: 800; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.wf-repay-alert-grid .is-do h3 { color: #047857; }
+.wf-repay-alert-grid .is-dont h3 { color: #b91c1c; }
+.wf-repay-alert-grid ul { margin: 0; padding-left: 18px; display: grid; gap: 10px; }
+.wf-repay-alert-grid li { color: #334155; font-size: 14.5px; line-height: 1.55; }
+.wf-repay-alert-grid li span { display: block; color: #64748b; font-size: 13.5px; margin-top: 2px; }
+.wf-repay-alert-foot { margin: 18px 0 0; font-size: 13.5px; color: #57534e; line-height: 1.6; }
+.wf-repay-alert-foot a { color: var(--rp-blue); font-weight: 700; word-break: break-word; }
+
+/* Steps */
+.wf-repay-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.wf-repay-steps li { background: #fff; border: 1px solid var(--rp-line); border-radius: 16px; padding: 22px; }
+.wf-repay-steps span { display: inline-flex; width: 36px; height: 36px; border-radius: 50%; align-items: center; justify-content: center; background: var(--rp-blue); color: #fff; font-weight: 800; margin-bottom: 14px; }
+.wf-repay-steps h3 { font-size: 16.5px; font-weight: 800; margin: 0 0 8px; color: var(--rp-ink); }
+.wf-repay-steps p { margin: 0; color: var(--rp-text); font-size: 14.5px; line-height: 1.6; }
+
+/* FAQ */
+.wf-repay-faq { display: grid; gap: 12px; margin-top: 24px; }
+.wf-repay-faq details { border: 1px solid var(--rp-line); border-radius: 14px; background: #fff; }
+.wf-repay-faq details[open] { border-color: #bfdbfe; box-shadow: 0 6px 18px rgba(15, 23, 42, .05); }
+.wf-repay-faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 20px; font-weight: 700; font-size: 16px; color: var(--rp-ink); }
+.wf-repay-faq summary::-webkit-details-marker { display: none; }
+.wf-repay-faq summary i { color: var(--rp-blue); transition: transform .2s ease; flex-shrink: 0; }
+.wf-repay-faq details[open] summary i { transform: rotate(180deg); }
+.wf-repay-faq details p { margin: 0; padding: 0 20px 18px; color: var(--rp-text); font-size: 15px; line-height: 1.65; }
+.wf-repay-more { text-align: center; color: var(--rp-text); margin: 24px 0 0; font-size: 15px; }
+.wf-repay-more a { color: var(--rp-blue); font-weight: 700; }
+
+@media (max-width: 991px) {
+  .wf-repay-hero-grid { grid-template-columns: 1fr; gap: 28px; }
+  .wf-repay-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .wf-repay-wrap { padding: 0 16px; }
+  .wf-repay-hero { padding: 32px 0 40px; }
+  .wf-repay-lead { font-size: 15.5px; }
+  .wf-repay-points { display: none; } /* payment options come first on phones; support hours are in the card */
+  .wf-repay-card { padding: 18px; }
+  .wf-repay-option { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
+  .wf-repay-alert { padding: 18px; }
+  .wf-repay-alert-head { grid-template-columns: 1fr; }
+  .wf-repay-alert-grid, .wf-repay-steps { grid-template-columns: 1fr; }
+  .wf-repay-section { padding: 40px 0; }
+  .wf-repay-contact-row .wf-repay-btn { flex: 1 1 100%; }
+}
+@media print {
+  .wf-repay-hero { background: #fff; color: #000; }
+  .wf-repay-hero h1, .wf-repay-lead, .wf-repay-points li { color: #000; }
+}

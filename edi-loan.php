@@ -3,7 +3,7 @@ $page_title = "EDI Loan (Equated Daily Installment) for Business | Waqt Finance"
 $meta_description = "What is an EDI Loan? Equated Daily Installment (EDI) loans give shopkeepers & MSMEs up to ₹5 Lakh collateral-free credit with easy daily repayment.";
 $meta_keywords = "EDI loan in India, daily installment loan India, EDI loan online, vendor loan India, small business loan, shopkeeper daily loan";
 $canonical_url = "https://waqtfinance.com/edi-loan";
-$meta_image = "assets/images/vendor-imgg.webp";
+$meta_image = "assets/images/og-edi-loan.jpg";
 $meta_image_alt = "EDI loan in India for shopkeepers and vendors";
 $breadcrumb_label = "EDI Loan";
 
@@ -161,7 +161,7 @@ include 'includes/header.php';
 
         <!-- Right -->
         <div class="prop-right">
-            <img src="assets/images/vendor-imgg.webp" alt="Image">
+            <img src="assets/images/vendor-imgg.webp" alt="Fruit and vegetable vendor at his stall">
         </div>
     </section>
 
@@ -529,7 +529,7 @@ include 'includes/header.php';
                             <li>Apply with your main bank</li>
                         </ul>
 
-                        <a href="#" class="btn btn-danger w-100 mt-2">
+                        <a href="eligibility-calculator" class="btn btn-danger w-100 mt-2">
                             Check Your Eligibility &rarr;
                         </a>
 
@@ -864,7 +864,7 @@ include 'includes/header.php';
             <!-- CTA -->
             <div class="text-center mt-5">
 
-                <a href="#" class="apply-btn btn-lg py-3" style="font-size:18px;">
+                <a href="eligibility-calculator" class="apply-btn btn-lg py-3" style="font-size:18px;">
 
                     Check Your Eligibility &rarr;
 
@@ -1677,11 +1677,16 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <script>
+    // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
     $('.testimonial-slider').slick({
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        autoplaySpeed: 1500,
+        autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
         dots: true,
         arrows: true,
         responsive: [{
@@ -1698,6 +1703,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         ]
     });
+});
 </script>
 
 <script>

@@ -192,7 +192,7 @@ include 'includes/main-header.php';
 
         <div class="cs-main-post">
             <figure>
-                <img onload="pagespeed.CriticalImages.checkImageForCriticality(this);" 
+                <img 
                      alt="Shopkeepers Loan Benefits" 
                      src="assets/images/benifits.webp">
             </figure>

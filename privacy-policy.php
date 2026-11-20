@@ -208,6 +208,16 @@ include 'includes/main-header.php';
             border-radius: 16px;
         }
     }
+
+/* Policy tabs: keep every tab reachable (safe centering) and use a scrolling row on small screens */
+.wf-policy-nav-tabs { justify-content: flex-start !important; flex-direction: row !important; width: auto !important; padding-left: 2px !important; padding-right: 2px !important; }
+.wf-policy-nav-tabs > :first-child { margin-left: auto; }
+.wf-policy-nav-tabs > :last-child { margin-right: auto; }
+.wf-policy-tab-btn { flex-shrink: 0; }
+@media (min-width: 1200px) {
+    .wf-policy-nav-tabs { gap: 6px !important; }
+    .wf-policy-tab-btn { padding: 8px 13px !important; }
+}
 </style>
 
     <section class="wf-policy-hero">
@@ -215,7 +225,8 @@ include 'includes/main-header.php';
             <div class="wf-policy-hero-content">
                 <span class="wf-policy-badge"><i class="fa-solid fa-user-shield"></i> Protecting Your Privacy</span>
                 <h1>Privacy Policy</h1>
-                <p>We value your privacy. Your personal information is safe with us and is used only to provide and improve our services. We never share your data without consent.</p>
+                <p>We collect only the data we need to provide your loan, we never sell it, and we share it only as this policy explains.</p>
+                <div class="pd-hero-meta"><span><i class="far fa-calendar" aria-hidden="true"></i> Last updated: 19 November 2026</span><span data-pd-reading hidden></span><button type="button" class="pd-print" data-pd-print><i class="fas fa-print" aria-hidden="true"></i> Print or save PDF</button></div>
             </div>
         </div>
     </section>
@@ -231,98 +242,151 @@ include 'includes/main-header.php';
                 <a href="privacy-policy" class="wf-policy-tab-btn active">Privacy Policy</a>
                 <a href="terms-condition" class="wf-policy-tab-btn">Terms & Conditions</a>
                 <a href="refund-cancellation" class="wf-policy-tab-btn">Refund Policy</a>
+                <a href="digital-lending" class="wf-policy-tab-btn">Digital Lending</a>
             </div>
         </div>
     </div>
 
     <!-- Policy Document Content -->
+<!-- Plain-language summary -->
+<section class="pd-glance-section" aria-labelledby="pd-glance-title">
+    <div class="container">
+        <div class="pd-glance">
+            <div class="pd-glance-head">
+                <div><span class="pd-eyebrow">At a glance</span><h2 id="pd-glance-title">The key points</h2></div>
+                <p>A plain-language summary. The full policy below is the binding text.</p>
+            </div>
+            <ul class="pd-glance-list">
+                <li><span class="pd-glance-icon"><i class="fas fa-ban" aria-hidden="true"></i></span><div><strong>We never sell your data</strong><span>We use your data only to provide and service your loan, and share it only as this policy explains.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-mobile-screen" aria-hidden="true"></i></span><div><strong>No access to contacts, SMS or photos</strong><span>The app never reads your contacts, call logs, SMS, photos or files. It uses the camera and microphone only for KYC.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-server" aria-hidden="true"></i></span><div><strong>Stored in India</strong><span>Your personal data is stored on servers in India, as RBI requires.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-user-gear" aria-hidden="true"></i></span><div><strong>You stay in control</strong><span>Ask us to access, correct or delete your data, or withdraw consent, by writing to <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a>.</span></div></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
     <section class="wf-policy-document-section" id="policy">
         <div class="container">
             <div class="wf-policy-paper">
                 <h2>Privacy Policy</h2>
+                <p><strong>Last updated:</strong> 19 November 2026</p>
                 <p>
-                    As a Private Limited Company established by the Companies Act of 1956, we, <strong>WAQT FINANCE PVT. LTD</strong> (henceforth referred to as the "Company"), are represented by our members. Our members shall be assumed to include each of our respective legal heirs, representatives, administrators, permitted successors, and assigns unless the context of this declaration indicates otherwise. This policy's author assures you of our steadfast commitment to safeguarding your privacy and the private information you give to us. This privacy statement describes the www.waqtfinance.com website (henceforth referred to as the "Website") developed by WAQT FINANCE PVT. LTD.
+                    This Privacy Policy explains how <strong>WAQT FINANCE PRIVATE LIMITED</strong> (CIN: U65923DL2022PTC396001), a Non-Banking Financial Company registered with the Reserve Bank of India (Registration No. B.10.00143) (the "Company", "we", "our" or "us"), collects, uses, shares, stores and protects your personal data when you use our website <a href="https://waqtfinance.com/">https://waqtfinance.com/</a> and our mobile application "WAQT Finance" (package name <strong>com.waqtfinance.customer</strong>) (together, the "Platform").
                 </p>
                 <p>
-                    So that we can keep providing you with services, we might collect and, in some situations, disclose information about you. To better protect your privacy, we provide this notice explaining our information collection and disclosure practices and the choices you have regarding the acquisition and use of your information. All terms that are capitalized going forward will signify what this agreement says. Furthermore, the headers in this document are only used to arrange the various sections of the agreement. Neither the user nor the author may deduce any meaning from the contents of this privacy policy by using the titles of the pages.
+                    We process personal data in accordance with the Digital Personal Data Protection Act, 2023, the Information Technology Act, 2000 and the rules made under it, and the directions of the Reserve Bank of India, including the Reserve Bank of India (Digital Lending) Directions, 2025. By using the Platform you agree to the processing described in this policy. Where the law requires your consent, we ask for it separately and you may withdraw it at any time as described in Section 9.
                 </p>
 
-                <h3>Definition</h3>
+                <h3>1. Definitions</h3>
                 <ul>
-                    <li>In this policy, the terms "We", "Our", and "Us" refer to the creators and operators of Waqt Finance.</li>
-                    <li>The terms "You", "Your", "Yourself", and "User" refer to natural or legal persons who use the website or mobile application.</li>
-                    <li>"Personal Information" refers to any information that can be used to identify you personally that we may have from you.</li>
-                    <li>"Third Parties" refers to any other website, company, or individual other than the User and the creator of this application.</li>
-                    <li>This privacy policy explains how we handle your personal information to protect your privacy. We value your trust and are committed to safeguarding your data while providing excellent platform services.</li>
+                    <li>"You", "your" and "User" mean any person who visits the Platform, applies for a loan or holds a loan with the Company.</li>
+                    <li>"Personal Data" means any data about you that identifies you or can be used to identify you.</li>
+                    <li>"Third Party" means any person other than you and the Company, including the service providers listed in Section 5.</li>
                 </ul>
-                <p>If you have any questions or concerns about this policy, please utilize the methods available on our website or mobile application to get in touch with us.</p>
 
-                <h3>1. Information Collected</h3>
-                <p>If you meet the requirements listed in the Website for eligibility, you can apply for a loan using the Services. You accept that <strong>WAQT FINANCE PVT. LTD</strong> (henceforth referred to as the "Company") shall gather and verify user data, documents, and details as may be necessary to authorize the Loan, as well as authenticate, track, and validate your whereabouts. You must register with the Company by logging in after providing us with your email address and mobile number to use the Services. You will need to share and upload the User Data on the Application Form during the application process. User data will include your personal information, which may include, but is not limited to, your financial information such as pay stubs, bank statements, PAN cards, Aadhar card details, bank account numbers, data from credit reference agencies, name, email address, gender, date of birth, mobile number, passwords, photograph, mobile phone information such as contact numbers, SMS, call logs, and browsing history, data and login credentials of third-party platforms if any, data needed for Know Your Customer (KYC) compliances, requirements, and other pertinent information ("Personal Information"). You guarantee that the personal data will always be true, correct, and comprehensive.</p>
-                <p>
-                    You grant us permission to import your information and Personal Information that is scattered over third-party platforms to authenticate or verify as part of the Services. You recognize and agree that we have the right to ask for updates on such Personal Information from time to time, and that we may also obtain such updated data from third-party platforms. The Company will only act on your express instructions or agreement and will not exercise its discretion in any transactions carried out on your behalf. Additionally, you give the Company permission to periodically choose which credit information businesses to get your credit information report from.
-                </p>
-                <p>
-                    The Company will process the User Data and/or additional documents and details once you have verified and uploaded them into the Application Form. If the Company's verification of the documents is complete, you may be approved for the loan, provided that you meet the eligibility requirements and fulfil any further requirements. After that, you must complete and upload the ENACH/NACH/ECS mandate form, check, or any other necessary documents. Following document completion, the Loan will be disbursed by the Company by the terms and conditions outlined in the Loan Agreement. Within the allotted four working hours, the approved Loan will be distributed electronically right into the User's bank account. You must pay back the outstanding balances to the lender by the deadlines specified in the loan agreement or sanction letter. Your removal, uninstallation, or cessation of using our services will not absolve you of the duty to reimburse any outstanding sums.
-                </p>
-                <p>
-                    <strong>WAQT FINANCE PVT. LTD</strong> is dedicated to protecting your personal information and keeping it private. You agree that your information will be collected, used, and disclosed by this privacy policy by using our services. Please use the channels on our website application to contact us with any questions or issues you may have about this policy or your personal information. We are committed to giving you the knowledgeable counsel and assistance you require to safely and effectively reach your financial goals.
-                </p>
+                <h3>2. Personal Data We Collect</h3>
+                <p>We collect only the data needed to assess, sanction, disburse, service and recover your loan and to comply with law. Depending on the product you apply for, this includes:</p>
+                <ul>
+                    <li><strong>Identity and contact details:</strong> name, mobile number, email address, date of birth, gender, current and permanent address, pincode and photograph.</li>
+                    <li><strong>KYC details:</strong> PAN, Aadhaar (masked or as permitted by law, through Aadhaar e-KYC, offline verification or DigiLocker with your consent), selfie and liveness check, and video KYC recording where applicable.</li>
+                    <li><strong>Employment and income details:</strong> employer or business details, salary slips, income and occupation.</li>
+                    <li><strong>Financial details:</strong> bank account number and IFSC, bank statements shared by you or fetched through the Account Aggregator framework with your consent, and credit information reports obtained from credit information companies with your consent.</li>
+                    <li><strong>Loan and repayment details:</strong> application details, loan agreement, Key Fact Statement, e-sign records, e-NACH / mandate details, repayment and payment transaction records.</li>
+                    <li><strong>Device and usage data:</strong> device model, operating system, app version, an app installation identifier, IP address and technical logs used for security, fraud prevention and to fix errors.</li>
+                    <li><strong>Communication records:</strong> your messages, complaints, and recordings of calls with our customer care, where you are informed of the recording.</li>
+                </ul>
 
-                <h3>2. External Links on the Website</h3>
-                <p>Advertisements and links to other websites, apps, resources, or material may be found on the website. The external links that are supplied by individuals or businesses other than <strong>WAQT FINANCE PVT. LTD</strong> (hereinafter referred to as the "Company") on the Website / Mobile App are not under our control. You understand and accept that we have no control over any external websites, mobile apps, businesses, or individuals that may acquire or disclose your personal information. Furthermore, no advertisements, goods, or other content on or accessible via such third-party websites, mobile applications, or resources are endorsed by us.</p>
-                <p>You further acknowledge and agree that we shall not be responsible for any loss or damage that you may suffer as a result of third-party websites, mobile apps, or other resources collecting and/or disclosing your Personal Information, or as a result of your reliance on the existence, completeness, or accuracy of any advertising, products, or other materials on, or accessible from, such websites or resources. These outside websites and resource providers might have privacy rules of their own that control how your Personal Information is gathered, stored, retained, and disclosed. To learn more about the procedures and handling of your Personal Information, we advise you to examine the privacy policies of any external websites or mobile applications that you access through links on our website.</p>
-                <p>
-                    Although <strong>WAQT FINANCE PVT. LTD</strong> is dedicated to safeguarding your privacy, we nonetheless advise you to exercise caution and due diligence when visiting outside websites. Please use the contact options on our website application to get in touch with us if you have any queries or issues regarding our privacy policies or the usage of external links.
-                </p>
+                <h3>3. Device Permissions and Data We Do Not Access</h3>
+                <p>The mobile app asks for a device permission only when you start the feature that needs it, and only after telling you why:</p>
+                <ul>
+                    <li><strong>Camera:</strong> to capture a selfie, a document photo, or for video KYC.</li>
+                    <li><strong>Microphone:</strong> only during video KYC.</li>
+                    <li><strong>Biometric (fingerprint / face unlock):</strong> to unlock the app. Your biometric data stays on your device and is never sent to us.</li>
+                    <li><strong>Notifications:</strong> to send loan, payment and security alerts. You can turn these off in your device settings.</li>
+                </ul>
+                <p>In line with RBI's Digital Lending Directions, <strong>we do not access your contact list, call logs, SMS, photos, media files or other files</strong> on your device. The mobile app does not access your device location.</p>
+                <p>When you apply on our website, your browser may ask once for permission to share your approximate location so that we can confirm that we serve your area. This happens only with your permission and is not repeated in the background. To convert your location into a city and pincode, the coordinates are sent to the OpenStreetMap Nominatim service.</p>
 
-                <h3>3. Our Use of Your Information</h3>
-                <p>When necessary, we will get in touch with you using the information you gave us when you registered. Please see our Terms of Service for further information regarding the type of communications that we receive. Furthermore, we might gather and retain sensitive personal information about you as well as your personal information for internal record-keeping needs. We use tracking data, including device IDs and IP addresses, to identify you and compile general demographic data.</p>
-                <p>
-                    We will give the information you disclosed to us and any information about you to the company we are purchased by or merged with, should that company decide to acquire us. In the event of a merger or acquisition, we will provide you with notice via email or by prominently posting a notice on the website or mobile application before the transfer of your data and its subsequent protection under a new privacy statement.
-                </p>
-                <p>We at <strong>WAQT FINANCE PVT. LTD</strong> are dedicated to protecting the privacy and security of your data. Please utilize the channels on our website or mobile application to contact us if you have any questions or issues about how we use your information.</p>
+                <h3>4. How We Use Your Personal Data</h3>
+                <ul>
+                    <li>To verify your identity and complete KYC as required by RBI's KYC Directions and the Prevention of Money Laundering Act, 2002.</li>
+                    <li>To assess your eligibility and creditworthiness, and to sanction, disburse and service your loan.</li>
+                    <li>To collect repayments, including through e-NACH mandates and payment gateways, and to issue receipts, statements and No Objection Certificates.</li>
+                    <li>To report your loan and repayment information to credit information companies, as required by law.</li>
+                    <li>To send you service messages about your application, loan, dues and account security.</li>
+                    <li>To prevent and detect fraud, protect the security of the Platform and investigate misuse.</li>
+                    <li>To handle your requests and complaints.</li>
+                    <li>To comply with legal and regulatory obligations and with lawful requests from authorities.</li>
+                    <li>To send you marketing messages, only where you have agreed to receive them. You may opt out at any time.</li>
+                </ul>
+                <p>We do not use your personal data for any purpose that is not stated here without first telling you and, where required, taking your consent.</p>
 
-                <h3>4. Cookies</h3>
-                <p><strong>WAQT FINANCE PVT. LTD</strong> (henceforth referred to as the "Company") employs "cookies" and other data collection tools on specific pages of our website. Cookies are little files that are stored on your computer's hard disk to provide personalized services and improve user experience. Our website has certain features that are only accessible with cookies enabled. They also help us provide content that is relevant to your interests. Cookies can be used to recognize users who have registered or logged in.</p>
-                <p>Cookies may be used by outside vendors, such as Google, to display advertisements to you based on your usage of our website. If offered, you can visit these third parties' websites to choose not to have cookies used for interest-based advertising. Go to Google Ads Settings to disable the Double Click cookie, which is used by Google and its partners to display ads based on your interests.</p>
-                <p>Additionally, Google Analytics Advertising is used on our website, enabling Google to gather information about visitors, including anonymous identifiers and Google advertising cookies. You can download and install the Google Analytics Opt-out Add-on from the given link if you would rather not have Google Analytics gather your data. We pledge to protect your privacy while offering a customized experience. Please use the contact information on our website or mobile application to get in touch with us if you have any queries about how we utilize cookies.</p>
+                <h3>5. Sharing Your Personal Data</h3>
+                <p><strong>We do not sell or rent your personal data.</strong> We share it only to the extent needed for the purposes in Section 4, and only with:</p>
+                <ul>
+                    <li><strong>Credit information companies</strong> (such as CRIF High Mark), to obtain your credit report with your consent and to report your loan as required by law.</li>
+                    <li><strong>Account Aggregator ecosystem partners</strong> (such as Setu and Digitap), to fetch your bank statements only after you approve the consent request.</li>
+                    <li><strong>KYC and verification service providers</strong>, for PAN, Aadhaar / DigiLocker, bank account, selfie, liveness and video KYC verification.</li>
+                    <li><strong>Payment and mandate service providers</strong> (such as Cashfree Payments), banks and NPCI, to disburse your loan and collect repayments.</li>
+                    <li><strong>E-sign service providers</strong>, to execute loan documents electronically.</li>
+                    <li><strong>Technology providers</strong>, such as cloud hosting, SMS, email and notification services, which process data only on our instructions.</li>
+                    <li><strong>Regulators, courts and law enforcement agencies</strong> (such as RBI, FIU-IND and the police), where required by law.</li>
+                    <li><strong>Any entity that acquires or merges with the Company</strong>, after informing you, and only on terms that protect your data at least as well as this policy.</li>
+                </ul>
+                <p>Every service provider we use is bound by a contract to keep your data confidential, to use it only for the service it provides to us, and to protect it with reasonable security practices. We do not let any service provider store your personal data longer than needed for that service.</p>
 
-                <h3>5. Confidentiality</h3>
-                <p>Your information is treated as confidential at <strong>WAQT FINANCE PVT. LTD</strong> (hereinafter referred to as the "Company") and will not be shared with any outside parties unless required by law or to enable the full provision of our services on our website. Your personal information is never sold, shared, or rented by us to marketing firms or other businesses that send unsolicited emails. We shall follow our privacy policy and terms of service in all correspondence. Please use the channels on our website or mobile application to contact us with any questions.</p>
+                <h3>6. Where Your Data Is Stored</h3>
+                <p>Your personal data is stored on servers located in India, as required by RBI. If any data is processed outside India for a specific service, we will ensure that it is brought back to and stored in India within the time allowed by RBI, and that it is protected by law and contract.</p>
 
-                <h3>6. Information Disclosed to Outside Parties</h3>
-                <p>We are unable to ensure that your Personal Information will never be disclosed in ways that are not specified in this Privacy Policy due to the state of regulations. Although we use industry best practices to safeguard your privacy, we are unable to guarantee that any private communications or personally identifying information you provide will stay private.</p>
-                
-                <h4>External Service Companies</h4>
-                <p>There may be optional services offered by outside service providers on our website. These providers' use of your information will be subject to their respective privacy rules if you choose to use these services, provide them with information, or permit them to gather information about you. To learn how these outside service providers handle your information, we advise you to read their privacy policies.</p>
-                
-                <h4>Additional Corporate Organizations</h4>
-                <p>To improve your experience using our website/mobile app and related services worldwide, we may share your Personal Information with our parent company, subsidiaries, and affiliated companies. The only goal of this data exchange is to enhance your use of our services. Information accessed by these entities will be handled with a minimum of care equivalent to that which they offer for data gathered from their other members. To maintain service continuity, your information might be shared in the case of a merger, acquisition, or other combination with another business organization. As soon as any such changes take place, you will be informed.</p>
-                
-                <h4>Law and Order</h4>
-                <p>To enforce the law, including those about fraud prevention, intellectual property rights, and other legal rights, we collaborate with law enforcement organizations and other parties. To investigate fraud, infringements on intellectual property, or other illegal acts that might put us or you in danger of legal repercussions, we reserve the right to share your Personal Information with law enforcement and government authorities as we, in our sole discretion, think necessary or appropriate. By publishing anything publicly accessible on our website, you agree to allow third parties to access and use the information you provide. Even though we work hard to protect your information, it's crucial to remember that anything you willingly provide online may be accessible to others. To keep informed about how your information is handled and safeguarded, we advise you to periodically review our Privacy Policy and use caution when sharing any personal information.</p>
-                
-                <p>Please use the contact options on our website or mobile application to get in touch with us if you have any questions or concerns about how we share your information with outside parties. To the best of our abilities, we are dedicated to protecting the privacy and security of your information.</p>
-
-                <h3>7. Accessing, Examining, and Modifying Your Profile</h3>
-                <p>You can check and amend the details you submitted when registering with <strong>WAQT FINANCE PVT. LTD</strong> (henceforth referred to as the "Company"), except your display name and login. You can email us at <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a> or use the option on the homepage of our website or mobile app to make adjustments.</p>
-                <p>If you update any information, we could keep a copy of your prior information. Please write us at <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a> as soon as possible if you believe that any information we have on you is inaccurate or incomplete, or if you would like your profile to be removed so that others cannot see it. If any errors are discovered, they will be quickly fixed. Although we make every effort to comply with your requests, please be aware that some information might be kept on file for particular uses, like handling disputes, fixing issues, and upholding our terms and conditions. Additionally, some of your information may remain in our databases owing to technological and regulatory limitations, such as backup systems. It is therefore impossible to ensure that every piece of personally identifying information has been eliminated.</p>
-                <p>Please use the contact options on our website if you have any more queries or worries about viewing or changing your profile.</p>
+                <h3>7. How Long We Keep Your Data</h3>
+                <ul>
+                    <li>If your loan application is not approved or you withdraw it, we keep your data only for as long as needed to comply with law, prevent fraud and resolve disputes.</li>
+                    <li>If you take a loan, we keep your data while the loan is active and for the period required after its closure by the Prevention of Money Laundering Act, 2002, RBI directions and other laws (generally at least five years after the business relationship ends).</li>
+                    <li>When the retention period ends, we delete or anonymise your data.</li>
+                </ul>
 
                 <h3>8. Security</h3>
-                <p>We at <strong>WAQT FINANCE PVT. LTD</strong> (henceforth referred to as the "Company") value your data highly and take precautions to guard it from loss and unwanted access. To protect Personal Information and other data we handle, we employ industry-standard security procedures. You understand and concur that any security breaches that occur outside of our regular security protocols are your responsibility and are at your own risk.</p>
+                <p>We protect your data with reasonable security practices and procedures, including encryption of data in transit (HTTPS/TLS), access controls limited to authorised staff who need the data for their work, secure storage of passwords and tokens, and monitoring for misuse. If a personal data breach occurs that affects you, we will inform you and the authorities as required by law.</p>
+                <p>Please do not share your OTP, PIN or password with anyone, including people who claim to be from WAQT Finance. Our staff will never ask for your OTP or password.</p>
 
-                <h3>9. Indemnity</h3>
-                <p>As a condition of using our website or mobile app, you undertake to indemnify and hold harmless <strong>WAQT FINANCE PVT. LTD</strong> (hereafter referred to as the "Company") against any disputes, lawsuits, or claims resulting from your disclosure of Personal Information to third parties. This covers all access to and usage of resources, apps, and websites operated by third parties. We disclaim all responsibility for any actions done by third parties concerning the Personal Information you have given them. It is at your own risk to utilize these third-party services.</p>
+                <h3>9. Your Rights</h3>
+                <p>Subject to applicable law, you have the right to:</p>
+                <ul>
+                    <li><strong>Access:</strong> ask for a summary of the personal data we hold about you and how we use it.</li>
+                    <li><strong>Correction and update:</strong> ask us to correct inaccurate or incomplete data.</li>
+                    <li><strong>Withdraw consent:</strong> withdraw any consent you have given, for example for marketing messages or for a specific data use. Withdrawal does not affect processing done before it, and some services may stop if they depend on that consent.</li>
+                    <li><strong>Erasure:</strong> ask us to delete your data that we no longer need. We will delete it except where we must keep it by law or to service an active loan. See our <a href="delete-account">Account &amp; Data Deletion</a> page.</li>
+                    <li><strong>Nomination:</strong> nominate a person to exercise these rights on your behalf in the event of your death or incapacity.</li>
+                    <li><strong>Grievance redressal:</strong> raise a complaint with our Grievance Officer, and if you are not satisfied, with the Data Protection Board of India.</li>
+                </ul>
+                <p>To exercise any right, email <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a> from your registered email address, or use <strong>Profile &rarr; Privacy and consent</strong> in the mobile app. We will respond within 30 days.</p>
+                <p>Deleting the app or closing your account does not cancel any amount you still owe under your loan agreement.</p>
 
-                <h3>10. Severability</h3>
-                <p>Except as otherwise specifically stated or as indicated by the context of the agreement, each paragraph of this privacy policy shall be and remain independent of, separate from, and severable from all other paragraphs hereof. The remaining paragraphs of this privacy policy will not be impacted by the decision or declaration that one or more of the paragraphs are void.</p>
+                <h3>10. Cookies and Analytics</h3>
+                <p>Our website uses cookies and similar technologies to keep you signed in, remember your preferences, keep the website secure and understand how visitors use it. We use Google Analytics and Google Tag Manager for website analytics, and Google may use cookies to show you ads based on your visits. You can block or delete cookies in your browser settings, opt out of Google personalised ads at <a href="https://adssettings.google.com/" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>, and install the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a>. Some features of the website may not work if cookies are blocked.</p>
 
-                <h3>11. Modification</h3>
-                <p>Periodically, we may amend our privacy policy. Any modifications will be announced via email or on the home page of our website and mobile app. To keep informed about how we protect your information, please examine these changes. Examine all of your options before deciding on a financial decision because borrowing money might be expensive.</p>
+                <h3>11. Links to Other Websites</h3>
+                <p>The Platform may link to websites and services run by others. We are not responsible for their privacy practices, and we recommend that you read their privacy policies before sharing any data with them.</p>
+
+                <h3>12. Children</h3>
+                <p>Our services are only for persons who are 18 years of age or older. We do not knowingly collect personal data of children. If you believe that a child has shared personal data with us, please contact us and we will delete it.</p>
+
+                <h3>13. Grievance Officer</h3>
+                <p>If you have any question or complaint about this policy or how we handle your personal data, please contact our Grievance Officer:</p>
+                <ul>
+                    <li><strong>Name:</strong> Sanjay Kumar</li>
+                    <li><strong>Email:</strong> <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a></li>
+                    <li><strong>Address:</strong> WAQT Finance Private Limited, 15K-5 Jyoti Nagar Housing Board Colony, Sahakar Marg, Jaipur, Rajasthan 302005</li>
+                    <li><strong>Hours:</strong> Monday to Saturday, 10:00 AM to 6:00 PM, except public holidays</li>
+                </ul>
+                <p>We will acknowledge your complaint promptly and resolve it within 30 days. For complaints about your loan, see our <a href="grievance-redressal-policy">Grievance Redressal Policy</a>.</p>
+
+                <h3>14. Changes to This Policy</h3>
+                <p>We may update this policy from time to time. We will post the updated policy on this page with a new "Last updated" date and, where the changes are significant, inform you through the app, SMS or email before they take effect.</p>
             </div>
         </div>
     </section>
 
+<?php include 'includes/policy-help.php'; ?>
 <?php include 'includes/footer.php' ?>

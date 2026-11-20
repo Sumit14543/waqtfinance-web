@@ -14,12 +14,15 @@ $allowedTabs = ['payday', 'wizard'];
 if (!in_array($activeTab, $allowedTabs, true)) {
     $activeTab = 'payday';
 }
+$isPayday = $activeTab === 'payday';
 
-// Pagination Config
-$limit = 10;
-$page = (int) ($_GET['page'] ?? 1);
-if ($page < 1) $page = 1;
-$offset = ($page - 1) * $limit;
+// Rows per page (whitelisted)
+$perPageOptions = [10, 25, 50, 100];
+$limit = (int) ($_GET['per_page'] ?? 10);
+if (!in_array($limit, $perPageOptions, true)) {
+    $limit = 10;
+}
+$page = max(1, (int) ($_GET['page'] ?? 1));
 
 // Filters
 $search = trim((string) ($_GET['search'] ?? ''));
@@ -30,8 +33,15 @@ $amountMin = trim((string) ($_GET['amount_min'] ?? ''));
 $amountMax = trim((string) ($_GET['amount_max'] ?? ''));
 $loanType = trim((string) ($_GET['loan_type'] ?? ''));
 
-$validPaydayStatuses = ['draft', 'submitted', 'review', 'approved', 'rejected', 'disbursed'];
-if ($activeTab !== 'payday' || !in_array($status, $validPaydayStatuses, true)) {
+$statusLabels = [
+    'draft' => 'Draft',
+    'submitted' => 'Submitted',
+    'review' => 'In review',
+    'approved' => 'Approved',
+    'rejected' => 'Rejected',
+    'disbursed' => 'Disbursed',
+];
+if (!$isPayday || !array_key_exists($status, $statusLabels)) {
     $status = '';
 }
 
@@ -40,14 +50,20 @@ foreach (['dateFrom', 'dateTo'] as $dateVar) {
         $$dateVar = '';
     }
 }
-
 foreach (['amountMin', 'amountMax'] as $amountVar) {
-    if ($$amountVar !== '' && !is_numeric($$amountVar)) {
+    if ($$amountVar !== '' && (!is_numeric($$amountVar) || (float) $$amountVar < 0)) {
         $$amountVar = '';
     }
 }
+// A reversed range is almost always a typo; swap it instead of returning nothing.
+if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+    [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+}
+if ($amountMin !== '' && $amountMax !== '' && (float) $amountMin > (float) $amountMax) {
+    [$amountMin, $amountMax] = [$amountMax, $amountMin];
+}
 
-if ($activeTab !== 'wizard') {
+if ($isPayday) {
     $loanType = '';
 }
 
@@ -60,6 +76,7 @@ $baseQueryParams = [
     'amount_min' => $amountMin,
     'amount_max' => $amountMax,
     'loan_type' => $loanType,
+    'per_page' => $limit === 10 ? '' : (string) $limit,
 ];
 
 function applications_build_query(array $baseParams, array $overrides = []): string
@@ -74,43 +91,57 @@ function applications_build_query(array $baseParams, array $overrides = []): str
     return http_build_query($query);
 }
 
+// Indian digit grouping: 1234567 -> 12,34,567
+function applications_inr(float $amount): string
+{
+    $num = (string) (int) round(abs($amount));
+    if (strlen($num) > 3) {
+        $num = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', substr($num, 0, -3)) . ',' . substr($num, -3);
+    }
+    return ($amount < 0 ? '-' : '') . $num;
+}
+
 function applications_format_money(float $amount): string
 {
     if ($amount >= 10000000) {
         return '₹' . number_format($amount / 10000000, 2) . ' Cr';
     }
-
     if ($amount >= 100000) {
         return '₹' . number_format($amount / 100000, 2) . ' L';
     }
+    return '₹' . applications_inr($amount);
+}
 
-    return '₹' . number_format($amount, 0);
+function applications_e($value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
 $filtersActive = $search !== '' || $status !== '' || $dateFrom !== '' || $dateTo !== '' || $amountMin !== '' || $amountMax !== '' || $loanType !== '';
+$today = date('Y-m-d');
 
-// Build queries based on tab
-$totalRecords = 0;
-$apps = [];
-
+// ---------- KPI cards ----------
 $kpiCards = [];
-if ($activeTab === 'payday') {
+if ($isPayday) {
     $statsRes = $conn->query("
         SELECT
             COUNT(*) AS total_applications,
             SUM(CASE WHEN created_at >= CURDATE() AND created_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS today_applications,
             SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND created_at < CURDATE() THEN 1 ELSE 0 END) AS yesterday_applications,
-            SUM(CASE WHEN status IN ('submitted', 'review') THEN 1 ELSE 0 END) AS processing_applications,
-            SUM(CASE WHEN status IN ('approved', 'disbursed') THEN 1 ELSE 0 END) AS successful_applications
+            SUM(CASE WHEN status = 'submitted' THEN 1 ELSE 0 END) AS submitted_applications,
+            SUM(CASE WHEN status = 'review' THEN 1 ELSE 0 END) AS review_applications,
+            SUM(CASE WHEN status IN ('approved', 'disbursed') THEN 1 ELSE 0 END) AS successful_applications,
+            SUM(CASE WHEN status = 'disbursed' THEN 1 ELSE 0 END) AS disbursed_applications
         FROM loan_applications
     ");
     $stats = $statsRes ? ($statsRes->fetch_assoc() ?: []) : [];
+    $submittedCount = (int) ($stats['submitted_applications'] ?? 0);
 
     $kpiCards = [
-        ['label' => 'Total Applications', 'value' => number_format((int)($stats['total_applications'] ?? 0)), 'sub' => 'All payday leads', 'icon' => 'fa-layer-group', 'tone' => 'blue'],
-        ['label' => "Today's Applications", 'value' => number_format((int)($stats['today_applications'] ?? 0)), 'sub' => 'Yesterday: ' . number_format((int)($stats['yesterday_applications'] ?? 0)), 'icon' => 'fa-calendar-day', 'tone' => 'green'],
-        ['label' => 'Submitted / Review', 'value' => number_format((int)($stats['processing_applications'] ?? 0)), 'sub' => 'Needs follow-up', 'icon' => 'fa-clipboard-list', 'tone' => 'yellow'],
-        ['label' => 'Approved / Disbursed', 'value' => number_format((int)($stats['successful_applications'] ?? 0)), 'sub' => 'Positive pipeline', 'icon' => 'fa-circle-check', 'tone' => 'red'],
+        ['label' => 'Total applications', 'value' => applications_inr((float) ($stats['total_applications'] ?? 0)), 'sub' => 'All payday leads', 'icon' => 'fa-layer-group', 'tone' => '', 'href' => '?' . applications_build_query(['tab' => 'payday'])],
+        ['label' => "Today's applications", 'value' => applications_inr((float) ($stats['today_applications'] ?? 0)), 'sub' => 'Yesterday: ' . applications_inr((float) ($stats['yesterday_applications'] ?? 0)), 'icon' => 'fa-calendar-day', 'tone' => '', 'href' => '?' . applications_build_query(['tab' => 'payday', 'date_from' => $today, 'date_to' => $today])],
+        ['label' => 'Awaiting review', 'value' => applications_inr((float) $submittedCount), 'sub' => applications_inr((float) ($stats['review_applications'] ?? 0)) . ' more already in review', 'icon' => 'fa-hourglass-half', 'tone' => $submittedCount > 0 ? 'alert' : '', 'href' => '?' . applications_build_query(['tab' => 'payday', 'status' => 'submitted'])],
+        ['label' => 'Approved / disbursed', 'value' => applications_inr((float) ($stats['successful_applications'] ?? 0)), 'sub' => applications_inr((float) ($stats['disbursed_applications'] ?? 0)) . ' disbursed', 'icon' => 'fa-circle-check', 'tone' => 'good', 'href' => '?' . applications_build_query(['tab' => 'payday', 'status' => 'approved'])],
     ];
 } else {
     $statsRes = $conn->query("
@@ -125,126 +156,116 @@ if ($activeTab === 'payday') {
     $stats = $statsRes ? ($statsRes->fetch_assoc() ?: []) : [];
 
     $kpiCards = [
-        ['label' => 'Total Applications', 'value' => number_format((int)($stats['total_applications'] ?? 0)), 'sub' => 'All legacy wizard leads', 'icon' => 'fa-layer-group', 'tone' => 'blue'],
-        ['label' => "Today's Applications", 'value' => number_format((int)($stats['today_applications'] ?? 0)), 'sub' => 'Yesterday: ' . number_format((int)($stats['yesterday_applications'] ?? 0)), 'icon' => 'fa-calendar-day', 'tone' => 'green'],
-        ['label' => 'This Month', 'value' => number_format((int)($stats['month_applications'] ?? 0)), 'sub' => date('M Y'), 'icon' => 'fa-chart-line', 'tone' => 'yellow'],
-        ['label' => 'Loan Value', 'value' => applications_format_money((float)($stats['total_loan_value'] ?? 0)), 'sub' => 'Requested amount', 'icon' => 'fa-indian-rupee-sign', 'tone' => 'red'],
+        ['label' => 'Total applications', 'value' => applications_inr((float) ($stats['total_applications'] ?? 0)), 'sub' => 'All legacy wizard leads', 'icon' => 'fa-layer-group', 'tone' => '', 'href' => '?' . applications_build_query(['tab' => 'wizard'])],
+        ['label' => "Today's applications", 'value' => applications_inr((float) ($stats['today_applications'] ?? 0)), 'sub' => 'Yesterday: ' . applications_inr((float) ($stats['yesterday_applications'] ?? 0)), 'icon' => 'fa-calendar-day', 'tone' => '', 'href' => '?' . applications_build_query(['tab' => 'wizard', 'date_from' => $today, 'date_to' => $today])],
+        ['label' => 'This month', 'value' => applications_inr((float) ($stats['month_applications'] ?? 0)), 'sub' => date('F Y'), 'icon' => 'fa-chart-line', 'tone' => '', 'href' => '?' . applications_build_query(['tab' => 'wizard', 'date_from' => date('Y-m-01'), 'date_to' => $today])],
+        ['label' => 'Requested loan value', 'value' => applications_format_money((float) ($stats['total_loan_value'] ?? 0)), 'sub' => 'Sum of all requested amounts', 'icon' => 'fa-indian-rupee-sign', 'tone' => '', 'href' => null],
     ];
 }
 
+// Tab counts (unfiltered totals)
+$tabCounts = ['payday' => 0, 'wizard' => 0];
+$tcRes = $conn->query("SELECT (SELECT COUNT(*) FROM loan_applications), (SELECT COUNT(*) FROM apply_loan_applications)");
+if ($tcRes) {
+    $tcRow = $tcRes->fetch_row();
+    $tabCounts = ['payday' => (int) ($tcRow[0] ?? 0), 'wizard' => (int) ($tcRow[1] ?? 0)];
+}
+
+// ---------- Build WHERE (everything except status first, so status chips can show counts) ----------
+$table = $isPayday ? 'loan_applications' : 'apply_loan_applications';
 $conditions = [];
 $params = [];
 $types = '';
-$amountExpression = $activeTab === 'payday' ? 'loan_amount' : "CAST(REPLACE(loan_amount, ',', '') AS DECIMAL(12,2))";
+$amountExpression = $isPayday ? 'loan_amount' : "CAST(REPLACE(loan_amount, ',', '') AS DECIMAL(12,2))";
 
 if ($dateFrom !== '') {
-    $conditions[] = "created_at >= ?";
+    $conditions[] = 'created_at >= ?';
     $params[] = $dateFrom . ' 00:00:00';
     $types .= 's';
 }
-
 if ($dateTo !== '') {
-    $conditions[] = "created_at <= ?";
+    $conditions[] = 'created_at <= ?';
     $params[] = $dateTo . ' 23:59:59';
     $types .= 's';
 }
-
 if ($amountMin !== '') {
     $conditions[] = "$amountExpression >= ?";
     $params[] = (float) $amountMin;
     $types .= 'd';
 }
-
 if ($amountMax !== '') {
     $conditions[] = "$amountExpression <= ?";
     $params[] = (float) $amountMax;
     $types .= 'd';
 }
-
-if ($activeTab === 'payday') {
-    if ($search !== '') {
-        $conditions[] = "(application_id LIKE ? OR full_name LIKE ? OR mobile LIKE ? OR email LIKE ? OR pan_number LIKE ?)";
-        $searchWild = "%$search%";
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $types .= 'sssss';
-    }
-
-    if ($status !== '') {
-        $conditions[] = "status = ?";
-        $params[] = $status;
-        $types .= 's';
-    }
-
-    $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
-    
-    // Count Total
-    $countSql = "SELECT COUNT(*) FROM loan_applications $whereClause";
-    $countStmt = $conn->prepare($countSql);
-    if (!empty($params)) {
-        $countStmt->bind_param($types, ...$params);
-    }
-    $countStmt->execute();
-    $totalRecords = (int) ($countStmt->get_result()->fetch_row()[0] ?? 0);
-    
-    // Fetch Applications
-    $fetchSql = "SELECT * FROM loan_applications $whereClause ORDER BY id DESC LIMIT ? OFFSET ?";
-    $fetchStmt = $conn->prepare($fetchSql);
-    $fetchParams = $params;
-    $fetchTypes = $types . 'ii';
-    $fetchParams[] = $limit;
-    $fetchParams[] = $offset;
-    $fetchStmt->bind_param($fetchTypes, ...$fetchParams);
-    $fetchStmt->execute();
-    $apps = $fetchStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-} else {
-    // Wizard applications (from apply_loan_applications)
-    if ($search !== '') {
-        $conditions[] = "(application_ref LIKE ? OR full_name LIKE ? OR mobile LIKE ? OR email LIKE ? OR pan_number LIKE ?)";
-        $searchWild = "%$search%";
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $params[] = $searchWild;
-        $types .= 'sssss';
-    }
-
-    if ($loanType !== '') {
-        $conditions[] = "loan_type = ?";
-        $params[] = $loanType;
-        $types .= 's';
-    }
-
-    $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
-    
-    // Count Total
-    $countSql = "SELECT COUNT(*) FROM apply_loan_applications $whereClause";
-    $countStmt = $conn->prepare($countSql);
-    if (!empty($params)) {
-        $countStmt->bind_param($types, ...$params);
-    }
-    $countStmt->execute();
-    $totalRecords = (int) ($countStmt->get_result()->fetch_row()[0] ?? 0);
-    
-    // Fetch Applications
-    $fetchSql = "SELECT * FROM apply_loan_applications $whereClause ORDER BY id DESC LIMIT ? OFFSET ?";
-    $fetchStmt = $conn->prepare($fetchSql);
-    $fetchParams = $params;
-    $fetchTypes = $types . 'ii';
-    $fetchParams[] = $limit;
-    $fetchParams[] = $offset;
-    $fetchStmt->bind_param($fetchTypes, ...$fetchParams);
-    $fetchStmt->execute();
-    $apps = $fetchStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+if ($search !== '') {
+    $idColumn = $isPayday ? 'application_id' : 'application_ref';
+    $conditions[] = "($idColumn LIKE ? OR full_name LIKE ? OR mobile LIKE ? OR email LIKE ? OR pan_number LIKE ?)";
+    $searchWild = '%' . $search . '%';
+    array_push($params, $searchWild, $searchWild, $searchWild, $searchWild, $searchWild);
+    $types .= 'sssss';
+}
+if (!$isPayday && $loanType !== '') {
+    $conditions[] = 'loan_type = ?';
+    $params[] = $loanType;
+    $types .= 's';
 }
 
+// Status chip counts honour every other active filter.
+$statusChipCounts = array_fill_keys(array_keys($statusLabels), 0);
+$statusChipTotal = 0;
+if ($isPayday) {
+    $chipWhere = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+    $chipStmt = $conn->prepare("SELECT status, COUNT(*) AS c FROM loan_applications $chipWhere GROUP BY status");
+    if ($chipStmt) {
+        if (!empty($params)) {
+            $chipStmt->bind_param($types, ...$params);
+        }
+        $chipStmt->execute();
+        foreach ($chipStmt->get_result()->fetch_all(MYSQLI_ASSOC) as $chipRow) {
+            $key = (string) $chipRow['status'];
+            $statusChipTotal += (int) $chipRow['c'];
+            if (array_key_exists($key, $statusChipCounts)) {
+                $statusChipCounts[$key] = (int) $chipRow['c'];
+            }
+        }
+    }
+}
+
+if ($isPayday && $status !== '') {
+    $conditions[] = 'status = ?';
+    $params[] = $status;
+    $types .= 's';
+}
+
+$whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+
+// Count
+$totalRecords = 0;
+$countStmt = $conn->prepare("SELECT COUNT(*) FROM $table $whereClause");
+if (!empty($params)) {
+    $countStmt->bind_param($types, ...$params);
+}
+$countStmt->execute();
+$totalRecords = (int) ($countStmt->get_result()->fetch_row()[0] ?? 0);
+
+$totalPages = max(1, (int) ceil($totalRecords / $limit));
+if ($page > $totalPages) {
+    $page = $totalPages; // e.g. after deleting the last row on the last page
+}
+$offset = ($page - 1) * $limit;
+
+// Fetch page
+$fetchStmt = $conn->prepare("SELECT * FROM $table $whereClause ORDER BY id DESC LIMIT ? OFFSET ?");
+$fetchParams = $params;
+$fetchParams[] = $limit;
+$fetchParams[] = $offset;
+$fetchStmt->bind_param($types . 'ii', ...$fetchParams);
+$fetchStmt->execute();
+$apps = $fetchStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
 $loanTypeOptions = [];
-if ($activeTab === 'wizard') {
+if (!$isPayday) {
     $loanTypeRes = $conn->query("SELECT DISTINCT loan_type FROM apply_loan_applications WHERE loan_type IS NOT NULL AND loan_type != '' ORDER BY loan_type ASC");
     if ($loanTypeRes) {
         while ($row = $loanTypeRes->fetch_assoc()) {
@@ -253,425 +274,562 @@ if ($activeTab === 'wizard') {
     }
 }
 
-$totalPages = (int) ceil($totalRecords / $limit);
-if ($totalPages < 1) $totalPages = 1;
+$rangeStart = $totalRecords > 0 ? $offset + 1 : 0;
+$rangeEnd = min($offset + $limit, $totalRecords);
+
+// Removable chips describing the active filters
+$activeFilterChips = [];
+if ($search !== '') $activeFilterChips[] = ['label' => 'Search: “' . $search . '”', 'remove' => ['search' => '']];
+if ($status !== '') $activeFilterChips[] = ['label' => 'Status: ' . $statusLabels[$status], 'remove' => ['status' => '']];
+if ($loanType !== '') $activeFilterChips[] = ['label' => 'Loan type: ' . $loanType, 'remove' => ['loan_type' => '']];
+if ($dateFrom !== '' || $dateTo !== '') {
+    $fromLabel = $dateFrom !== '' ? date('d M Y', strtotime($dateFrom)) : '…';
+    $toLabel = $dateTo !== '' ? date('d M Y', strtotime($dateTo)) : 'today';
+    $activeFilterChips[] = ['label' => ($dateFrom === $dateTo ? 'Date: ' . $fromLabel : 'Date: ' . $fromLabel . ' – ' . $toLabel), 'remove' => ['date_from' => '', 'date_to' => '']];
+}
+if ($amountMin !== '' || $amountMax !== '') {
+    $minLabel = $amountMin !== '' ? '₹' . applications_inr((float) $amountMin) : '₹0';
+    $maxLabel = $amountMax !== '' ? '₹' . applications_inr((float) $amountMax) : 'any';
+    $activeFilterChips[] = ['label' => 'Amount: ' . $minLabel . ' – ' . $maxLabel, 'remove' => ['amount_min' => '', 'amount_max' => '']];
+}
+
+$colCount = $isPayday ? 7 : 7;
 ?>
 
 <style>
-    .tab-nav {
+    /* ---------- Tabs ---------- */
+    .app-tabs {
         display: flex;
-        width: 100%;
-        background: #f1f5f9;
-        padding: 6px;
-        border-radius: 12px;
-        gap: 6px;
-        margin-bottom: 30px;
-        border: 1px solid var(--border-color);
+        gap: 4px;
+        border-bottom: 1px solid var(--border-color);
+        margin: -6px 0 22px;
+        overflow-x: auto;
+        scrollbar-width: none;
     }
-    .tab-btn {
-        flex: 1;
-        justify-content: center;
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        padding: 10px 20px;
-        border-radius: 9px;
-        transition: all 0.25s ease;
-        text-decoration: none;
+    .app-tabs::-webkit-scrollbar { display: none; }
+    .app-tab {
+        position: relative;
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        padding: 10px 14px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color 0.15s var(--ease);
     }
-    .tab-btn:hover {
-        color: var(--primary);
-        background: rgba(24, 82, 156, 0.04);
+    .app-tab:hover { color: var(--text-main); }
+    .app-tab.active { color: var(--primary); }
+    .app-tab.active::after {
+        content: '';
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: -1px;
+        height: 2px;
+        border-radius: 2px 2px 0 0;
+        background: var(--primary);
     }
-    .tab-btn.active {
-        color: #ffffff !important;
-        background: var(--primary) !important;
-        box-shadow: 0 4px 10px rgba(24, 82, 156, 0.2);
+    .app-tab .count {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: #eef1f6;
+        color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
     }
-    .applications-kpi-grid {
+    .app-tab.active .count { background: var(--primary-soft); color: var(--primary); }
+
+    /* ---------- KPI cards ---------- */
+    .app-kpis {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 16px;
-        margin: -10px 0 28px;
+        margin-bottom: 22px;
     }
-    .applications-kpi-card {
+    .app-kpi {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xs);
+        text-decoration: none;
+        color: inherit;
+        min-width: 0;
+        transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+    }
+    a.app-kpi:hover { border-color: #b9cbe3; box-shadow: var(--shadow-sm); }
+    .app-kpi.is-current { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .app-kpi-label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+    .app-kpi-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-top: 2px;
+        color: var(--text-main);
+        font-variant-numeric: tabular-nums;
+    }
+    .app-kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .app-kpi-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
-        gap: 14px;
-        min-height: 104px;
-        padding: 18px;
-        border: 1px solid #dbe4ef;
-        border-radius: 8px;
-        background: #ffffff;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
-    }
-    .applications-kpi-icon {
-        width: 48px;
-        height: 48px;
-        flex: 0 0 48px;
-        display: inline-flex;
-        align-items: center;
         justify-content: center;
-        border-radius: 8px;
-        font-size: 20px;
-    }
-    .applications-kpi-card.kpi-blue .applications-kpi-icon {
-        background: rgba(24, 82, 156, 0.08);
+        font-size: 14px;
+        background: var(--primary-soft);
         color: var(--primary);
     }
-    .applications-kpi-card.kpi-green .applications-kpi-icon {
-        background: rgba(22, 163, 74, 0.09);
-        color: #16a34a;
+    .app-kpi.alert .app-kpi-icon { background: #fef2f2; color: #dc2626; }
+    .app-kpi.good .app-kpi-icon { background: #f0fdf4; color: #15803d; }
+
+    /* ---------- Records card ---------- */
+    .records-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xs);
+        min-width: 0;
     }
-    .applications-kpi-card.kpi-yellow .applications-kpi-icon {
-        background: rgba(202, 138, 4, 0.11);
-        color: #ca8a04;
-    }
-    .applications-kpi-card.kpi-red .applications-kpi-icon {
-        background: rgba(239, 68, 68, 0.08);
-        color: #dc2626;
-    }
-    .applications-kpi-info h3 {
-        margin: 0;
-        color: var(--text-main);
-        font-size: 24px;
-        line-height: 1.15;
-        font-weight: 800;
-    }
-    .applications-kpi-info p {
-        margin: 4px 0 0;
-        color: var(--text-muted);
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-    }
-    .applications-kpi-info span {
-        display: block;
-        margin-top: 4px;
-        color: #64748b;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    @media (max-width: 1180px) {
-        .applications-kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-    @media (max-width: 640px) {
-        .applications-kpi-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-    .applications-filter-panel {
-        display: grid;
-        gap: 16px;
-        padding: 18px;
-        margin-bottom: 22px;
-        border: 1px solid #dbe4ef;
-        border-radius: 8px;
-        background: #fbfdff;
-    }
-    .applications-filter-grid {
-        display: grid;
-        grid-template-columns: minmax(260px, 1.4fr) repeat(5, minmax(140px, 1fr));
-        gap: 12px;
-        align-items: end;
-    }
-    .filter-field {
-        display: grid;
-        gap: 6px;
-    }
-    .filter-field label {
-        color: var(--text-muted);
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-    }
-    .filter-field input,
-    .filter-field select {
-        width: 100%;
-        height: 42px;
-        padding: 9px 12px;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        background: #ffffff;
-        color: var(--text-main);
-        font-size: 13.5px;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .filter-field input:focus,
-    .filter-field select:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px var(--primary-glow);
-    }
-    .filter-actions {
+    .records-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
         flex-wrap: wrap;
+        padding: 18px 20px 14px;
     }
-    .filter-action-buttons {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    .filter-summary {
-        color: var(--text-muted);
-        font-size: 13px;
-        font-weight: 700;
-    }
-    .btn-outline-adm,
-    .btn-export-adm {
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 0 16px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 800;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .btn-outline-adm {
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        color: var(--text-main);
-    }
-    .btn-outline-adm:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: rgba(24, 82, 156, 0.05);
-    }
-    .btn-export-adm {
-        border: 1px solid rgba(22, 163, 74, 0.25);
-        background: rgba(22, 163, 74, 0.08);
-        color: #15803d;
-    }
-    .btn-export-adm:hover {
-        background: #16a34a;
-        color: #ffffff;
-    }
-    @media (max-width: 1200px) {
-        .applications-filter-grid {
-            grid-template-columns: repeat(3, minmax(180px, 1fr));
-        }
-    }
-    @media (max-width: 720px) {
-        .applications-filter-grid {
-            grid-template-columns: 1fr;
-        }
-        .filter-actions {
-            align-items: stretch;
-        }
-        .filter-action-buttons,
-        .filter-action-buttons > * {
-            width: 100%;
-        }
-    }
-
-    /* Pagination classes */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        list-style: none;
-        margin-top: 25px;
-    }
-    .page-item a, .page-item span {
-        padding: 8px 14px;
-        border: 1px solid var(--border-color);
-        background: var(--bg-card);
-        color: var(--text-muted);
-        border-radius: 8px;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all 0.3s;
-    }
-    .page-item.active span, .page-item a:hover {
-        color: #ffffff;
-        background: var(--primary);
-        border-color: var(--primary);
-    }
-
-    /* Loading Overlay Spinner */
-    .page-loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 23, 42, 0.65);
-        backdrop-filter: blur(4px);
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s ease;
-    }
-    .page-loading-overlay.active {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    .loading-spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid rgba(255, 255, 255, 0.2);
-        border-left-color: #ffffff;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 15px;
-    }
-    .loading-text {
-        color: #ffffff;
+    .records-title {
         font-family: 'Outfit', sans-serif;
         font-size: 16px;
         font-weight: 600;
-        letter-spacing: 0.5px;
+        color: var(--text-main);
     }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    .records-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
+    .records-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .btn-ghost-adm {
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background: #ffffff;
+        color: var(--text-main);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color 0.15s var(--ease), color 0.15s var(--ease), background-color 0.15s var(--ease);
+    }
+    .btn-ghost-adm:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .btn-ghost-adm i { font-size: 13px; }
+    .records-actions .btn-primary-adm { height: 38px; padding: 0 16px; }
+
+    /* Status chips */
+    .status-chips {
+        display: flex;
+        gap: 8px;
+        padding: 0 20px 14px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .status-chips::-webkit-scrollbar { display: none; }
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background: #ffffff;
+        color: var(--text-secondary);
+        font-size: 12.5px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .status-chip:hover { border-color: var(--border-strong); color: var(--text-main); }
+    .status-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+    .status-chip .num { font-variant-numeric: tabular-nums; color: var(--text-muted); font-weight: 600; }
+    .status-chip.active { background: #0f172a; border-color: #0f172a; color: #ffffff; }
+    .status-chip.active .num { color: rgba(255, 255, 255, 0.7); }
+    .status-chip.is-empty { opacity: 0.55; }
+    .dot-draft { background: #64748b !important; }
+    .dot-submitted { background: #2563eb !important; }
+    .dot-review { background: #d97706 !important; }
+    .dot-approved { background: #16a34a !important; }
+    .dot-rejected { background: #dc2626 !important; }
+    .dot-disbursed { background: #0d9488 !important; }
+
+    /* Filter toolbar */
+    .filter-bar {
+        display: grid;
+        grid-template-columns: minmax(220px, 2fr) repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+        align-items: end;
+        padding: 14px 20px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-subtle);
+    }
+    .filter-bar .fld { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .filter-bar label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+    .filter-bar input,
+    .filter-bar select {
+        width: 100%;
+        height: 38px;
+        padding: 0 11px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        background: #ffffff;
+        color: var(--text-main);
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+    }
+    .filter-bar input:focus,
+    .filter-bar select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .filter-bar .search-wrap { position: relative; }
+    .filter-bar .search-wrap i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 12.5px;
+        pointer-events: none;
+    }
+    .filter-bar .search-wrap input { padding-left: 34px; }
+    .filter-bar .range { display: flex; align-items: center; gap: 6px; }
+    .filter-bar .range span { color: var(--text-muted); font-size: 12px; }
+    .filter-bar .fld-actions { flex-direction: row; gap: 8px; }
+    .filter-bar .fld-actions .btn-primary-adm { height: 38px; padding: 0 16px; justify-content: center; }
+    .filter-bar .fld-actions .btn-ghost-adm { padding: 0 12px; }
+
+    .active-filters {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 10px 20px;
+        border-top: 1px solid var(--border-color);
+        font-size: 12.5px;
+        color: var(--text-muted);
+    }
+    .filter-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 6px 0 10px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .filter-pill i {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+    }
+    .filter-pill:hover i { background: rgba(24, 82, 156, 0.15); }
+    .clear-all { color: var(--text-muted); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+    .clear-all:hover { color: var(--danger); }
+
+    /* Table */
+    .records-card .table-responsive { border-radius: 0; border-top: 1px solid var(--border-color); }
+    .records-card .admin-table th:first-child, .records-card .admin-table td:first-child { padding-left: 20px; }
+    .records-card .admin-table th:last-child, .records-card .admin-table td:last-child { padding-right: 20px; }
+    .records-card .admin-table td { padding-top: 12px; padding-bottom: 12px; vertical-align: middle; }
+    .records-card .admin-table tbody tr { cursor: pointer; }
+    .records-card .admin-table tbody tr.row-empty { cursor: default; }
+    .th-right, .td-right { text-align: right; }
+    .cell-main { font-weight: 600; color: var(--text-main); }
+    .cell-main.placeholder { font-weight: 500; color: var(--text-muted); font-style: italic; }
+    .cell-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+    .cell-id {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
+    }
+    .copy-btn {
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        opacity: 0;
+        transition: opacity 0.15s var(--ease), background-color 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    tr:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+    .copy-btn:hover { background: #eef1f6; color: var(--primary); }
+    .copy-btn.copied { opacity: 1; color: #15803d; }
+    .cell-amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .cell-date { font-size: 13px; color: var(--text-main); font-variant-numeric: tabular-nums; }
+    .cell-time { font-size: 12px; color: var(--text-muted); }
+    .type-chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .row-actions { display: inline-flex; gap: 6px; justify-content: flex-end; }
+    .row-actions .btn-action { width: 32px; height: 32px; }
+    .row-actions .btn-action.danger { color: #b91c1c; border-color: #fecaca; background: #ffffff; }
+    .row-actions .btn-action.danger:hover { background: #fef2f2; border-color: #dc2626; color: #dc2626; }
+
+    .empty-block {
+        padding: 56px 20px !important;
+        text-align: center;
+        white-space: normal !important;
+        color: var(--text-muted);
+    }
+    .empty-block i.big { font-size: 28px; color: #cbd5e1; display: block; margin-bottom: 10px; }
+    .empty-block strong { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 4px; }
+    .empty-block .btn-ghost-adm { margin-top: 14px; }
+
+    /* Footer: range + page size + pagination */
+    .records-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 12px 20px;
+        border-top: 1px solid var(--border-color);
+        font-size: 12.5px;
+        color: var(--text-muted);
+    }
+    .records-foot .per-page { display: inline-flex; align-items: center; gap: 8px; }
+    .records-foot select {
+        height: 32px;
+        padding: 0 8px;
+        border: 1px solid var(--border-strong);
+        border-radius: 7px;
+        background: #ffffff;
+        font-size: 12.5px;
+        color: var(--text-main);
+        cursor: pointer;
+    }
+    .records-foot .pagination { display: flex; gap: 4px; list-style: none; margin: 0; }
+    .page-item a, .page-item span {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        background: #ffffff;
+        color: var(--text-secondary);
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .page-item a:hover { border-color: var(--primary); color: var(--primary); }
+    .page-item.active span { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+    .page-item.disabled span { opacity: 0.45; cursor: not-allowed; }
+    .page-item.gap span { border: none; background: transparent; min-width: 18px; padding: 0; }
+
+    @media (max-width: 1180px) {
+        .app-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 900px) {
+        .filter-bar { grid-template-columns: 1fr 1fr; }
+        .filter-bar .fld-search { grid-column: 1 / -1; }
+    }
+    @media (max-width: 640px) {
+        .app-kpis { grid-template-columns: minmax(0, 1fr); }
+        .filter-bar { grid-template-columns: minmax(0, 1fr); }
+        .filter-bar .fld-actions .btn-primary-adm { flex: 1; }
+        .records-actions { width: 100%; }
+        .records-actions > * { flex: 1; justify-content: center; }
+        .records-foot { justify-content: center; }
+        .copy-btn { opacity: 1; }
     }
 </style>
 
-<!-- Tab Navigation -->
-<div class="tab-nav">
-    <a href="?tab=payday" class="tab-btn <?php echo $activeTab === 'payday' ? 'active' : ''; ?>">
-        <i class="fa-solid fa-calendar-day"></i> Payday (Salary) Loans
+<!-- Tabs -->
+<nav class="app-tabs" aria-label="Application type">
+    <a href="?tab=payday" class="app-tab<?php echo $isPayday ? ' active' : ''; ?>"<?php echo $isPayday ? ' aria-current="page"' : ''; ?>>
+        <i class="fa-solid fa-calendar-day"></i> Payday (salary) loans
+        <span class="count"><?php echo applications_inr((float) $tabCounts['payday']); ?></span>
     </a>
-    <a href="?tab=wizard" class="tab-btn <?php echo $activeTab === 'wizard' ? 'active' : ''; ?>">
-        <i class="fa-solid fa-history"></i> Legacy Wizard Applications (Old)
+    <a href="?tab=wizard" class="app-tab<?php echo !$isPayday ? ' active' : ''; ?>"<?php echo !$isPayday ? ' aria-current="page"' : ''; ?>>
+        <i class="fa-solid fa-clock-rotate-left"></i> Legacy wizard (old)
+        <span class="count"><?php echo applications_inr((float) $tabCounts['wizard']); ?></span>
     </a>
-</div>
+</nav>
 
-<div class="applications-kpi-grid">
-    <?php foreach ($kpiCards as $card): ?>
-        <div class="applications-kpi-card kpi-<?php echo htmlspecialchars($card['tone'], ENT_QUOTES, 'UTF-8'); ?>">
-            <div class="applications-kpi-icon">
-                <i class="fa-solid <?php echo htmlspecialchars($card['icon'], ENT_QUOTES, 'UTF-8'); ?>"></i>
+<!-- KPIs (click to filter) -->
+<div class="app-kpis">
+    <?php foreach ($kpiCards as $card):
+        $tag = $card['href'] ? 'a' : 'div';
+        $isCurrent = false;
+        if ($card['href']) {
+            parse_str(ltrim($card['href'], '?'), $cardQuery);
+            $isCurrent = $filtersActive && $cardQuery == array_filter(['tab' => $activeTab, 'search' => $search, 'status' => $status, 'date_from' => $dateFrom, 'date_to' => $dateTo, 'amount_min' => $amountMin, 'amount_max' => $amountMax, 'loan_type' => $loanType], static fn($v) => $v !== '');
+        }
+    ?>
+        <<?php echo $tag; ?> class="app-kpi <?php echo $card['tone']; ?><?php echo $isCurrent ? ' is-current' : ''; ?>"<?php echo $card['href'] ? ' href="' . applications_e($card['href']) . '"' : ''; ?>>
+            <div style="min-width: 0;">
+                <div class="app-kpi-label"><?php echo applications_e($card['label']); ?></div>
+                <div class="app-kpi-value"><?php echo applications_e($card['value']); ?></div>
+                <div class="app-kpi-sub"><?php echo applications_e($card['sub']); ?></div>
             </div>
-            <div class="applications-kpi-info">
-                <h3><?php echo htmlspecialchars($card['value'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                <p><?php echo htmlspecialchars($card['label'], ENT_QUOTES, 'UTF-8'); ?></p>
-                <span><?php echo htmlspecialchars($card['sub'], ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-        </div>
+            <span class="app-kpi-icon"><i class="fa-solid <?php echo $card['icon']; ?>"></i></span>
+        </<?php echo $tag; ?>>
     <?php endforeach; ?>
 </div>
 
-<div class="data-card">
-    <div class="card-header-flex">
-        <h2 class="card-title-text">
-            <i class="fa-solid fa-folder-open" style="color: var(--primary); margin-right: 8px;"></i> 
-            <?php echo $activeTab === 'payday' ? 'Payday (Salary) Loan Lead Records' : 'Legacy Wizard (Old) Lead Records'; ?>
-        </h2>
-        <?php if ($activeTab === 'payday'): ?>
-            <a href="edit-application.php?type=payday&page=<?php echo $page; ?>&<?php echo applications_build_query($baseQueryParams); ?>" class="btn-primary-adm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-plus"></i> Add Application
-            </a>
-        <?php endif; ?>
-    </div>
-
-    <!-- Filter Form -->
-    <form method="GET" action="applications.php" class="applications-filter-panel filter-row" id="applicationsFilterForm">
-        <input type="hidden" name="tab" value="<?php echo htmlspecialchars($activeTab, ENT_QUOTES, 'UTF-8'); ?>">
-
-        <div class="applications-filter-grid">
-            <div class="filter-field">
-                <label for="appSearch">Search</label>
-                <input type="text" id="appSearch" name="search" placeholder="Name, email, phone, PAN, ID..." value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-
-            <?php if ($activeTab === 'payday'): ?>
-                <div class="filter-field">
-                    <label for="appStatus">Status</label>
-                    <select name="status" id="appStatus">
-                        <option value="">All Statuses</option>
-                        <option value="draft" <?php echo $status === 'draft' ? 'selected' : ''; ?>>Draft</option>
-                        <option value="submitted" <?php echo $status === 'submitted' ? 'selected' : ''; ?>>Submitted</option>
-                        <option value="review" <?php echo $status === 'review' ? 'selected' : ''; ?>>Review</option>
-                        <option value="approved" <?php echo $status === 'approved' ? 'selected' : ''; ?>>Approved</option>
-                        <option value="rejected" <?php echo $status === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
-                        <option value="disbursed" <?php echo $status === 'disbursed' ? 'selected' : ''; ?>>Disbursed</option>
-                    </select>
-                </div>
-            <?php else: ?>
-                <div class="filter-field">
-                    <label for="appLoanType">Loan Type</label>
-                    <select name="loan_type" id="appLoanType">
-                        <option value="">All Loan Types</option>
-                        <?php foreach ($loanTypeOptions as $option): ?>
-                            <option value="<?php echo htmlspecialchars($option, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $loanType === $option ? 'selected' : ''; ?>><?php echo htmlspecialchars($option, ENT_QUOTES, 'UTF-8'); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            <?php endif; ?>
-
-            <div class="filter-field">
-                <label for="dateFrom">From Date</label>
-                <input type="date" id="dateFrom" name="date_from" value="<?php echo htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-
-            <div class="filter-field">
-                <label for="dateTo">To Date</label>
-                <input type="date" id="dateTo" name="date_to" value="<?php echo htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-
-            <div class="filter-field">
-                <label for="amountMin">Min Amount</label>
-                <input type="number" id="amountMin" name="amount_min" min="0" step="1000" placeholder="0" value="<?php echo htmlspecialchars($amountMin, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-
-            <div class="filter-field">
-                <label for="amountMax">Max Amount</label>
-                <input type="number" id="amountMax" name="amount_max" min="0" step="1000" placeholder="100000" value="<?php echo htmlspecialchars($amountMax, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-        </div>
-
-        <div class="filter-actions">
-            <span class="filter-summary"><?php echo number_format($totalRecords); ?> matching application<?php echo $totalRecords === 1 ? '' : 's'; ?></span>
-            <div class="filter-action-buttons">
-                <button type="submit" class="btn-primary-adm"><i class="fa-solid fa-filter"></i> Apply Filter</button>
-                <a href="export-csv.php?type=<?php echo htmlspecialchars($activeTab, ENT_QUOTES, 'UTF-8'); ?>" class="btn-export-adm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;" target="_blank">
-                    <i class="fa-solid fa-file-csv"></i> Export CSV
-                </a>
-                <?php if ($filtersActive): ?>
-                    <a href="applications.php?tab=<?php echo htmlspecialchars($activeTab, ENT_QUOTES, 'UTF-8'); ?>" class="btn-outline-adm" title="Reset filters">
-                        <i class="fa-solid fa-rotate-left"></i> Reset
-                    </a>
+<section class="records-card">
+    <div class="records-head">
+        <div>
+            <div class="records-title"><?php echo $isPayday ? 'Payday applications' : 'Legacy wizard applications'; ?></div>
+            <div class="records-meta" id="recordsMeta">
+                <?php if ($totalRecords > 0): ?>
+                    Showing <?php echo applications_inr((float) $rangeStart); ?>–<?php echo applications_inr((float) $rangeEnd); ?> of <span data-total><?php echo applications_inr((float) $totalRecords); ?></span><?php echo $filtersActive ? ' matching' : ''; ?> application<?php echo $totalRecords === 1 ? '' : 's'; ?>
+                <?php else: ?>
+                    No matching applications
                 <?php endif; ?>
             </div>
         </div>
+        <div class="records-actions">
+            <button type="button" class="btn-ghost-adm" id="exportCsvBtn" title="Download the <?php echo $filtersActive ? 'filtered' : 'full'; ?> list as CSV"<?php echo $totalRecords === 0 ? ' disabled style="opacity:.5;cursor:not-allowed;"' : ''; ?>>
+                <i class="fa-solid fa-file-arrow-down"></i> Export<?php echo $filtersActive ? ' filtered' : ''; ?> CSV
+            </button>
+            <?php if ($isPayday): ?>
+                <a href="edit-application.php?type=payday&amp;page=<?php echo $page; ?>&amp;<?php echo applications_e(applications_build_query($baseQueryParams)); ?>" class="btn-primary-adm">
+                    <i class="fa-solid fa-plus"></i> Add application
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <?php if ($isPayday): ?>
+        <!-- Status quick filters (counts respect the other active filters) -->
+        <div class="status-chips" role="tablist" aria-label="Filter by status">
+            <a role="tab" aria-selected="<?php echo $status === '' ? 'true' : 'false'; ?>" class="status-chip<?php echo $status === '' ? ' active' : ''; ?>" href="?<?php echo applications_e(applications_build_query($baseQueryParams, ['status' => '', 'page' => ''])); ?>">
+                All <span class="num"><?php echo applications_inr((float) $statusChipTotal); ?></span>
+            </a>
+            <?php foreach ($statusLabels as $key => $label):
+                $chipCount = $statusChipCounts[$key];
+                $isActiveChip = $status === $key;
+            ?>
+                <a role="tab" aria-selected="<?php echo $isActiveChip ? 'true' : 'false'; ?>" class="status-chip<?php echo $isActiveChip ? ' active' : ''; ?><?php echo $chipCount === 0 && !$isActiveChip ? ' is-empty' : ''; ?>" href="?<?php echo applications_e(applications_build_query($baseQueryParams, ['status' => $key, 'page' => ''])); ?>">
+                    <span class="dot dot-<?php echo $key; ?>"></span><?php echo $label; ?> <span class="num"><?php echo applications_inr((float) $chipCount); ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Filters -->
+    <form method="GET" action="applications.php" class="filter-bar" id="applicationsFilterForm">
+        <input type="hidden" name="tab" value="<?php echo applications_e($activeTab); ?>">
+        <?php if ($status !== ''): ?><input type="hidden" name="status" value="<?php echo applications_e($status); ?>"><?php endif; ?>
+        <?php if ($limit !== 10): ?><input type="hidden" name="per_page" value="<?php echo $limit; ?>"><?php endif; ?>
+
+        <div class="fld fld-search">
+            <label for="appSearch">Search</label>
+            <div class="search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" id="appSearch" name="search" placeholder="Name, mobile, email, PAN or <?php echo $isPayday ? 'application ID' : 'reference'; ?>" value="<?php echo applications_e($search); ?>" autocomplete="off">
+            </div>
+        </div>
+
+        <?php if (!$isPayday): ?>
+            <div class="fld">
+                <label for="appLoanType">Loan type</label>
+                <select name="loan_type" id="appLoanType" data-autosubmit>
+                    <option value="">All loan types</option>
+                    <?php foreach ($loanTypeOptions as $option): ?>
+                        <option value="<?php echo applications_e($option); ?>" <?php echo $loanType === $option ? 'selected' : ''; ?>><?php echo applications_e($option); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        <?php endif; ?>
+
+        <div class="fld">
+            <label for="dateFrom">Applied from</label>
+            <input type="date" id="dateFrom" name="date_from" max="<?php echo $today; ?>" value="<?php echo applications_e($dateFrom); ?>">
+        </div>
+        <div class="fld">
+            <label for="dateTo">Applied to</label>
+            <input type="date" id="dateTo" name="date_to" max="<?php echo $today; ?>" value="<?php echo applications_e($dateTo); ?>">
+        </div>
+        <div class="fld">
+            <label for="amountMin">Amount (₹)</label>
+            <div class="range">
+                <input type="number" id="amountMin" name="amount_min" min="0" step="1000" inputmode="numeric" placeholder="Min" aria-label="Minimum amount" value="<?php echo applications_e($amountMin); ?>">
+                <span>–</span>
+                <input type="number" id="amountMax" name="amount_max" min="0" step="1000" inputmode="numeric" placeholder="Max" aria-label="Maximum amount" value="<?php echo applications_e($amountMax); ?>">
+            </div>
+        </div>
+        <div class="fld fld-actions">
+            <button type="submit" class="btn-primary-adm"><i class="fa-solid fa-filter"></i> Apply</button>
+        </div>
     </form>
 
+    <?php if (!empty($activeFilterChips)): ?>
+        <div class="active-filters">
+            <span>Filtered by</span>
+            <?php foreach ($activeFilterChips as $chip): ?>
+                <a class="filter-pill" href="?<?php echo applications_e(applications_build_query($baseQueryParams, $chip['remove'] + ['page' => ''])); ?>" title="Remove this filter">
+                    <?php echo applications_e($chip['label']); ?> <i class="fa-solid fa-xmark"></i>
+                </a>
+            <?php endforeach; ?>
+            <a class="clear-all" href="?<?php echo applications_e(applications_build_query(['tab' => $activeTab, 'per_page' => $baseQueryParams['per_page']])); ?>">Clear all</a>
+        </div>
+    <?php endif; ?>
+
+    <!-- Filtered CSV export (POST + CSRF, uses the filters currently applied) -->
     <form method="POST" action="api.php" id="applicationsExportForm" style="display:none;">
         <input type="hidden" name="action" value="export_applications">
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="tab" value="<?php echo htmlspecialchars($activeTab, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="status" value="<?php echo htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="date_from" value="<?php echo htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="date_to" value="<?php echo htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="amount_min" value="<?php echo htmlspecialchars($amountMin, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="amount_max" value="<?php echo htmlspecialchars($amountMax, ENT_QUOTES, 'UTF-8'); ?>">
-        <input type="hidden" name="loan_type" value="<?php echo htmlspecialchars($loanType, ENT_QUOTES, 'UTF-8'); ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo applications_e($_SESSION['csrf_token'] ?? ''); ?>">
+        <input type="hidden" name="tab" value="<?php echo applications_e($activeTab); ?>">
+        <input type="hidden" name="search" value="<?php echo applications_e($search); ?>">
+        <input type="hidden" name="status" value="<?php echo applications_e($status); ?>">
+        <input type="hidden" name="date_from" value="<?php echo applications_e($dateFrom); ?>">
+        <input type="hidden" name="date_to" value="<?php echo applications_e($dateTo); ?>">
+        <input type="hidden" name="amount_min" value="<?php echo applications_e($amountMin); ?>">
+        <input type="hidden" name="amount_max" value="<?php echo applications_e($amountMax); ?>">
+        <input type="hidden" name="loan_type" value="<?php echo applications_e($loanType); ?>">
     </form>
 
     <!-- Table -->
@@ -679,55 +837,92 @@ if ($totalPages < 1) $totalPages = 1;
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>App ID</th>
-                    <th>Full Name</th>
+                    <th>Applicant</th>
+                    <th><?php echo $isPayday ? 'Application ID' : 'Reference'; ?></th>
                     <th>Mobile</th>
-                    <th>Email</th>
-                    <th>Loan Type</th>
-                    <th>Amount</th>
-                    <th>Applied Date</th>
-                    <?php if ($activeTab === 'payday'): ?>
+                    <?php if ($isPayday): ?>
+                        <th class="th-right">Amount</th>
                         <th>Status</th>
+                    <?php else: ?>
+                        <th>Loan type</th>
+                        <th class="th-right">Amount</th>
                     <?php endif; ?>
-                    <th>Actions</th>
+                    <th>Applied</th>
+                    <th class="th-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="applicationsTbody">
                 <?php if (empty($apps)): ?>
-                    <tr>
-                        <td colspan="<?php echo $activeTab === 'payday' ? 9 : 8; ?>" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No applications matching these criteria.</td>
+                    <tr class="row-empty">
+                        <td colspan="<?php echo $colCount; ?>" class="empty-block">
+                            <i class="fa-solid fa-inbox big"></i>
+                            <?php if ($filtersActive): ?>
+                                <strong>No applications match these filters</strong>
+                                Try widening the date range or clearing a filter.<br>
+                                <a class="btn-ghost-adm" href="?tab=<?php echo $activeTab; ?>"><i class="fa-solid fa-rotate-left"></i> Clear filters</a>
+                            <?php else: ?>
+                                <strong>No applications yet</strong>
+                                New applications will appear here as they come in.
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($apps as $app): ?>
-                        <?php 
-                            $displayId = $activeTab === 'payday' ? $app['application_id'] : $app['application_ref']; 
-                            $loanTypeLabel = $activeTab === 'payday' ? 'Payday' : ($app['loan_type'] ?? 'N/A');
-                            $statusValue = (string) ($app['status'] ?? '');
-                            $statusClass = preg_replace('/[^a-z0-9_-]/i', '', $statusValue);
-                            // Format loan amount correctly (apply_loan_applications store it as text or decimal)
-                            $displayAmount = is_numeric($app['loan_amount']) ? number_format((float)$app['loan_amount'], 2) : htmlspecialchars($app['loan_amount'], ENT_QUOTES, 'UTF-8');
-                        ?>
-                        <tr id="app-row-<?php echo (int) $app['id']; ?>">
-                            <td><strong style="color: var(--text-main); font-weight: 700;"><?php echo htmlspecialchars($displayId, ENT_QUOTES, 'UTF-8'); ?></strong></td>
-                            <td><?php echo htmlspecialchars($app['full_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($app['mobile'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($app['email'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><span style="background: rgba(24, 82, 156, 0.08); padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); white-space: nowrap;"><?php echo htmlspecialchars($loanTypeLabel, ENT_QUOTES, 'UTF-8'); ?></span></td>
-                            <td>&#8377;<?php echo $displayAmount; ?></td>
-                            <td><?php echo date('d M Y, h:i A', strtotime($app['created_at'])); ?></td>
-                            <?php if ($activeTab === 'payday'): ?>
-                                <td><span class="badge-status badge-<?php echo htmlspecialchars($statusClass, ENT_QUOTES, 'UTF-8'); ?>" id="badge-<?php echo (int) $app['id']; ?>"><?php echo htmlspecialchars($statusValue, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                    <?php foreach ($apps as $app):
+                        $rowId = (int) $app['id'];
+                        $displayId = (string) ($isPayday ? ($app['application_id'] ?? '') : ($app['application_ref'] ?? ''));
+                        $fullName = trim((string) ($app['full_name'] ?? ''));
+                        $hasName = $fullName !== '' && strtoupper($fullName) !== 'N/A';
+                        $email = trim((string) ($app['email'] ?? ''));
+                        $statusValue = strtolower((string) ($app['status'] ?? ''));
+                        $statusClass = preg_replace('/[^a-z0-9_-]/i', '', $statusValue);
+                        $rawAmount = str_replace(',', '', (string) ($app['loan_amount'] ?? ''));
+                        $displayAmount = is_numeric($rawAmount) ? '₹' . applications_inr((float) $rawAmount) : ($rawAmount !== '' ? applications_e($app['loan_amount']) : '—');
+                        $createdTs = !empty($app['created_at']) ? strtotime((string) $app['created_at']) : false;
+                        $detailQuery = applications_build_query($baseQueryParams, ['page' => $page]);
+                        $viewUrl = 'view-application.php?id=' . $rowId . '&type=' . $activeTab . '&' . $detailQuery;
+                        $editUrl = 'edit-application.php?id=' . $rowId . '&type=' . $activeTab . '&' . $detailQuery;
+                    ?>
+                        <tr id="app-row-<?php echo $rowId; ?>" data-href="<?php echo applications_e($viewUrl); ?>">
+                            <td>
+                                <?php if ($hasName): ?>
+                                    <div class="cell-main"><?php echo applications_e($fullName); ?></div>
+                                <?php else: ?>
+                                    <div class="cell-main placeholder"><?php echo $statusValue === 'draft' ? 'Incomplete draft' : 'Name not provided'; ?></div>
+                                <?php endif; ?>
+                                <div class="cell-sub" title="<?php echo applications_e($email); ?>"><?php echo $email !== '' ? applications_e($email) : '—'; ?></div>
+                            </td>
+                            <td>
+                                <span class="cell-id">
+                                    <?php echo applications_e($displayId); ?>
+                                    <?php if ($displayId !== ''): ?>
+                                        <button type="button" class="copy-btn" data-copy="<?php echo applications_e($displayId); ?>" title="Copy ID" aria-label="Copy application ID"><i class="fa-regular fa-copy"></i></button>
+                                    <?php endif; ?>
+                                </span>
+                            </td>
+                            <td style="font-variant-numeric: tabular-nums;"><?php echo applications_e($app['mobile'] ?? '—'); ?></td>
+                            <?php if ($isPayday): ?>
+                                <td class="td-right cell-amount"><?php echo $displayAmount; ?></td>
+                                <td>
+                                    <span class="badge-status badge-<?php echo applications_e($statusClass); ?>" id="badge-<?php echo $rowId; ?>"><?php echo applications_e($statusLabels[$statusValue] ?? ($statusValue !== '' ? $statusValue : 'Unknown')); ?></span>
+                                </td>
+                            <?php else: ?>
+                                <td><span class="type-chip"><?php echo applications_e(($app['loan_type'] ?? '') !== '' ? $app['loan_type'] : 'N/A'); ?></span></td>
+                                <td class="td-right cell-amount"><?php echo $displayAmount; ?></td>
                             <?php endif; ?>
-                            <td style="white-space: nowrap;">
-                                <a href="view-application.php?id=<?php echo (int) $app['id']; ?>&type=<?php echo $activeTab; ?>&page=<?php echo $page; ?>&<?php echo applications_build_query($baseQueryParams); ?>" class="btn-action" title="View Details" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; text-decoration: none;">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                <a href="edit-application.php?id=<?php echo (int) $app['id']; ?>&type=<?php echo $activeTab; ?>&page=<?php echo $page; ?>&<?php echo applications_build_query($baseQueryParams); ?>" class="btn-action" title="Edit Details" style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; text-decoration: none; margin-left: 4px;">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </a>
-                                <button type="button" class="btn-action delete-btn" data-id="<?php echo (int) $app['id']; ?>" data-type="<?php echo $activeTab; ?>" title="Delete Application" style="border-color: rgba(239, 68, 68, 0.2); color: #fca5a5; margin-left: 4px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: transparent; cursor: pointer; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2);">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
+                            <td>
+                                <?php if ($createdTs): ?>
+                                    <div class="cell-date"><?php echo date('d M Y', $createdTs); ?></div>
+                                    <div class="cell-time"><?php echo date('h:i A', $createdTs); ?></div>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
+                            <td class="td-right">
+                                <div class="row-actions">
+                                    <a href="<?php echo applications_e($viewUrl); ?>" class="btn-action" title="View details" aria-label="View application"><i class="fa-solid fa-eye"></i></a>
+                                    <a href="<?php echo applications_e($editUrl); ?>" class="btn-action" title="Edit" aria-label="Edit application"><i class="fa-solid fa-pen-to-square"></i></a>
+                                    <button type="button" class="btn-action danger delete-btn" data-id="<?php echo $rowId; ?>" data-type="<?php echo $activeTab; ?>" data-label="<?php echo applications_e($hasName ? $fullName : $displayId); ?>" title="Delete" aria-label="Delete application"><i class="fa-solid fa-trash-can"></i></button>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -736,160 +931,198 @@ if ($totalPages < 1) $totalPages = 1;
         </table>
     </div>
 
-    <!-- Pagination -->
-    <?php if ($totalPages > 1): ?>
-        <ul class="pagination">
-            <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                <?php if ($page <= 1): ?>
-                    <span style="opacity:0.5; cursor:not-allowed;">&laquo; Prev</span>
-                <?php else: ?>
-                    <a href="?<?php echo applications_build_query($baseQueryParams, ['page' => $page - 1]); ?>">&laquo; Prev</a>
-                <?php endif; ?>
-            </li>
-            
-            <?php
-            $window = 2; // Sliding window range around active page
-            $pagesToShow = [];
-            if ($totalPages <= 7) {
-                for ($i = 1; $i <= $totalPages; $i++) {
-                    $pagesToShow[] = $i;
-                }
-            } else {
-                $pagesToShow[] = 1;
-                $start = max(2, $page - $window);
-                $end = min($totalPages - 1, $page + $window);
-                
-                if ($start > 2) {
-                    $pagesToShow[] = '...';
-                }
-                
-                for ($i = $start; $i <= $end; $i++) {
-                    $pagesToShow[] = $i;
-                }
-                
-                if ($end < $totalPages - 1) {
-                    $pagesToShow[] = '...';
-                }
-                
-                $pagesToShow[] = $totalPages;
-            }
+    <!-- Footer: page size + pagination -->
+    <?php if ($totalRecords > 0): ?>
+        <div class="records-foot">
+            <div class="per-page">
+                <label for="perPageSelect">Rows per page</label>
+                <select id="perPageSelect" aria-label="Rows per page">
+                    <?php foreach ($perPageOptions as $opt): ?>
+                        <option value="<?php echo $opt; ?>" <?php echo $limit === $opt ? 'selected' : ''; ?>><?php echo $opt; ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span>Page <?php echo $page; ?> of <?php echo applications_inr((float) $totalPages); ?></span>
+            </div>
 
-            foreach ($pagesToShow as $p):
-                if ($p === '...'):
-            ?>
-                    <li class="page-item disabled">
-                        <span style="border: none; background: transparent; cursor: default;">...</span>
-                    </li>
-                <?php else: ?>
-                    <li class="page-item <?php echo $p === $page ? 'active' : ''; ?>">
-                        <?php if ($p === $page): ?>
-                            <span><?php echo $p; ?></span>
+            <?php if ($totalPages > 1): ?>
+                <ul class="pagination" aria-label="Pagination">
+                    <li class="page-item<?php echo $page <= 1 ? ' disabled' : ''; ?>">
+                        <?php if ($page <= 1): ?>
+                            <span aria-hidden="true"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>
                         <?php else: ?>
-                            <a href="?<?php echo applications_build_query($baseQueryParams, ['page' => $p]); ?>"><?php echo $p; ?></a>
+                            <a class="page-link" href="?<?php echo applications_e(applications_build_query($baseQueryParams, ['page' => $page - 1])); ?>" aria-label="Previous page"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>
                         <?php endif; ?>
                     </li>
-                <?php endif; ?>
-            <?php endforeach; ?>
-            
-            <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
-                <?php if ($page >= $totalPages): ?>
-                    <span style="opacity:0.5; cursor:not-allowed;">Next &raquo;</span>
-                <?php else: ?>
-                    <a href="?<?php echo applications_build_query($baseQueryParams, ['page' => $page + 1]); ?>">Next &raquo;</a>
-                <?php endif; ?>
-            </li>
-        </ul>
+                    <?php
+                    $window = 1;
+                    $pagesToShow = [];
+                    if ($totalPages <= 7) {
+                        $pagesToShow = range(1, $totalPages);
+                    } else {
+                        $pagesToShow[] = 1;
+                        $start = max(2, $page - $window);
+                        $end = min($totalPages - 1, $page + $window);
+                        if ($page <= 3) { $end = 4; }
+                        if ($page >= $totalPages - 2) { $start = $totalPages - 3; }
+                        if ($start > 2) { $pagesToShow[] = '...'; }
+                        for ($i = $start; $i <= $end; $i++) { $pagesToShow[] = $i; }
+                        if ($end < $totalPages - 1) { $pagesToShow[] = '...'; }
+                        $pagesToShow[] = $totalPages;
+                    }
+                    foreach ($pagesToShow as $p):
+                        if ($p === '...'): ?>
+                            <li class="page-item gap"><span>…</span></li>
+                        <?php elseif ($p === $page): ?>
+                            <li class="page-item active"><span aria-current="page"><?php echo $p; ?></span></li>
+                        <?php else: ?>
+                            <li class="page-item"><a class="page-link" href="?<?php echo applications_e(applications_build_query($baseQueryParams, ['page' => $p])); ?>"><?php echo $p; ?></a></li>
+                        <?php endif;
+                    endforeach; ?>
+                    <li class="page-item<?php echo $page >= $totalPages ? ' disabled' : ''; ?>">
+                        <?php if ($page >= $totalPages): ?>
+                            <span aria-hidden="true"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>
+                        <?php else: ?>
+                            <a class="page-link" href="?<?php echo applications_e(applications_build_query($baseQueryParams, ['page' => $page + 1])); ?>" aria-label="Next page"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>
+                        <?php endif; ?>
+                    </li>
+                </ul>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
-</div>
+</section>
 
-
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Delete Application Click Handler
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+(function () {
+    const csrfToken = <?php echo json_encode((string) ($_SESSION['csrf_token'] ?? '')); ?>;
+    const tbody = document.getElementById('applicationsTbody');
+
+    // Whole row opens the application (except when clicking a control or selecting text).
+    if (tbody) {
+        tbody.addEventListener('click', function (e) {
+            const row = e.target.closest('tr[data-href]');
+            if (!row || e.target.closest('a, button, input, select')) return;
+            if (window.getSelection && String(window.getSelection()).length > 0) return;
+            if (e.ctrlKey || e.metaKey) {
+                window.open(row.dataset.href, '_blank');
+            } else {
+                window.location.href = row.dataset.href;
+            }
+        });
+    }
+
+    // Copy application ID
+    document.querySelectorAll('.copy-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const text = btn.getAttribute('data-copy') || '';
+            const done = function () {
+                const icon = btn.querySelector('i');
+                btn.classList.add('copied');
+                if (icon) icon.className = 'fa-solid fa-check';
+                setTimeout(function () {
+                    btn.classList.remove('copied');
+                    if (icon) icon.className = 'fa-regular fa-copy';
+                }, 1200);
+            };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done).catch(function () {});
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); done(); } catch (err) {}
+                ta.remove();
+            }
+        });
+    });
+
+    // Loan type select applies immediately
+    document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
+        el.addEventListener('change', function () {
+            if (el.form) el.form.requestSubmit ? el.form.requestSubmit() : el.form.submit();
+        });
+    });
+
+    // Rows per page
+    const perPage = document.getElementById('perPageSelect');
+    if (perPage) {
+        perPage.addEventListener('change', function () {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', perPage.value);
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        });
+    }
+
+    // Filtered CSV export (submits the applied filters, not half-typed ones)
+    const exportBtn = document.getElementById('exportCsvBtn');
+    const exportForm = document.getElementById('applicationsExportForm');
+    if (exportBtn && exportForm) {
+        exportBtn.addEventListener('click', function () {
+            if (exportBtn.disabled) return;
+            exportForm.submit();
+            const original = exportBtn.innerHTML;
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Preparing CSV…';
+            setTimeout(function () {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = original;
+            }, 2500);
+        });
+    }
+
+    // Delete
+    document.querySelectorAll('.delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
             const id = btn.getAttribute('data-id');
             const type = btn.getAttribute('data-type') || 'payday';
+            const label = btn.getAttribute('data-label') || 'this application';
             Swal.fire({
                 title: 'Delete application?',
-                text: 'This action cannot be undone.',
+                html: 'Delete <b></b>? It will be removed from this list. A copy is kept in the deleted-records archive.',
                 icon: 'warning',
                 showCancelButton: true,
+                focusCancel: true,
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#475569',
-                confirmButtonText: 'Yes, delete it'
-            }).then((result) => {
+                confirmButtonText: 'Delete',
+                didOpen: function (popup) {
+                    const b = popup.querySelector('.swal2-html-container b');
+                    if (b) b.textContent = label;
+                }
+            }).then(function (result) {
                 if (!result.isConfirmed) return;
-
-                Swal.fire({
-                    title: 'Deleting application...',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading(); }
-                });
+                Swal.fire({ title: 'Deleting…', allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } });
 
                 const fd = new FormData();
                 fd.append('action', 'delete_application');
                 fd.append('id', id);
                 fd.append('type', type);
-                fd.append('csrf_token', '<?php echo $_SESSION['csrf_token'] ?? ''; ?>');
+                fd.append('csrf_token', csrfToken);
 
-                fetch('api.php', {
-                    method: 'POST',
-                    body: fd
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const row = document.getElementById(`app-row-${id}`);
+                fetch('api.php', { method: 'POST', body: fd })
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (data.status !== 'success') throw new Error(data.message || 'Failed to delete application.');
+                        const row = document.getElementById('app-row-' + id);
                         if (row) row.remove();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Deleted',
-                            text: 'Application deleted successfully.',
-                            timer: 1300,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        throw new Error(data.message || "Failed to delete application.");
-                    }
-                })
-                .catch(err => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Delete failed',
-                        text: err.message || 'Unable to delete application.'
+                        Swal.fire({ icon: 'success', title: 'Deleted', text: data.message || 'Application deleted.', timer: 1400, showConfirmButton: false });
+                        // Reload when the page is now empty so pagination and counts stay correct.
+                        if (tbody && !tbody.querySelector('tr[data-href]')) {
+                            setTimeout(function () { window.location.reload(); }, 1400);
+                        }
+                    })
+                    .catch(function (err) {
+                        Swal.fire({ icon: 'error', title: 'Delete failed', text: err.message || 'Unable to delete application.' });
                     });
-                });
             });
         });
     });
-
-// Local loading overlay replaced by global footer handler
-
-    const exportForm = document.getElementById('applicationsExportForm');
-    function syncExportFilters() {
-        if (!filterForm || !exportForm) return;
-
-        ['search', 'status', 'date_from', 'date_to', 'amount_min', 'amount_max', 'loan_type'].forEach(name => {
-            const source = filterForm.querySelector(`[name="${name}"]`);
-            const target = exportForm.querySelector(`[name="${name}"]`);
-            if (source && target) {
-                target.value = source.value;
-            }
-        });
-    }
-
-    if (filterForm && exportForm) {
-        filterForm.addEventListener('input', syncExportFilters);
-        filterForm.addEventListener('change', syncExportFilters);
-        exportForm.addEventListener('submit', () => {
-            syncExportFilters();
-            loadingText.innerText = "Preparing Excel Download...";
-            loadingOverlay.classList.add('active');
-            setTimeout(() => loadingOverlay.classList.remove('active'), 1800);
-        });
-    }
+})();
 </script>
 
 <?php include 'footer.php'; ?>

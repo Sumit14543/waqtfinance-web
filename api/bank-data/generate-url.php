@@ -26,7 +26,7 @@ if (function_exists('waqt_enforce_rate_limit')) {
 }
 
 $host = $_SERVER['HTTP_HOST'] ?? '';
-$isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || PHP_SAPI === 'cli';
+$isLocal = waqt_is_local_request();
 
 // 1. Mandatory Session Gate: Mobile OTP verification required before paid AA initiation
 $verifiedMobile = $_SESSION['lead_verified_mobile'] ?? '';

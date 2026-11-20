@@ -2,6 +2,7 @@
 $current_page = basename($_SERVER['PHP_SELF'], ".php");
 ?>
 <link rel="stylesheet" href="<?php echo $prefix ?? ''; ?>assets/css/responsive-header-fixes.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/responsive-header-fixes.css'); ?>">
+<link rel="stylesheet" href="<?php echo $prefix ?? ''; ?>assets/css/site-responsive.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/site-responsive.css'); ?>">
 
 <div class="loan-topbar">
   <marquee behavior="scroll" scrollamount="5">
@@ -79,10 +80,8 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
       </div>
 
       <div class="loan-phone">
-        <i data-lucide="mail"></i>
-        <span style="margin-right:20px">customercare@waqtfinance.com</span>
-        <i data-lucide="phone"></i>
-        9217086610
+        <a href="mailto:customercare@waqtfinance.com"><i data-lucide="mail" aria-hidden="true"></i><span>customercare@waqtfinance.com</span></a>
+        <a href="tel:+919217086610"><i data-lucide="phone" aria-hidden="true"></i><span>+91 92170 86610</span></a>
       </div>
     </div>
   </div>
@@ -109,35 +108,25 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
         <a href="<?php echo $prefix; ?>about-us" class="<?= ($current_page == 'about-us') ? 'active' : '' ?>">About</a>
         <a href="<?php echo $prefix; ?>products" class="<?= ($current_page == 'products') ? 'active' : '' ?>">Products</a>
         <?php
+        // Published locations from Admin > Location CMS (falls back to config/location-pages.php if the table is missing).
         $header_locations = [];
-        if (function_exists('db')) {
-            try {
-                $header_loc_res = db()->query("SELECT name, slug FROM location_pages WHERE status = 'published' ORDER BY name ASC");
-                if ($header_loc_res) {
-                    $header_locations = $header_loc_res->fetch_all(MYSQLI_ASSOC);
-                }
-            } catch (Throwable $e) {
-                error_log($e->getMessage());
-            }
+        try {
+            require_once __DIR__ . '/location_data.php';
+            $header_locations = array_map(static fn(array $l): array => ['slug' => $l['slug'], 'name' => $l['name']], waqt_list_locations());
+        } catch (Throwable $e) {
+            error_log('Header locations: ' . $e->getMessage());
         }
-        if (empty($header_locations)) {
-            $header_locations = [
-                ['slug' => 'delhi-ncr', 'name' => 'Delhi NCR'],
-                ['slug' => 'delhi', 'name' => 'Delhi'],
-                ['slug' => 'noida', 'name' => 'Noida & Greater Noida'],
-                ['slug' => 'gurugram', 'name' => 'Gurugram']
-            ];
-        }
-        $header_active_slugs = array_column($header_locations, 'slug');
-        $header_active_pages = array_map(fn($s) => 'loan-in-' . $s, $header_active_slugs);
-        $is_loc_active = in_array($current_page, $header_active_pages, true);
+        // Location pages are served by location-detail.php / product-city-landing.php, so use their slug for highlighting.
+        $header_current_loc = isset($location_key) ? (string) $location_key : (isset($city_key) ? (string) $city_key : '');
+        $is_loc_active = $header_current_loc !== '' || $current_page === 'locations';
         ?>
         <div class="wf-nav-dropdown">
           <a href="#" class="wf-dropdown-trigger <?= $is_loc_active ? 'active' : '' ?>">Locations <i class="fas fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i></a>
           <div class="wf-dropdown-menu">
             <?php foreach ($header_locations as $loc): ?>
-              <a href="<?php echo $prefix; ?>loan-in-<?php echo htmlspecialchars($loc['slug']); ?>" class="<?= ($current_page == 'loan-in-' . $loc['slug']) ? 'active' : '' ?>"><?php echo htmlspecialchars($loc['name']); ?></a>
+              <a href="<?php echo $prefix; ?>loan-in-<?php echo htmlspecialchars($loc['slug']); ?>" class="<?= ($header_current_loc === $loc['slug']) ? 'active' : '' ?>"><?php echo htmlspecialchars($loc['name']); ?></a>
             <?php endforeach; ?>
+            <a href="<?php echo $prefix; ?>locations" class="wf-dropdown-all <?= ($current_page === 'locations') ? 'active' : '' ?>">All locations <i class="fas fa-arrow-right" style="font-size: 10px; margin-left: 4px;"></i></a>
           </div>
         </div>
         <a href="<?php echo $prefix; ?>faqs" class="<?= ($current_page == 'faqs' || $current_page == 'faq') ? 'active' : '' ?>">FAQs</a>
@@ -179,202 +168,106 @@ $current_page = basename($_SERVER['PHP_SELF'], ".php");
 </script>
 
 <!-- Mobile Navigation Drawer (Offcanvas) -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel" style="width: 280px; background: #ffffff;">
-  <div class="offcanvas-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
-    <div class="loan-logo">
-      <a href="/">
-        <img src="<?php echo $prefix; ?>assets/images/logo1.webp" alt="Waqt Finance Logo" style="height: 36px; width: auto;">
-      </a>
-    </div>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" style="font-size: 14px; color: #475569; background: none; border: none; padding: 0; cursor: pointer;"><i class="bi bi-x-lg"></i></button>
+<?php
+$wf_home = ($prefix ?? '') !== '' ? $prefix : './';
+$wf_cur = static fn(array $pages): bool => in_array($current_page, $pages, true);
+$wf_link = static function (string $href, string $icon, string $label, bool $active) use ($prefix): string {
+    return '<a href="' . htmlspecialchars(($prefix ?? '') . ($href !== '' ? $href : './'), ENT_QUOTES, 'UTF-8') . '" class="bank-nav-link' . ($active ? ' active" aria-current="page' : '') . '">'
+        . '<i class="bi ' . $icon . '" aria-hidden="true"></i><span>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span></a>';
+};
+?>
+<div class="offcanvas offcanvas-start wf-custom-drawer" tabindex="-1" id="staticBackdrop" aria-labelledby="wfDrawerTitle">
+  <div class="offcanvas-header">
+    <a href="<?php echo htmlspecialchars($wf_home, ENT_QUOTES, 'UTF-8'); ?>" class="wf-drawer-header-brand" aria-label="Waqt Finance home">
+      <img src="<?php echo $prefix; ?>assets/images/logo1.webp" alt="" width="40" height="40">
+      <span id="wfDrawerTitle">Waqt Finance</span>
+    </a>
+    <button type="button" class="wf-drawer-close-btn" data-bs-dismiss="offcanvas" aria-label="Close menu"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
   </div>
-  <div class="offcanvas-body" style="padding: 20px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box; overflow-y: auto; height: calc(100% - 70px);">
-    <div class="nav-item-custom">
-      <a href="<?php echo $prefix; ?>repay" class="bank-nav-link">
-        <i class="bi bi-cash-coin"></i>
-        <span>Repay</span>
-      </a>
-    </div>
-    
-        <!-- About Us Link -->
-    <div class="nav-item-custom">
-      <a href="<?php echo $prefix; ?>about-us" class="bank-nav-link">
-        <i class="bi bi-info-circle"></i>
-        <span>About Us</span>
-      </a>
-    </div>
-    
-    <div class="nav-item-custom">
-      <a href="<?php echo $prefix; ?>policies" class="bank-nav-link">
-        <i class="bi bi-file-earmark-lock"></i>
-        <span>Media Center & Policies</span>
-      </a>
+
+  <div class="offcanvas-body">
+    <div class="wf-drawer-cta">
+      <a href="<?php echo $prefix; ?>apply" class="wf-drawer-cta-primary"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Apply for a loan</a>
+      <a href="<?php echo $prefix; ?>repay" class="wf-drawer-cta-secondary<?php echo $wf_cur(['repay']) ? ' active' : ''; ?>"><i class="bi bi-cash-coin" aria-hidden="true"></i> Repay / Pay EMI</a>
     </div>
 
-    <!-- LOAN PRODUCTS SECTION -->
-    <div class="wf-drawer-nav-group">
-      <span class="wf-drawer-group-label" style="font-family: 'Inter', sans-serif !important;">Loan Products</span>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>personal-loan" class="bank-nav-link">
-          <i class="bi bi-person"></i>
-          <span>Personal Loan</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>business-loan" class="bank-nav-link">
-          <i class="bi bi-briefcase"></i>
-          <span>Business Loan</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>vehicle-loan" class="bank-nav-link">
-          <i class="bi bi-car-front"></i>
-          <span>Vehicle Loan</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>edi-loan" class="bank-nav-link">
-          <i class="bi bi-cash-stack"></i>
-          <span>EDI Loan</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>pay-day-loan" class="bank-nav-link">
-          <i class="bi bi-calendar-event"></i>
-          <span>Payday Loan</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>loan-against-property" class="bank-nav-link">
-          <i class="bi bi-house-door"></i>
-          <span>Loan Against Property</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>shopkeeper-business-loan" class="bank-nav-link">
-          <i class="bi bi-shop"></i>
-          <span>Shopkeeper Business Loan</span>
-        </a>
-      </div>
-
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>partner" class="bank-nav-link">
-          <i class="bi bi-share"></i>
-          <span>Partner Program</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- RESOURCES SECTION -->
-    <div class="wf-drawer-nav-group">
-      <span class="wf-drawer-group-label" style="font-family: 'Inter', sans-serif !important;">Resources</span>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>blog" class="bank-nav-link">
-          <i class="bi bi-journal-text"></i>
-          <span>Blog</span>
-        </a>
-      </div>
-      
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>apply" class="bank-nav-link">
-          <i class="bi bi-file-earmark-text"></i>
-          <span>Apply</span>
-        </a>
-      </div>
-
-      <div class="nav-item-custom">
-        <a href="<?php echo $prefix; ?>contact-us" class="bank-nav-link">
-          <i class="bi bi-people"></i>
-          <span>Contact</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Support Help Card at bottom -->
-    <div class="wf-drawer-support-card" style="margin-top: 12px; padding: 16px; background: #eaf3ff; border: 1px solid #d0e3fc; border-radius: 12px; display: flex; gap: 12px; align-items: center; box-sizing: border-box;">
-        <div style="background: #ffffff; color: #18529c; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 2px 4px rgba(24, 82, 156, 0.05);">
-            <i class="bi bi-headset"></i>
+    <nav class="wf-drawer-nav-group" aria-label="Main">
+      <?php
+      echo $wf_link('', 'bi-house-door', 'Home', $wf_cur(['index', '']));
+      echo $wf_link('about-us', 'bi-info-circle', 'About Us', $wf_cur(['about-us']));
+      echo $wf_link('products', 'bi-grid', 'All Products', $wf_cur(['products']));
+      ?>
+      <div class="wf-drawer-acc">
+        <button type="button" class="bank-nav-link wf-drawer-acc-btn<?php echo $is_loc_active ? ' active' : ''; ?>" aria-expanded="<?php echo $is_loc_active ? 'true' : 'false'; ?>" aria-controls="wfDrawerLocations">
+          <i class="bi bi-geo-alt" aria-hidden="true"></i><span>Locations</span><i class="bi bi-chevron-down wf-drawer-acc-icon" aria-hidden="true"></i>
+        </button>
+        <div id="wfDrawerLocations" class="wf-drawer-acc-panel"<?php echo $is_loc_active ? '' : ' hidden'; ?>>
+          <?php foreach ($header_locations as $loc): $on = $header_current_loc === $loc['slug']; ?>
+            <a href="<?php echo $prefix; ?>loan-in-<?php echo htmlspecialchars($loc['slug'], ENT_QUOTES, 'UTF-8'); ?>"<?php echo $on ? ' class="active" aria-current="page"' : ''; ?>><?php echo htmlspecialchars($loc['name'], ENT_QUOTES, 'UTF-8'); ?></a>
+          <?php endforeach; ?>
+          <a href="<?php echo $prefix; ?>locations"<?php echo $current_page === 'locations' ? ' class="active" aria-current="page"' : ''; ?>>All locations</a>
         </div>
-        <div>
-            <span style="font-size: 11.5px; font-weight: 600; color: #64748b; display: block; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif !important;">Need Help?</span>
-            <a href="tel:9217086610" style="font-size: 14.5px; font-weight: 800; color: #18529c; text-decoration: none; display: block; margin: 1px 0 2px 0; font-family: 'Inter', sans-serif !important;">+91 92170 86610</a>
-            <span style="font-size: 11px; color: #64748b; font-weight: 500; display: block; font-family: 'Inter', sans-serif !important;">Loan support available</span>
-        </div>
+      </div>
+      <?php
+      echo $wf_link('faqs', 'bi-question-circle', 'FAQs', $wf_cur(['faqs', 'faq']));
+      echo $wf_link('policies', 'bi-file-earmark-text', 'Policies & Documents', $wf_cur(['policies']));
+      echo $wf_link('contact-us', 'bi-envelope', 'Contact Us', $wf_cur(['contact-us']));
+      ?>
+    </nav>
+
+    <nav class="wf-drawer-nav-group" aria-labelledby="wfDrawerLoans">
+      <span class="wf-drawer-group-label" id="wfDrawerLoans">Loan products</span>
+      <?php
+      echo $wf_link('personal-loan', 'bi-person', 'Personal Loan', $wf_cur(['personal-loan', 'personal-loan-apply']));
+      echo $wf_link('business-loan', 'bi-briefcase', 'Business Loan', $wf_cur(['business-loan', 'business-loan-apply']));
+      echo $wf_link('pay-day-loan', 'bi-calendar-event', 'Payday Loan', $wf_cur(['pay-day-loan', 'payday-apply']));
+      echo $wf_link('edi-loan', 'bi-cash-stack', 'EDI Loan', $wf_cur(['edi-loan', 'edi-loan-apply']));
+      echo $wf_link('vehicle-loan', 'bi-car-front', 'Vehicle Loan', $wf_cur(['vehicle-loan', 'vehicle-loan-apply']));
+      echo $wf_link('loan-against-property', 'bi-house', 'Loan Against Property', $wf_cur(['loan-against-property', 'loan-against-property-apply']));
+      echo $wf_link('shopkeeper-business-loan', 'bi-shop', 'Shopkeeper Business Loan', $wf_cur(['shopkeeper-business-loan']));
+      ?>
+    </nav>
+
+    <nav class="wf-drawer-nav-group" aria-labelledby="wfDrawerTools">
+      <span class="wf-drawer-group-label" id="wfDrawerTools">Tools and more</span>
+      <?php
+      echo $wf_link('emi-calculator', 'bi-calculator', 'EMI Calculator', $wf_cur(['emi-calculator']));
+      echo $wf_link('free-credit-score', 'bi-speedometer2', 'Free CIBIL Score', $wf_cur(['free-credit-score']));
+      echo $wf_link('pay-online', 'bi-qr-code', 'Pay Online (UPI QR)', $wf_cur(['pay-online']));
+      echo $wf_link('partner', 'bi-people', 'Partner Program', $wf_cur(['partner']));
+      echo $wf_link('blog', 'bi-journal-text', 'Blog', $wf_cur(['blog', 'blog-detail']));
+      ?>
+    </nav>
+
+    <div class="wf-drawer-support-card">
+      <span class="wf-drawer-support-icon" aria-hidden="true"><i class="bi bi-headset"></i></span>
+      <div>
+        <span class="wf-drawer-support-label">Need help?</span>
+        <a href="tel:+919217086610">+91 92170 86610</a>
+        <a href="mailto:customercare@waqtfinance.com" class="wf-drawer-support-mail">customercare@waqtfinance.com</a>
+        <span class="wf-drawer-support-hours">Mon to Sat, 10 AM to 6 PM</span>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const currentPath = window.location.pathname.toLowerCase();
-    const links = document.querySelectorAll(".bank-nav-link");
-    let matched = false;
-    
-    // Sort links by length of href descending to match more specific routes first
-    const sortedLinks = Array.from(links).sort((a, b) => {
-        return (b.getAttribute("href") || "").length - (a.getAttribute("href") || "").length;
-    });
-    
-    for (const link of sortedLinks) {
-        const href = link.getAttribute("href");
-        if (!href) continue;
-        
-        // Remove trailing and leading slashes and .php extension to get clean names
-        const cleanHref = href.replace(/^\/|\.php$/g, "").toLowerCase();
-        const cleanPath = currentPath.replace(/^\/|\.php$/g, "").toLowerCase();
-        
-        if (cleanHref === "" && (cleanPath === "" || cleanPath === "index")) {
-            link.classList.add("active");
-            matched = true;
-            break;
-        } else if (cleanHref !== "" && (cleanPath === cleanHref || cleanPath.startsWith(cleanHref + "/") || cleanPath.endsWith("/" + cleanHref))) {
-            // Special checks for sub-application matching
-            if (cleanHref === "edi-loan" && cleanPath.startsWith("edi-loan")) {
-                link.classList.add("active");
-                matched = true;
-                break;
-            }
-            if (cleanHref === "pay-day-loan" && cleanPath.startsWith("payday")) {
-                link.classList.add("active");
-                matched = true;
-                break;
-            }
-            
-            link.classList.add("active");
-            matched = true;
-            break;
-        }
-    }
-    
-    // Fallback default active if nothing matched
-    if (!matched) {
-        const homeLink = Array.from(links).find(l => l.getAttribute("href") === "/");
-        if (homeLink) homeLink.classList.add("active");
-    }
-
-    // Locations collapse toggler for mobile menu
-    const locTrigger = document.querySelector('a[href="#locationsCollapse"]');
-    const locCollapse = document.getElementById('locationsCollapse');
-    if (locTrigger && locCollapse) {
-        locTrigger.addEventListener('click', function(e) {
-            e.preventDefault();
-            const isOpen = locCollapse.classList.contains('show');
-            if (isOpen) {
-                locCollapse.classList.remove('show');
-                locTrigger.setAttribute('aria-expanded', 'false');
-            } else {
-                locCollapse.classList.add('show');
-                locTrigger.setAttribute('aria-expanded', 'true');
-            }
+document.addEventListener("DOMContentLoaded", function () {
+    // Locations accordion inside the mobile drawer
+    var accBtn = document.querySelector('.wf-drawer-acc-btn');
+    var accPanel = document.getElementById('wfDrawerLocations');
+    if (accBtn && accPanel) {
+        accBtn.addEventListener('click', function () {
+            var open = accBtn.getAttribute('aria-expanded') === 'true';
+            accBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+            accPanel.hidden = open;
         });
+    }
+    // While the drawer is open, hide floating widgets (WhatsApp chat) that would sit on top of it
+    var drawer = document.getElementById('staticBackdrop');
+    if (drawer) {
+        drawer.addEventListener('show.bs.offcanvas', function () { document.documentElement.classList.add('wf-drawer-open'); });
+        drawer.addEventListener('hidden.bs.offcanvas', function () { document.documentElement.classList.remove('wf-drawer-open'); });
     }
 });
 </script>
@@ -383,152 +276,118 @@ document.addEventListener("DOMContentLoaded", function() {
    PREMIUM MOBILE DRAWER CSS OVERRIDES
    ========================================================================== */
 .wf-custom-drawer {
-    max-width: 86vw !important;
-    width: 320px !important;
+    max-width: 88vw !important;
+    width: 330px !important;
     height: 100dvh !important;
     background: #ffffff !important;
     border: none !important;
-    box-shadow: 16px 0 32px rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 16px 0 32px rgba(15, 23, 42, 0.12) !important;
+    font-family: 'Inter', sans-serif !important;
 }
-
-/* Backdrop Overlay styling */
 .offcanvas-backdrop.show {
     background-color: rgba(15, 23, 42, 0.55) !important;
     opacity: 1 !important;
-    transition: opacity 180ms ease !important;
 }
+.wf-custom-drawer.offcanvas { transition: transform 220ms ease !important; }
+@media (prefers-reduced-motion: reduce) { .wf-custom-drawer.offcanvas { transition: none !important; } }
 
-.wf-custom-drawer.offcanvas {
-    transition: transform 220ms ease !important;
-}
-
-/* Offcanvas Header Styles */
+/* Header */
 .wf-custom-drawer .offcanvas-header {
-    padding: 20px 24px !important;
+    padding: 14px 16px 14px 18px !important;
     border-bottom: 1px solid #e5edf6 !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
     background: #ffffff !important;
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 100 !important;
+    flex-shrink: 0;
 }
-
-.wf-drawer-header-brand {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-}
-
+.wf-drawer-header-brand { display: flex !important; align-items: center !important; gap: 10px !important; text-decoration: none !important; }
+.wf-drawer-header-brand img { width: 40px; height: 40px; }
+.wf-drawer-header-brand span { font-size: 17px; font-weight: 800; color: #0b213a; }
 .wf-drawer-close-btn {
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 50% !important;
-    background: #f1f5f9 !important;
-    border: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0.8 !important;
-    cursor: pointer !important;
-    padding: 0 !important;
-    transition: all 0.2s ease !important;
+    width: 40px !important; height: 40px !important; border-radius: 50% !important;
+    background: #f1f5f9 !important; border: none !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    cursor: pointer !important; padding: 0 !important; color: #0f2742 !important;
 }
+.wf-drawer-close-btn:hover { background: #e2e8f0 !important; }
+.wf-drawer-close-btn i { font-size: 16px !important; }
 
-.wf-drawer-close-btn:hover {
-    background: #e2e8f0 !important;
-    opacity: 1 !important;
-    transform: rotate(90deg) !important;
-}
-
-.wf-drawer-close-btn i {
-    font-size: 16px !important;
-    color: #475569 !important;
-}
-
-/* Offcanvas Body Styles */
+/* Body */
 .wf-custom-drawer .offcanvas-body {
-    padding: 24px !important;
+    padding: 16px 14px 24px !important;
     overflow-y: auto !important;
+    overscroll-behavior: contain;
     display: flex !important;
     flex-direction: column !important;
-    gap: 24px !important;
+    gap: 18px !important;
     scrollbar-width: thin !important;
     box-sizing: border-box !important;
 }
+.wf-custom-drawer .offcanvas-body::-webkit-scrollbar { width: 4px !important; }
+.wf-custom-drawer .offcanvas-body::-webkit-scrollbar-thumb { background: #cbd5e1 !important; border-radius: 4px !important; }
 
-.wf-custom-drawer .offcanvas-body::-webkit-scrollbar {
-    width: 4px !important;
+/* Quick actions */
+.wf-drawer-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wf-drawer-cta a {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+    padding: 12px; border-radius: 12px; font-size: 13.5px; font-weight: 700; line-height: 1.25;
+    text-decoration: none !important; min-height: 72px;
 }
+.wf-drawer-cta i { font-size: 18px; }
+.wf-drawer-cta-primary { background: #18529c; color: #fff !important; }
+.wf-drawer-cta-primary:hover { background: #0d3f7b; }
+.wf-drawer-cta-secondary { background: #eaf3ff; color: #0b3f7f !important; border: 1px solid #d0e3fc; }
+.wf-drawer-cta-secondary.active { border-color: #18529c; }
 
-.wf-custom-drawer .offcanvas-body::-webkit-scrollbar-thumb {
-    background: #cbd5e1 !important;
-    border-radius: 4px !important;
-}
-
-/* Menu Group and Item Styles */
-.wf-drawer-nav-group {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-}
-
+/* Groups and links */
+.wf-drawer-nav-group { display: flex !important; flex-direction: column !important; gap: 2px !important; }
+.wf-drawer-nav-group + .wf-drawer-nav-group { border-top: 1px solid #eef2f7; padding-top: 14px; }
 .wf-drawer-group-label {
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    color: #64748b !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.8px !important;
-    margin-bottom: 8px !important;
-    margin-top: 4px !important;
-    display: block !important;
+    font-size: 11.5px !important; font-weight: 700 !important; color: #64748b !important;
+    text-transform: uppercase !important; letter-spacing: 0.8px !important;
+    margin: 0 0 6px !important; padding: 0 12px !important; display: block !important;
 }
-
 .wf-custom-drawer .bank-nav-link {
-    display: flex !important;
-    align-items: center !important;
-    gap: 14px !important;
-    height: 48px !important;
-    padding: 0 16px !important;
-    border-radius: 8px !important;
-    font-size: 14.5px !important;
-    font-weight: 500 !important;
-    color: #0f2742 !important;
-    text-decoration: none !important;
-    transition: all 150ms ease !important;
-    box-sizing: border-box !important;
-    border-left: 4px solid transparent !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    transform: none !important;
+    display: flex !important; align-items: center !important; gap: 14px !important;
+    width: 100% !important; min-height: 46px !important; height: auto !important;
+    padding: 10px 12px !important; border: 0 !important; border-radius: 10px !important;
+    font-size: 15px !important; font-weight: 500 !important; color: #0f2742 !important;
+    text-decoration: none !important; text-align: left !important;
+    background: transparent !important; box-shadow: none !important; transform: none !important;
+    position: relative; cursor: pointer; font-family: inherit !important; margin: 0 !important;
 }
+.wf-custom-drawer .bank-nav-link i { font-size: 18px !important; color: #64748b !important; width: 20px !important; flex-shrink: 0; text-align: center; }
+.wf-custom-drawer .bank-nav-link:hover { background: #f5f8fc !important; color: #0b5cad !important; }
+.wf-custom-drawer .bank-nav-link.active { background: #eaf3ff !important; color: #0b5cad !important; font-weight: 700 !important; }
+.wf-custom-drawer .bank-nav-link.active::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: #0b5cad; }
+.wf-custom-drawer .bank-nav-link.active i { color: #0b5cad !important; }
+.wf-custom-drawer a:focus-visible, .wf-custom-drawer button:focus-visible { outline: 3px solid #93c5fd !important; outline-offset: 1px; }
 
-.wf-custom-drawer .bank-nav-link i {
-    font-size: 18px !important;
-    color: #64748b !important;
-    width: 20px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
+/* Locations accordion */
+.wf-drawer-acc-icon { margin-left: auto; font-size: 13px !important; transition: transform .2s ease; }
+.wf-drawer-acc-btn[aria-expanded="true"] .wf-drawer-acc-icon { transform: rotate(180deg); }
+.wf-drawer-acc-panel { margin: 2px 0 6px 44px; padding-left: 10px; border-left: 2px solid #e2e8f0; display: flex; flex-direction: column; }
+.wf-drawer-acc-panel[hidden] { display: none; }
+.wf-drawer-acc-panel a { padding: 9px 10px; border-radius: 8px; font-size: 14.5px; color: #334155 !important; text-decoration: none !important; }
+.wf-drawer-acc-panel a:hover { background: #f5f8fc; color: #0b5cad !important; }
+.wf-drawer-acc-panel a.active { color: #0b5cad !important; font-weight: 700; background: #eaf3ff; }
 
-.wf-custom-drawer .bank-nav-link:hover {
-    background: #f8fafc !important;
-    color: #0b5cad !important;
-    transform: translateX(4px) !important;
-}
+/* Support card */
+.wf-drawer-support-card { display: flex; gap: 12px; align-items: flex-start; padding: 14px; background: #f5f9ff; border: 1px solid #d0e3fc; border-radius: 12px; }
+.wf-drawer-support-icon { background: #fff; color: #18529c; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.wf-drawer-support-card a { display: block; font-size: 15px; font-weight: 800; color: #18529c !important; text-decoration: none !important; margin: 2px 0; }
+.wf-drawer-support-card a.wf-drawer-support-mail { font-size: 13px; font-weight: 600; word-break: break-all; }
+.wf-drawer-support-label { font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; display: block; }
+.wf-drawer-support-hours { font-size: 12px; color: #64748b; display: block; margin-top: 2px; }
 
-.wf-custom-drawer .bank-nav-link.active {
-    background: #eaf3ff !important;
-    color: #0b5cad !important;
-    font-weight: 600 !important;
-    border-left-color: #0b5cad !important;
-}
-
-.wf-custom-drawer .bank-nav-link.active i {
-    color: #0b5cad !important;
-}
+/* Hide floating chat widgets while the drawer is open */
+html.wf-drawer-open #authkey-chat-widget,
+html.wf-drawer-open [id^="authkey"],
+html.wf-drawer-open [class*="authkey"],
+html.wf-drawer-open .whatsapp-float,
+html.wf-drawer-open .wf-whatsapp-float,
+html.wf-drawer-open #scroll-top { display: none !important; }
 
 /* Mobile top navbar overrides */
 @media (max-width: 991px) {

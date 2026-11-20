@@ -220,15 +220,26 @@ include 'includes/main-header.php';
             text-align: center;
         }
     }
+
+/* Policy tabs: keep every tab reachable (safe centering) and use a scrolling row on small screens */
+.wf-policy-nav-tabs { justify-content: flex-start !important; flex-direction: row !important; width: auto !important; padding-left: 2px !important; padding-right: 2px !important; }
+.wf-policy-nav-tabs > :first-child { margin-left: auto; }
+.wf-policy-nav-tabs > :last-child { margin-right: auto; }
+.wf-policy-tab-btn { flex-shrink: 0; }
+@media (min-width: 1200px) {
+    .wf-policy-nav-tabs { gap: 6px !important; }
+    .wf-policy-tab-btn { padding: 8px 13px !important; }
+}
 </style>
 
 <main>
     <section class="wf-policy-hero">
         <div class="container">
             <div class="wf-policy-hero-content">
-                <span class="wf-policy-badge"><i class="fa-solid fa-building-columns"></i> Reliable funds for life</span>
-                <h1>Anti-Money Laundering</h1>
-                <p>Ensure secure and compliant financial transactions with our robust anti-money laundering solutions. With real-time monitoring, risk assessments, and regulatory adherence, we keep transactions safe.</p>
+                <span class="wf-policy-badge"><i class="fa-solid fa-building-columns"></i> KYC &amp; Compliance</span>
+                <h1>Anti-Money Laundering Policy</h1>
+                <p>How we verify our customers and prevent money laundering and terrorist financing, as required by the Prevention of Money Laundering Act, 2002 and RBI's KYC Directions.</p>
+                <div class="pd-hero-meta"><span data-pd-reading hidden></span><button type="button" class="pd-print" data-pd-print><i class="fas fa-print" aria-hidden="true"></i> Print or save PDF</button></div>
             </div>
         </div>
     </section>
@@ -243,9 +254,28 @@ include 'includes/main-header.php';
                 <a href="privacy-policy" class="wf-policy-tab-btn">Privacy Policy</a>
                 <a href="terms-condition" class="wf-policy-tab-btn">Terms & Conditions</a>
                 <a href="refund-cancellation" class="wf-policy-tab-btn">Refund Policy</a>
+                <a href="digital-lending" class="wf-policy-tab-btn">Digital Lending</a>
             </div>
         </div>
     </div>
+
+<!-- Plain-language summary -->
+<section class="pd-glance-section" aria-labelledby="pd-glance-title">
+    <div class="container">
+        <div class="pd-glance">
+            <div class="pd-glance-head">
+                <div><span class="pd-eyebrow">At a glance</span><h2 id="pd-glance-title">The key points</h2></div>
+                <p>A plain-language summary. The full policy below is the binding text.</p>
+            </div>
+            <ul class="pd-glance-list">
+                <li><span class="pd-glance-icon"><i class="fas fa-id-card" aria-hidden="true"></i></span><div><strong>KYC is mandatory</strong><span>We verify your identity and address with officially valid documents or Aadhaar-based verification before we lend.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-video" aria-hidden="true"></i></span><div><strong>Video KYC option</strong><span>With your consent, KYC can be completed over a live video call with a Company official (V-CIP).</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-magnifying-glass-chart" aria-hidden="true"></i></span><div><strong>Transactions are monitored</strong><span>Suspicious transactions are reported to the Financial Intelligence Unit-India (FIU-IND), as the law requires.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-lock" aria-hidden="true"></i></span><div><strong>Your KYC data stays confidential</strong><span>KYC records are shared only where the law requires, such as with the Central KYC Records Registry (CKYCR).</span></div></li>
+            </ul>
+        </div>
+    </div>
+</section>
 
     <section class="wf-policy-document-section">
         <div class="container">
@@ -1160,5 +1190,6 @@ include 'includes/main-header.php';
         </div>
     </section>
 </main>
+<?php include 'includes/policy-help.php'; ?>
 <?php include 'includes/footer.php'; ?>
     

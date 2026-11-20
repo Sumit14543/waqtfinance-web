@@ -32,3 +32,23 @@
 @media (max-width: 575px) {
   #authkey-chat-widget { max-width: calc(100vw - 24px) !important; max-height: calc(100dvh - 100px) !important; }
 }
+
+/* Top contact strip: real links, no fixed right padding (it pushed the page 4px wider than the screen) */
+.loan-phone { padding-right: 16px !important; gap: 18px !important; flex-shrink: 0; }
+.loan-phone a { display: inline-flex; align-items: center; gap: 6px; color: inherit !important; text-decoration: none !important; white-space: nowrap; }
+.loan-phone a:hover { text-decoration: underline !important; }
+.loan-category-inner { max-width: 100%; box-sizing: border-box; }
+
+/* 1200-1439px (most laptops): the product strip + email + phone did not fit and made the page wider than the screen */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .loan-category-bar { overflow: hidden; }
+  .loan-category-inner { min-width: 0 !important; width: 100%; }
+  .loan-left-menu { min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+  .loan-left-menu::-webkit-scrollbar { display: none; }
+  .loan-phone { margin-left: 8px !important; padding-left: 0 !important; gap: 12px !important; }
+  .loan-phone a:first-child span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .loan-nav-links { gap: 2px !important; flex-wrap: nowrap !important; }
+  .loan-nav-links > a, .loan-nav-links .wf-dropdown-trigger { white-space: nowrap !important; padding-left: 9px !important; padding-right: 9px !important; font-size: 14.5px !important; }
+  .loan-actions { gap: 8px !important; flex-shrink: 0; }
+  .loan-actions .loan-btn { white-space: nowrap !important; padding-left: 12px !important; padding-right: 12px !important; font-size: 13px !important; }
+}

@@ -4,604 +4,68 @@ declare(strict_types=1);
 $product_key = trim((string) ($_GET['product'] ?? ''));
 $city_key = trim((string) ($_GET['city'] ?? ''));
 
-$products = [
-    'personal-loan' => [
-        'name' => 'Personal Loan',
-        'apply_url' => 'personal-loan-apply',
-        'min_amount' => '₹50,000',
-        'max_amount_val' => 1500000,
-        'default_rate' => 12.99,
-        'default_tenure' => 24,
-        'tenure' => '12 to 60 Months',
-        'interest' => 'Starting at 10.99% p.a.',
-        'desc' => 'Instant personal loan options for medical emergencies, wedding costs, home renovations, and travel across India.',
-        'features' => [
-            '100% paperless digital journey',
-            'No collateral or guarantor required',
-            'Flexible repayment options',
-            'Quick digital verification via Aadhaar/OTP'
-        ],
-        'eligibility' => [
-            'Age: 21 to 58 years',
-            'Employment: Salaried with monthly credit in bank account',
-            'Minimum Net Income: ₹25,000 per month',
-            'Credit Score: 700+ preferred'
-        ],
-        'documents' => [
-            'Identity Proof: PAN Card & Aadhaar Card',
-            'Address Proof: Aadhaar, Electricity Bill, or Rent Agreement',
-            'Income Proof: Last 3 months bank statements showing salary credits',
-            'Employment Proof: Employee ID Card or Offer Letter'
-        ],
-        'choice_scenarios' => [
-            'title' => 'When a Personal Loan is the Right Choice',
-            'items' => [
-                [
-                    'q' => 'Temporary Cash Flow Gaps',
-                    'a' => 'Ideal when you are waiting for a bonus, consulting fee, or salary increments in the coming months.'
-                ],
-                [
-                    'q' => 'Medical & Emergencies',
-                    'a' => 'Quick funding during health emergencies, family hospitalizations, or critical vehicle repairs.'
-                ],
-                [
-                    'q' => 'Debt Consolidation',
-                    'a' => 'Combine multiple credit card bills or small dues into a single fixed EMI with a clear repayment roadmap.'
-                ]
-            ]
-        ],
-        'benefits_vs_risks' => [
-            'benefits' => [
-                'Fast approval cycles without pledging collateral',
-                'Lower total interest outgo when repaid in short cycles',
-                'Helps improve credit score with timely repayments'
-            ],
-            'risks' => [
-                'Higher EMI payments on shorter loan durations',
-                'Risk of late fees and credit score damage on defaults',
-                'Processing charges up to 3% apply upon sanction'
-            ]
-        ],
-        'common_mistakes' => [
-            [
-                'q' => 'Ignoring the Total Cost',
-                'a' => 'Many focus only on interest rates while ignoring processing fees, documentation charges, and penal rates.'
-            ],
-            [
-                'q' => 'Underestimating EMIs',
-                'a' => 'Taking a shorter tenure to save interest can choke your daily cash flow with high monthly installments.'
-            ],
-            [
-                'q' => 'Borrowing Without Visibility',
-                'a' => 'Applying without confirmed salary or alternative income streams increases the probability of default.'
-            ]
-        ],
-        'faqs' => [
-            [
-                'q' => 'How quickly is a Personal Loan approved?',
-                'a' => 'After documents are uploaded, the application moves through eligibility, verification and policy checks. Timelines vary by applicant profile and document completeness.'
-            ],
-            [
-                'q' => 'Do I need any security or collateral?',
-                'a' => 'No. Personal Loans at Waqt Finance are unsecured, meaning you do not need to pledge any property, vehicle, or assets.'
-            ],
-            [
-                'q' => 'Can a short-term personal loan be approved without a high credit score?',
-                'a' => 'Yes, applicants with moderate credit scores can get approved, though a credit score above 700 helps secure the best interest rates.'
-            ],
-            [
-                'q' => 'Is a 12-month loan better than a 36-month loan?',
-                'a' => 'A 12-month loan saves you significant total interest but carries a higher monthly EMI. Choose based on your monthly cash flow comfort.'
-            ],
-            [
-                'q' => 'Will prepaying my loan improve my credit score?',
-                'a' => 'Paying off a loan early shows positive repayment behavior, though regular timely monthly payments have the strongest positive impact on your CIBIL profile.'
-            ]
-        ]
-    ],
-    'business-loan' => [
-        'name' => 'Business Loan',
-        'apply_url' => 'business-loan-apply',
-        'min_amount' => '₹1,00,000',
-        'max_amount_val' => 2500000,
-        'default_rate' => 15.99,
-        'default_tenure' => 36,
-        'tenure' => '12 to 72 Months',
-        'interest' => 'Competitive rates',
-        'desc' => 'Collateral-free business funding for working capital, stock purchase, machinery upgrades, and business expansion.',
-        'features' => [
-            'Unsecured funding up to ₹25 Lakhs',
-            'Quick processing for registered MSMEs',
-            'Flexible repayment terms suited to cash flow',
-            'Transparent terms with no hidden charges'
-        ],
-        'eligibility' => [
-            'Business Type: Sole Proprietor, Partnership, or Private Limited',
-            'Business Vintage: Active operations for at least 1 year',
-            'Minimum Annual Turnover: ₹12 Lakhs audited/reported',
-            'Credit Profile: No active defaults in last 12 months'
-        ],
-        'documents' => [
-            'KYC: PAN & Aadhaar of the promoter/owner',
-            'Business Registration: GST registration, Udyam certificate, or Shop Establishment License',
-            'Financial Proof: 6 months current bank statements',
-            'Tax Proof: Latest GST returns or ITR (if applicable)'
-        ],
-        'choice_scenarios' => [
-            'title' => 'When a Business Loan is the Right Choice',
-            'items' => [
-                [
-                    'q' => 'Inventory Cycles',
-                    'a' => 'Perfect for purchasing raw materials or stocking inventory ahead of high-demand seasonal cycles.'
-                ],
-                [
-                    'q' => 'Equipment & Upgrades',
-                    'a' => 'Secure capital to upgrade IT hardware, commercial machinery, or purchase transport assets.'
-                ],
-                [
-                    'q' => 'Vendor Cash Gaps',
-                    'a' => 'Manage cash flow gaps when waiting for client payments or pending vendor invoices.'
-                ]
-            ]
-        ],
-        'benefits_vs_risks' => [
-            'benefits' => [
-                'Collateral-free MSME financing up to ₹25 Lakhs',
-                'Flexible tenure structures aligning with billing cycles',
-                'Interest costs can be claimed as business expenses'
-            ],
-            'risks' => [
-                'Higher daily/monthly commitment on short terms',
-                'Defaults can negatively affect promoter credit rating',
-                'Late payment charges and bounce penalties apply'
-            ]
-        ],
-        'common_mistakes' => [
-            [
-                'q' => 'Mixing Personal and Business Funds',
-                'a' => 'Using personal bank accounts to manage business loan repayments makes accounting and audit compliance complex.'
-            ],
-            [
-                'q' => 'Borrowing Without Cash Flow Matching',
-                'a' => 'If your client payment cycles are 90 days, choosing a monthly EMI without reserves can lead to defaults.'
-            ],
-            [
-                'q' => 'Neglecting Business Documentation',
-                'a' => 'Not maintaining valid GST registrations or tax records restricts eligibility for higher amounts.'
-            ]
-        ],
-        'faqs' => [
-            [
-                'q' => 'Is a GST registration mandatory for a Business Loan?',
-                'a' => 'While GST registration is preferred and helps secure higher loan amounts, small businesses with valid local establishment licenses or Udyam certificates can also apply.'
-            ],
-            [
-                'q' => 'How can I use the business loan funds?',
-                'a' => 'Funds can be used for any legitimate business activity, including buying raw materials, paying salaries, scaling inventory, or upgrading equipment.'
-            ],
-            [
-                'q' => 'Do business loans require a guarantor?',
-                'a' => 'Our unsecured business loans do not require third-party guarantors, though promoters must provide personal guarantees.'
-            ],
-            [
-                'q' => 'What is the maximum business loan amount available?',
-                'a' => 'Waqt Finance provides unsecured business loans up to ₹25 Lakhs based on turnover, bank transaction volumes, and repayment history.'
-            ]
-        ]
-    ],
-    'pay-day-loan' => [
-        'name' => 'Payday Loan',
-        'apply_url' => 'payday-apply',
-        'min_amount' => '₹3,000',
-        'max_amount_val' => 150000,
-        'default_rate' => 18.00,
-        'default_tenure' => 1,
-        'tenure' => 'Up to 1 Month',
-        'interest' => 'Flat short-term rates',
-        'desc' => 'Short-term cash advance to manage sudden emergency expenses and salary gaps before your next pay day.',
-        'features' => [
-            'Salary advance support from ₹3,000 to ₹1.5 Lakhs',
-            'Processing fees up to 6% plus applicable taxes',
-            'Online verification via Aadhaar/PAN checks with borrower consent',
-            'Convenient single-payment option on salary date'
-        ],
-        'eligibility' => [
-            'Employment: Full-time salaried employees',
-            'Salary Mode: Direct bank transfer (cash/cheque salary not accepted)',
-            'Minimum Salary: ₹15,000 per month',
-            'Age: 21 to 58 years'
-        ],
-        'documents' => [
-            'KYC: Aadhaar Card & PAN Card',
-            'Salary Bank Statement: Last 3 months statement in PDF format',
-            'Work Proof: Corporate Email Verification or Salary Slip'
-        ],
-        'choice_scenarios' => [
-            'title' => 'When a Payday Loan is the Right Choice',
-            'items' => [
-                [
-                    'q' => 'Mid-Month Salary Gaps',
-                    'a' => 'Bridge small utility or bill gaps when salary is delayed or exhausted in the second half of the month.'
-                ],
-                [
-                    'q' => 'Immediate Medical Purchase',
-                    'a' => 'Useful for pharmacy purchases, urgent diagnostic tests, or medical emergencies before salary date.'
-                ],
-                [
-                    'q' => 'Credit Card Bill Defense',
-                    'a' => 'Avoid heavy credit card late payment fees and CIBIL impact by paying off card dues on time using payday funds.'
-                ]
-            ]
-        ],
-        'benefits_vs_risks' => [
-            'benefits' => [
-                'Digital review and bank account credit after approval',
-                'No multi-year debt burden; repays in a single shot',
-                'Helps manage mid-month liquidity issues safely'
-            ],
-            'risks' => [
-                'High flat interest rate calculated over small durations',
-                'Requires complete repayment from the next salary credit',
-                'Late payment charges apply daily for overdue bills'
-            ]
-        ],
-        'common_mistakes' => [
-            [
-                'q' => 'Over-borrowing',
-                'a' => 'Borrowing more than your repayment capability will lead to a severe budget crisis on salary day.'
-            ],
-            [
-                'q' => 'Relying on Payday Loans for Routine Expenses',
-                'a' => 'Using payday loans repeatedly to buy groceries indicates basic budget deficits that need planning, not credit.'
-            ],
-            [
-                'q' => 'Delaying the Repayment Date',
-                'a' => 'Missing the payment auto-debit triggers bounce charges and damages credit score severely.'
-            ]
-        ],
-        'faqs' => [
-            [
-                'q' => 'How does a Payday Loan work?',
-                'a' => 'It is a salary advance. You borrow a small amount (₹3,00,000 max) to cover a temporary cash shortage and repay it in a single payment when your next salary is credited.'
-            ],
-            [
-                'q' => 'Will applying affect my credit score?',
-                'a' => 'We perform soft credit checks for initial eligibility which do not hurt your credit rating. Repaying on time will help build your credit profile.'
-            ],
-            [
-                'q' => 'How is a payday loan different from a standard personal loan?',
-                'a' => 'Standard personal loans are repaid over 12-60 months in equal monthly installments, while payday loans are repaid in a single installment within 7 to 30 days.'
-            ],
-            [
-                'q' => 'Can self-employed individuals apply for a payday loan?',
-                'a' => 'No. Payday loans are designed strictly for salaried individuals with steady payroll credits. Self-employed owners can explore our Business or EDI loans instead.'
-            ],
-            [
-                'q' => 'What happens if I cannot pay on time?',
-                'a' => 'Late payment interest and administrative penalty fees will apply. Also, it will be reported to credit bureaus, hurting your future borrowing capabilities.'
-            ]
-        ]
-    ],
-    'edi-loan' => [
-        'name' => 'EDI Loan',
-        'apply_url' => 'edi-loan-apply',
-        'min_amount' => '₹25,000',
-        'max_amount_val' => 500000,
-        'default_rate' => 18.00,
-        'default_tenure' => 3,
-        'tenure' => '7 to 90 Days',
-        'interest' => 'Daily installment finance',
-        'desc' => 'Daily installment business loan designed specifically for retail shopkeepers, street vendors, and small traders.',
-        'features' => [
-            'Convenient daily repayment collection model',
-            'Matches daily cash counter sales',
-            'Instant Udyam/GST verification & fast processing',
-            'No monthly heavy payment stress'
-        ],
-        'eligibility' => [
-            'Profile: Retailers, Kirana shops, vendors, and small traders',
-            'Business Location: Operating from a physical store or stable setup',
-            'Vintage: Minimum 6 months of continuous operation',
-            'Daily Income: Steady daily sales counter'
-        ],
-        'documents' => [
-            'KYC: Owner PAN Card & Aadhaar Card',
-            'Business Proof: Udyam Registration or Shop license',
-            'Banking: Last 6 months bank statement (current or savings)'
-        ],
-        'choice_scenarios' => [
-            'title' => 'When an EDI Loan is the Right Choice',
-            'items' => [
-                [
-                    'q' => 'Retail Cash Counter Sales',
-                    'a' => 'Ideal for businesses receiving daily cash and card sales, matching daily micro-collection schedules.'
-                ],
-                [
-                    'q' => 'Festival Inventory Spikes',
-                    'a' => 'Quickly buy seasonal merchandise, crackers, clothing, or sweets, and pay off daily as counter sales happen.'
-                ],
-                [
-                    'q' => 'Kirana Restocking',
-                    'a' => 'Manage weekly inventory refills without locking up your primary savings capital.'
-                ]
-            ]
-        ],
-        'benefits_vs_risks' => [
-            'benefits' => [
-                'No heavy monthly installment pressure on the business',
-                'Fits Kirana and retail counter daily revenue cycles',
-                'Extremely low verification barriers for micro-traders'
-            ],
-            'risks' => [
-                'Requires sufficient daily bank balance for e-NACH pulls',
-                'Only useful for short cycle working capital needs',
-                'Late penalties accrue daily if debit bounces'
-            ]
-        ],
-        'common_mistakes' => [
-            [
-                'q' => 'Failing to Maintain Daily Bank Balance',
-                'a' => 'If the daily balance drops below the debit value, bank bounce fees and e-NACH charges will multiply rapidly.'
-            ],
-            [
-                'q' => 'Borrowing for Non-Income Assets',
-                'a' => 'Using daily repayment loans to buy slow-moving assets will choke your daily operational cash reserves.'
-            ]
-        ],
-        'faqs' => [
-            [
-                'q' => 'What is an EDI Loan?',
-                'a' => 'EDI stands for Easy Daily Installment. Instead of paying a heavy monthly EMI, a small installment is collected daily, matching the daily revenue cycle of shopkeepers.'
-            ],
-            [
-                'q' => 'How is the daily payment collected?',
-                'a' => 'Collection is automated through secure e-NACH/Auto-debit from your registered bank account daily, making the cycle hassle-free.'
-            ],
-            [
-                'q' => 'Are there any pre-payment charges?',
-                'a' => 'Yes, traders can pay off the outstanding principal early to save interest, subject to standard foreclosure terms.'
-            ],
-            [
-                'q' => 'Is a physical office visit necessary?',
-                'a' => 'No. The entire process, from KYC submission to e-mandate registration, is managed completely online.'
-            ]
-        ]
-    ],
-    'vehicle-loan' => [
-        'name' => 'Vehicle Loan',
-        'apply_url' => 'vehicle-loan-apply',
-        'min_amount' => '₹50,000',
-        'max_amount_val' => 1000000,
-        'default_rate' => 10.99,
-        'default_tenure' => 36,
-        'tenure' => '12 to 84 Months',
-        'interest' => 'Attractive auto rates',
-        'desc' => 'Flexible finance options for new and pre-owned cars, two-wheelers, and commercial vehicles with easy processing.',
-        'features' => [
-            'Up to 90% funding on vehicle asset value',
-            'Dealer direct payouts for fast delivery',
-            'Simple documentation and registration support',
-            'Competitive interest rates starting at 10.99% p.a.'
-        ],
-        'eligibility' => [
-            'Applicant: Salaried professionals, self-employed, or firm owners',
-            'Min Income: ₹2,00,000 per annum (income proof required)',
-            'Age: 21 to 65 years at loan maturity',
-            'CIBIL Score: 700+ preferred for best rates'
-        ],
-        'documents' => [
-            'KYC: PAN Card, Aadhaar Card, or Passport',
-            'Address Proof: Utility bills or driving license',
-            'Income Proof: 3 months salary slips or last year ITR',
-            'Vehicle Details: Quotation from authorized dealer (or registration copy for pre-owned)'
-        ],
-        'choice_scenarios' => [
-            'title' => 'When a Vehicle Loan is the Right Choice',
-            'items' => [
-                [
-                    'q' => 'Buying a Commercial Auto',
-                    'a' => 'Perfect when expanding your logistics business or cargo delivery fleet with customized EMIs.'
-                ],
-                [
-                    'q' => 'Pre-Owned Car Purchase',
-                    'a' => 'Finance used passenger cars that fit your budget, subject to quick asset inspection.'
-                ]
-            ]
-        ],
-        'benefits_vs_risks' => [
-            'benefits' => [
-                'Covers up to 90% of the vehicle ex-showroom cost',
-                'Lower interest rates because the loan is secured by the asset',
-                'Flexible tenure choices going up to 7 years'
-            ],
-            'risks' => [
-                'The vehicle remains hypothecated to the lender until full closure',
-                'Non-payment can lead to asset repossession by the lender',
-                'Pre-owned vehicles require valuation and fitness certification'
-            ]
-        ],
-        'common_mistakes' => [
-            [
-                'q' => 'Ignoring Hypothecation Closure',
-                'a' => 'After fully paying the loan, failing to remove the hypothecation from the RC at the RTO will restrict future sale.'
-            ],
-            [
-                'q' => 'Skipping Insurance Verification',
-                'a' => 'Maintaining comprehensive vehicle insurance is mandatory during the entire tenure; neglecting it violates loan covenants.'
-            ]
-        ],
-        'faqs' => [
-            [
-                'q' => 'Can I get a loan for a used car or bike?',
-                'a' => 'Yes, Waqt Finance offers pre-owned vehicle loans subject to valuation and fitness checks of the vehicle.'
-            ],
-            [
-                'q' => 'Is a guarantor required for a vehicle loan?',
-                'a' => 'Generally, no guarantor is required if you meet our credit score and income eligibility rules.'
-            ],
-            [
-                'q' => 'What is hypothecation?',
-                'a' => 'Hypothecation means the vehicle acts as collateral. The registration certificate (RC) will mention Waqt Finance as the mortgagee until the loan is fully repaid.'
-            ]
-        ]
-    ],
-    'loan-against-property' => [
-        'name' => 'Loan Against Property',
-        'apply_url' => 'loan-against-property-apply',
-        'min_amount' => '₹5,00,000',
-        'max_amount_val' => 5000000,
-        'default_rate' => 9.99,
-        'default_tenure' => 120,
-        'tenure' => '12 to 240 Months',
-        'interest' => 'Lower secured loan rates',
-        'desc' => 'Unlock maximum cash value from your residential, commercial, or industrial property with long-term repayment tenure.',
-        'features' => [
-            'High value funding against property market value',
-            'Lower interest rates compared to unsecured loans',
-            'Long tenure up to 15 years for comfortable EMIs',
-            'Continue using the property during the loan tenure'
-        ],
-        'eligibility' => [
-            'Property Owner: Salaried, self-employed, traders, or companies',
-            'Property Status: Clear title, approved plan, and mortgage-free',
-            'Age Limit: 21 to 65 years',
-            'Stable Income: Verifiable through ITR, salary, or business banking'
-        ],
-        'documents' => [
-            'Identity & Address: Aadhaar, PAN Card, and utility documents',
-            'Property Documents: Registry copy, chains of title, tax receipts, and approved building plan',
-            'Income Proof: Last 2 years ITR with financial statements or 6 months bank statement'
-        ],
-        'choice_scenarios' => [
-            'title' => 'When a Loan Against Property is the Right Choice',
-            'items' => [
-                [
-                    'q' => 'High Value Capital Needs',
-                    'a' => 'When you need heavy long-term capital for business setup, children\'s higher education abroad, or factory purchases.'
-                ],
-                [
-                    'q' => 'Refinancing Expensive Loans',
-                    'a' => 'Consolidate short-term business debts into a single, low-interest long-term property loan to reduce monthly cash stress.'
-                ]
-            ]
-        ],
-        'benefits_vs_risks' => [
-            'benefits' => [
-                'Significantly lower interest rates compared to personal/business loans',
-                'Extended repayment tenures up to 15-20 years',
-                'Larger loan amounts (up to 70% of property market value)'
-            ],
-            'risks' => [
-                'Risk of property foreclosure and loss of asset in case of defaults',
-                'Lengthy legal and technical title verification cycles',
-                'Valuation and processing charges are relatively higher'
-            ]
-        ],
-        'common_mistakes' => [
-            [
-                'q' => 'Borrowing Without Title Clearance',
-                'a' => 'Applying with incomplete registry chains, outstanding property taxes, or missing parent deeds leads to rejection.'
-            ],
-            [
-                'q' => 'Over-leveraging property values',
-                'a' => 'Borrowing more than your monthly income capacity can support makes the long-term EMI schedule a severe risk.'
-            ]
-        ],
-        'faqs' => [
-            [
-                'q' => 'What types of properties are eligible for LAP?',
-                'a' => 'Residential houses, flats, commercial offices, shops, and registered industrial plots are eligible, provided they have clear titles and approved layouts.'
-            ],
-            [
-                'q' => 'How much loan amount can I expect?',
-                'a' => 'You can secure up to 60-70% of the market valuation of the property, subject to income assessment checks.'
-            ],
-            [
-                'q' => 'Can I continue using the property during the loan tenure?',
-                'a' => 'Yes, you retain full operational usage, tenancy, or occupancy rights of the mortgaged property during the loan cycle.'
-            ],
-            [
-                'q' => 'What is the processing time for a Loan Against Property?',
-                'a' => 'Because LAP involves detailed physical verification, valuation, and legal title search, processing typically takes 7 to 10 working days.'
-            ]
-        ]
-    ]
-];
-
-$cities = [
-    'delhi-ncr' => [
-        'name' => 'Delhi NCR',
-        'type' => 'AdministrativeArea',
-        'areas' => ['Delhi', 'Noida', 'Greater Noida', 'Gurugram', 'Ghaziabad', 'Faridabad'],
-        'desc' => 'across Delhi NCR, including New Delhi, Noida, Gurugram, Ghaziabad, Faridabad, and Greater Noida.',
-        'office' => 'Noida Sector 63 Corporate HQ'
-    ],
-    'delhi' => [
-        'name' => 'Delhi',
-        'type' => 'City',
-        'areas' => ['Dwarka', 'Karol Bagh', 'Lajpat Nagar', 'Connaught Place', 'Rohini', 'Pitampura', 'Dwarka Mor'],
-        'desc' => 'across Delhi, including Dwarka, Karol Bagh, Lajpat Nagar, Connaught Place, Rohini, and Pitampura.',
-        'office' => 'Delhi customer support zone'
-    ],
-    'noida' => [
-        'name' => 'Noida',
-        'type' => 'City',
-        'areas' => ['Sector 63', 'Sector 62', 'Sector 18', 'Greater Noida West', 'Pari Chowk', 'Sector 15', 'Sector 63 HQ'],
-        'desc' => 'across Noida and Greater Noida, including Sector 63, Sector 62, Sector 18, Greater Noida West, and Pari Chowk.',
-        'office' => 'Corporate Head Office in Noida Sector 63'
-    ],
-    'gurugram' => [
-        'name' => 'Gurugram',
-        'type' => 'City',
-        'areas' => ['DLF Cyber City', 'Udyog Vihar', 'Golf Course Road', 'Sohna Road', 'Sector 14', 'Sector 45', 'Sector 56'],
-        'desc' => 'across Gurugram, including DLF Cyber City, Udyog Vihar, Golf Course Road, Sohna Road, and major sectors.',
-        'office' => 'Gurugram customer support zone'
-    ]
-];
-
-// Check validity of product
-if (!isset($products[$product_key])) {
-    include '404.php';
-    exit;
+// Product content: Admin > Location CMS > Product content (defaults in config/location-product-templates.php).
+// City: Admin > Location CMS. Unknown products, inactive products and unpublished cities return 404.
+require_once __DIR__ . '/includes/location_data.php';
+if (session_status() === PHP_SESSION_NONE && function_exists('start_secure_session')) {
+    start_secure_session();
 }
-
-// Always try to load city from DB first (so admin panel edits take precedence!)
-require_once __DIR__ . '/config/db.php';
-$conn = db();
-$stmt = $conn->prepare("SELECT * FROM location_pages WHERE slug = ? AND status = 'published' LIMIT 1");
-if ($stmt) {
-    $stmt->bind_param('s', $city_key);
-    $stmt->execute();
-    $dbCityRow = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    
-    if ($dbCityRow) {
-        $dbAreas = json_decode((string) $dbCityRow['areas'], true) ?? [];
-        $cities[$city_key] = [
-            'name' => $dbCityRow['name'],
-            'type' => $dbCityRow['type'] === 'office' ? 'AdministrativeArea' : 'City',
-            'areas' => $dbAreas,
-            'desc' => 'across ' . $dbCityRow['name'] . ', including ' . implode(', ', array_slice($dbAreas, 0, 5)) . '.',
-            'office' => $dbCityRow['type'] === 'office' ? $dbCityRow['address'] : $dbCityRow['name'] . ' customer support zone',
-            'product_content' => $dbCityRow['product_content'] ?? null
-        ];
-    }
-}
-
-// Check if city exists (either loaded from DB or hardcoded fallback)
-if (!isset($cities[$city_key])) {
+$isAdminPreview = !empty($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+$products = waqt_location_product_templates();
+$location = waqt_get_location($city_key, $isAdminPreview);
+if (!isset($products[$product_key]) || !$location) {
+    http_response_code(404);
     include '404.php';
     exit;
 }
 
 $prod = $products[$product_key];
-$city = $cities[$city_key];
+$prod['faqs'] = is_array($prod['faqs'] ?? null) ? $prod['faqs'] : [];
+foreach (['features', 'eligibility', 'documents', 'common_mistakes'] as $listKey) {
+    $prod[$listKey] = is_array($prod[$listKey] ?? null) ? $prod[$listKey] : [];
+}
+$prod['choice_scenarios'] = is_array($prod['choice_scenarios'] ?? null) ? $prod['choice_scenarios'] + ['title' => '', 'items' => []] : ['title' => '', 'items' => []];
+$prod['benefits_vs_risks'] = is_array($prod['benefits_vs_risks'] ?? null) ? $prod['benefits_vs_risks'] + ['benefits' => [], 'risks' => []] : ['benefits' => [], 'risks' => []];
+
+$city = [
+    'name' => $location['name'],
+    'type' => $location['type'] === 'region' ? 'AdministrativeArea' : 'City',
+    'areas' => $location['areas'] ?: [$location['name']],
+    'address' => $location['address'],
+    'phone' => $location['phone'],
+    'is_office' => $location['type'] === 'office' && $location['address'] !== '',
+    'product_content' => $location['product_content'] ? json_encode($location['product_content']) : null,
+];
+$e = static fn($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+if ($location['status'] !== 'published') {
+    $meta_robots = 'noindex, nofollow';
+}
 
 // Default page meta and heading content
-$loan_range_map = ['personal-loan' => '₹50,000 to ₹25 Lakh', 'business-loan' => '₹1 Lakh to ₹25 Lakh', 'pay-day-loan' => '₹3,000 to ₹1.5 Lakh before salary', 'edi-loan' => '₹25,000 to ₹5 Lakh (daily EDI)', 'vehicle-loan' => 'up to 90% on-road vehicle finance', 'loan-against-property' => '₹5 Lakh to ₹5 Crore'];
-$range_text = $loan_range_map[$product_key] ?? "loans from {$prod['min_amount']}";
+$range_text = $prod['range_text'] ?: ("loans from " . $prod['min_amount']);
 $page_title = "{$prod['name']} in {$city['name']} | Apply Online | Waqt Finance";
-$meta_description = "Apply online for {$prod['name']} in {$city['name']} at Waqt Finance. Get {$range_text} with fast online approval & flexible EMIs.";
+if (mb_strlen($page_title) > 60) {
+    $page_title = "{$prod['name']} in {$city['name']} | Waqt Finance";
+}
+if (mb_strlen($page_title) > 60) {
+    $page_title = "{$prod['name']} in {$city['name']}";
+}
+// Meta description: factual and within 160 characters (no approval-speed promises).
+$waqt_pcl_meta = static function (array $prod, array $city, string $range_text): string {
+    $parts = [
+        "Apply online for a {$prod['name']} in {$city['name']} with Waqt Finance.",
+        rtrim(ucfirst($range_text), '.') . ($prod['tenure'] !== '' ? ", tenure {$prod['tenure']}." : '.'),
+        "Consent-based checks and clear terms before you accept.",
+    ];
+    $out = '';
+    foreach ($parts as $part) {
+        $next = trim($out . ' ' . $part);
+        if (mb_strlen($next) > 160) break;
+        $out = $next;
+    }
+    return $out !== '' ? $out : mb_substr($parts[0], 0, 160);
+};
+$meta_description = $waqt_pcl_meta($prod, $city, $range_text);
 $meta_keywords = "{$product_key} in {$city_key}, {$prod['name']} {$city['name']}, online loan {$city['name']}, {$product_key} online {$city['name']}";
 $page_heading = "{$prod['name']} in {$city['name']}";
 $page_description_paragraph = "Apply online with Waqt Finance for " . strtolower($prod['name']) . " options in {$city['name']}. We support borrowers with a digital application process, consent-based checks, document review, and clear terms before acceptance.";
@@ -640,7 +104,7 @@ if (!empty($city['product_content'])) {
             $meta_description = $p_overrides['meta_description'];
         } else {
             // Recompute with overridden min_amount and tenure
-              $meta_description = "Apply online for {$prod['name']} in {$city['name']} at Waqt Finance. Get {$range_text} with fast online approval & flexible EMIs.";
+            $meta_description = $waqt_pcl_meta($prod, $city, $range_text);
         }
         if (!empty($p_overrides['description'])) {
             $page_description_paragraph = $p_overrides['description'];
@@ -649,27 +113,80 @@ if (!empty($city['product_content'])) {
 }
 
 $canonical_url = "https://waqtfinance.com/{$product_key}-in-{$city_key}";
-$meta_image = "assets/images/loan-hero.webp";
+$meta_image = is_file(__DIR__ . "/assets/images/og-{$product_key}.jpg") ? "assets/images/og-{$product_key}.jpg" : "assets/images/og-default.jpg";
 $meta_image_alt = "{$prod['name']} in {$city['name']} by Waqt Finance";
 $breadcrumb_label = "{$prod['name']} in {$city['name']}";
+$breadcrumb_items = [
+    ['name' => 'Home', 'url' => ''],
+    ['name' => 'Locations', 'url' => 'locations'],
+    ['name' => 'Loans in ' . $city['name'], 'url' => 'loan-in-' . $city_key],
+    ['name' => $prod['name'], 'url' => $product_key . '-in-' . $city_key],
+];
+$product_page = is_file(__DIR__ . '/' . $product_key . '.php') ? $product_key : '';
 
+// FAQs shown on the page (and in FAQPage schema): product FAQs, this city's own FAQs, then local help.
+$display_faqs = [];
+foreach (array_merge($prod['faqs'], $location['faqs'] ?? []) as $faq) {
+    if (is_array($faq) && trim((string) ($faq['q'] ?? '')) !== '' && trim((string) ($faq['a'] ?? '')) !== '') {
+        $display_faqs[] = ['q' => (string) $faq['q'], 'a' => (string) $faq['a']];
+    }
+}
+if (count($city['areas']) > 1) {
+    $display_faqs[] = [
+        'q' => "Which areas of {$city['name']} can apply for a " . strtolower($prod['name']) . "?",
+        'a' => "Applicants from " . implode(', ', $city['areas']) . " and nearby areas of {$city['name']} can apply online. Eligibility depends on your documents and our credit policy, not only on your locality.",
+    ];
+}
+$site_contact = waqt_location_site_defaults();
+$display_faqs[] = [
+    'q' => "How can I get help in {$city['name']}?",
+    'a' => $city['is_office']
+        ? "Our office is at {$city['address']}. Please call {$city['phone']} before visiting."
+        : "Applications from {$city['name']} are handled online. Call {$city['phone']} or email {$site_contact['email']}, Monday to Saturday, 10:00 AM to 6:00 PM.",
+];
+$prod['faqs'] = $display_faqs;
+
+$area_served = [["@type" => $city['type'], "name" => $city['name']]];
+foreach ($city['areas'] as $area) {
+    if ($area !== $city['name']) {
+        $area_served[] = ["@type" => "Place", "name" => $area];
+    }
+}
+$loan_schema = [
+    "@context" => "https://schema.org",
+    "@type" => "LoanOrCredit",
+    "@id" => $canonical_url . "#loan",
+    "name" => "{$prod['name']} in {$city['name']}",
+    "url" => $canonical_url,
+    "description" => $meta_description,
+    "provider" => ["@id" => "https://waqtfinance.com/#organization"],
+    "areaServed" => $area_served,
+    "currency" => "INR",
+];
+if ((int) ($prod['max_amount_val'] ?? 0) > 0) {
+    $loan_schema["amount"] = ["@type" => "MonetaryAmount", "currency" => "INR", "maxValue" => (int) $prod['max_amount_val']];
+    $min_numeric = (int) preg_replace('/\D/', '', (string) $prod['min_amount']);
+    if ($min_numeric >= 1000 && $min_numeric < (int) $prod['max_amount_val']) {
+        $loan_schema["amount"]["minValue"] = $min_numeric;
+    }
+}
 $seo_schema = [
     [
         "@context" => "https://schema.org",
         "@type" => "Service",
+        "@id" => $canonical_url . "#service",
         "name" => "{$prod['name']} in {$city['name']}",
         "url" => $canonical_url,
         "description" => $meta_description,
         "provider" => [
             "@id" => "https://waqtfinance.com/#organization"
         ],
-        "areaServed" => [
-            ["@type" => $city['type'], "name" => $city['name']]
-        ],
+        "areaServed" => $area_served,
         "serviceType" => [
             $prod['name']
         ]
-    ]
+    ],
+    $loan_schema,
 ];
 
 // Build & Append FAQ Schema if FAQs exist for improved Google Rich Snippets ranking
@@ -698,6 +215,17 @@ if (!empty($prod['faqs']) && is_array($prod['faqs'])) {
 
 $extra_head = <<<HTML
 <style>
+.wf-local-breadcrumb{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;font-size:13px;color:#c9d9ea;margin-bottom:14px}
+.wf-local-breadcrumb a{color:#fff;text-decoration:none}
+.wf-local-breadcrumb a:hover{text-decoration:underline}
+.wf-local-related h2{text-align:center;margin-bottom:22px}
+.wf-local-related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px;max-width:1000px;margin:0 auto}
+.wf-local-related-grid>div{background:#fff;border:1px solid #e3eaf3;border-radius:14px;padding:20px 22px}
+.wf-local-related-grid h3{font-size:17px;font-weight:800;color:#0b213a;margin:0 0 12px}
+.wf-local-related-links{display:flex;flex-wrap:wrap;gap:8px}
+.wf-local-related-links a{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #d4e4f5;border-radius:999px;background:#f8fbff;color:#18529c;font-size:14px;font-weight:700;text-decoration:none}
+.wf-local-related-links a:hover{border-color:#18529c}
+.wf-local-related-links a.is-hub{background:#18529c;color:#fff;border-color:#18529c}
     :root {
         --wf-primary: #062b5d;
         --wf-secondary: #18529c;
@@ -1288,6 +816,68 @@ $extra_head = <<<HTML
             margin-bottom: 10px;
         }
     }
+/* Brand-consistent controls (blue, not red) */
+.wf-local-page input[type="range"].wf-slider-input, input[type="range"].wf-slider-input { background: #dbe5f1 !important; accent-color: #18529c; height: 6px; }
+input[type="range"].wf-slider-input::-webkit-slider-thumb { background: #18529c !important; border: 3px solid #fff; }
+input[type="range"].wf-slider-input::-moz-range-thumb { background: #18529c; border: 3px solid #fff; }
+.wf-apply-badge { background: #18529c; border-color: #dbeafe; }
+.wf-apply-line { background: #bfdbfe; }
+.wf-apply-now-btn { background: #18529c; border-radius: 10px; }
+.wf-apply-now-btn:hover { background: #0d3f7b; }
+.wf-apply-now-btn:focus-visible, .wf-tab-btn:focus-visible, .wf-faq-trigger:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+/* Hero: two columns with a key-facts card */
+.wf-local-hero { padding: 56px 0 60px; text-align: left; }
+.wf-pcl-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 40px; align-items: center; max-width: 1140px; margin: 0 auto; }
+.wf-pcl-hero-grid .wf-local-hero-content { align-items: flex-start; max-width: none; margin: 0; }
+.wf-pcl-hero-grid .wf-local-hero h1, .wf-local-hero .wf-pcl-hero-grid h1 { text-align: left; font-size: clamp(30px, 4.2vw, 48px); margin-bottom: 14px; }
+.wf-pcl-hero-grid .wf-local-breadcrumb { justify-content: flex-start; }
+.wf-pcl-hero-grid .wf-local-description-box, .wf-pcl-hero-grid p { text-align: left; }
+.wf-pcl-hero-grid .wf-local-trust-strip { justify-content: flex-start; }
+.wf-pcl-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.wf-pcl-btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border: 1px solid rgba(255,255,255,.45); border-radius: 8px; color: #fff !important; font-weight: 700; text-decoration: none !important; }
+.wf-pcl-btn-ghost:hover { background: rgba(255,255,255,.1); }
+.wf-local-btn:focus-visible, .wf-pcl-btn-ghost:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.wf-pcl-hero-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); border-radius: 18px; padding: 24px; backdrop-filter: blur(6px); }
+.wf-pcl-hero-card-title { color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; opacity: .85; margin: 0 0 12px; }
+.wf-pcl-hero-card dl { margin: 0; display: grid; gap: 0; }
+.wf-pcl-hero-card dl > div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 11px 0; border-top: 1px solid rgba(255,255,255,.12); }
+.wf-pcl-hero-card dl > div:first-child { border-top: 0; }
+.wf-pcl-hero-card dt { color: #c9d9ea; font-size: 13.5px; font-weight: 600; }
+.wf-pcl-hero-card dt i { width: 16px; color: #93c5fd; margin-right: 4px; }
+.wf-pcl-hero-card dd { color: #fff; font-size: 15px; font-weight: 700; margin: 0; line-height: 1.45; }
+/* style.css sets hero <p> with !important; the card text needs its own size */
+body .wf-local-hero .wf-pcl-hero-card-note { color: #c9d9ea !important; font-size: 12.5px !important; line-height: 1.5 !important; margin: 12px 0 0 !important; max-width: none !important; }
+body .wf-local-hero .wf-pcl-hero-card-title { color: #fff !important; font-size: 13px !important; line-height: 1.4 !important; margin: 0 0 12px !important; max-width: none !important; }
+body .wf-local-hero .wf-pcl-hero-grid h1 { font-size: clamp(30px, 4.2vw, 48px) !important; }
+@media (max-width: 575px) {
+  body .wf-local-hero .wf-pcl-hero-grid h1 { font-size: 32px !important; }
+  .wf-pcl-hero-grid .wf-local-trust-strip { flex-direction: row; align-items: flex-start; }
+  .wf-pcl-hero-grid .wf-local-trust-strip span { width: auto; justify-content: flex-start; min-height: 34px; }
+}
+@media (max-width: 900px) {
+  .wf-pcl-hero-grid { grid-template-columns: 1fr; gap: 24px; }
+  .wf-local-hero { padding: 40px 0 44px; }
+}
+@media (max-width: 575px) {
+  .wf-pcl-hide-sm { display: none !important; }
+  .wf-pcl-hero-card { padding: 18px; }
+  .wf-pcl-hero-card dl > div { grid-template-columns: 104px 1fr; }
+  .wf-pcl-hero-actions a { flex: 1 1 100%; justify-content: center; }
+}
+/* City block */
+.wf-pcl-scenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto 28px; }
+.wf-pcl-scenarios article { background: #fff; border: 1px solid #e3eaf3; border-radius: 14px; padding: 18px 20px; }
+.wf-pcl-scenarios h3 { font-size: 16.5px; font-weight: 800; color: #0b213a; margin: 0 0 8px; }
+.wf-pcl-scenarios p { color: #475569; font-size: 14.5px; line-height: 1.6; margin: 0; }
+.wf-pcl-note { color: #334155; line-height: 1.7; }
+.wf-pcl-note p { margin: 0 0 10px; }
+.wf-pcl-contact { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px; }
+.wf-pcl-contact li { display: flex; gap: 10px; align-items: flex-start; color: #334155; font-size: 15px; line-height: 1.55; }
+.wf-pcl-contact i { color: #18529c; margin-top: 4px; width: 16px; }
+.wf-pcl-contact a { color: #18529c; font-weight: 700; }
+.wf-localities-serviced h3 { font-size: 17px; font-weight: 800; color: var(--wf-primary); margin: 0 0 14px; }
+.wf-mistake-title { font-size: 18px; font-weight: 800; color: var(--wf-slate-900); margin: 0 0 8px; }
+.wf-faq-h { margin: 0; font-size: inherit; font-weight: inherit; }
 </style>
 HTML;
 
@@ -1299,7 +889,9 @@ include 'includes/main-header.php';
     <!-- Premium Hero Section -->
     <section class="wf-local-hero">
         <div class="container">
+            <div class="wf-pcl-hero-grid">
             <div class="wf-local-hero-content">
+                <nav class="wf-local-breadcrumb" aria-label="Breadcrumb"><a href="./">Home</a><span aria-hidden="true">/</span><a href="locations">Locations</a><span aria-hidden="true">/</span><a href="loan-in-<?php echo $e($city_key); ?>"><?php echo $e($city['name']); ?></a><span aria-hidden="true">/</span><span aria-current="page"><?php echo $e($prod['name']); ?></span></nav>
                 <h1><?php echo htmlspecialchars($page_heading, ENT_QUOTES, 'UTF-8'); ?></h1>
                 <div class="wf-local-description-box" style="margin-bottom: 20px; color: #cbd5e1; font-size: 15.5px; line-height: 1.6; font-family: 'Plus Jakarta Sans', sans-serif;">
                     <?php echo waqt_sanitize_rich_html($page_description_paragraph); ?>
@@ -1309,9 +901,21 @@ include 'includes/main-header.php';
                     <span><i class="fa-solid fa-file-invoice"></i> Clear terms before acceptance</span>
                     <span><i class="fa-solid fa-location-dot"></i> Serving <?php echo htmlspecialchars($city['name'], ENT_QUOTES, 'UTF-8'); ?> areas</span>
                 </div>
-                <div>
-                    <a class="wf-local-btn" href="<?php echo $prod['apply_url']; ?>?city=<?php echo urlencode($city_key); ?>">Apply Now <i class="fa-solid fa-arrow-right"></i></a>
+                <div class="wf-pcl-hero-actions">
+                    <a class="wf-local-btn" href="<?php echo $e($prod['apply_url']); ?>?city=<?php echo urlencode($city_key); ?>">Apply Now <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <a class="wf-pcl-btn-ghost" href="#emi-calculator"><i class="fa-solid fa-calculator" aria-hidden="true"></i> Check your EMI</a>
                 </div>
+            </div>
+            <aside class="wf-pcl-hero-card" aria-label="<?php echo $e($prod['name']); ?> key facts">
+                <p class="wf-pcl-hero-card-title">Key facts</p>
+                <dl>
+                    <div><dt><i class="fa-solid fa-indian-rupee-sign" aria-hidden="true"></i> Loan amount</dt><dd><?php echo $e(ucfirst($range_text)); ?></dd></div>
+                    <div><dt><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Tenure</dt><dd><?php echo $e($prod['tenure']); ?></dd></div>
+                    <div><dt><i class="fa-solid fa-percent" aria-hidden="true"></i> Interest</dt><dd><?php echo $e($prod['interest']); ?></dd></div>
+                    <div class="wf-pcl-hide-sm"><dt><i class="fa-solid <?php echo $city['is_office'] ? 'fa-building' : 'fa-location-dot'; ?>" aria-hidden="true"></i> <?php echo $city['is_office'] ? 'Office' : 'Service'; ?></dt><dd><?php echo $city['is_office'] ? $e($city['address']) : 'Online across ' . $e($city['name']); ?></dd></div>
+                </dl>
+                <p class="wf-pcl-hero-card-note">Final amount, rate and charges are shown in the Key Fact Statement before you accept.</p>
+            </aside>
             </div>
         </div>
     </section>
@@ -1320,7 +924,7 @@ include 'includes/main-header.php';
     <section class="wf-local-section">
         <div class="container">
             <h2>Loan Details & Structure</h2>
-            <p class="wf-local-sub">Below is the general structure for a <?php echo strtolower($prod['name']); ?> for applicants in <?php echo $city['name']; ?>. Final eligibility checks and documents review apply.</p>
+            <p class="wf-local-sub">Below is the general structure for a <?php echo $e(strtolower($prod['name'])); ?> for applicants in <?php echo $e($city['name']); ?>. Final eligibility checks and documents review apply.</p>
             <div class="wf-local-area-chips" aria-label="Popular service areas in <?php echo htmlspecialchars($city['name'], ENT_QUOTES, 'UTF-8'); ?>">
                 <?php foreach (array_slice($city['areas'], 0, 6) as $area): ?>
                     <span><?php echo htmlspecialchars($area, ENT_QUOTES, 'UTF-8'); ?></span>
@@ -1330,22 +934,22 @@ include 'includes/main-header.php';
             <div class="wf-product-bento">
                 <div class="wf-product-bento-card">
                     <strong>Minimum Amount</strong>
-                    <span><?php echo $prod['min_amount']; ?></span>
+                    <span><?php echo $e($prod['min_amount']); ?></span>
                 </div>
                 <div class="wf-product-bento-card">
                     <strong>Repayment Tenure</strong>
-                    <span><?php echo $prod['tenure']; ?></span>
+                    <span><?php echo $e($prod['tenure']); ?></span>
                 </div>
                 <div class="wf-product-bento-card">
                     <strong>Interest Rate</strong>
-                    <span><?php echo $prod['interest']; ?></span>
+                    <span><?php echo $e($prod['interest']); ?></span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- EMI Calculator widget (Calculates dynamically) -->
-    <section class="wf-local-section wf-local-band">
+    <section class="wf-local-section wf-local-band" id="emi-calculator">
         <div class="container">
             <h2>Calculate Your EMI</h2>
             <p class="wf-local-sub">Enter your loan details below to instantly calculate your estimated monthly installment.</p>
@@ -1354,23 +958,23 @@ include 'includes/main-header.php';
                 <div class="wf-calc-sliders">
                     <div class="wf-slider-group">
                         <label class="wf-slider-header" for="loanAmtSlider">Loan Amount 
-                            <span id="loanAmtVal"><?php echo $prod['min_amount']; ?></span>
+                            <span id="loanAmtVal"><?php echo $e($prod['min_amount']); ?></span>
                         </label>
-                        <input type="range" class="wf-slider-input" id="loanAmtSlider" min="<?php echo (int)filter_var($prod['min_amount'], FILTER_SANITIZE_NUMBER_INT); ?>" max="<?php echo $prod['max_amount_val']; ?>" step="5000" value="<?php echo (int)filter_var($prod['min_amount'], FILTER_SANITIZE_NUMBER_INT); ?>">
+                        <input type="range" class="wf-slider-input" id="loanAmtSlider" min="<?php echo (int)filter_var($prod['min_amount'], FILTER_SANITIZE_NUMBER_INT); ?>" max="<?php echo (int) $prod['max_amount_val']; ?>" step="5000" value="<?php echo (int)filter_var($prod['min_amount'], FILTER_SANITIZE_NUMBER_INT); ?>">
                     </div>
                     
                     <div class="wf-slider-group">
                         <label class="wf-slider-header" for="interestSlider">Interest Rate (p.a.) 
-                            <span id="interestVal"><?php echo $prod['default_rate']; ?>%</span>
+                            <span id="interestVal"><?php echo (float) $prod['default_rate']; ?>%</span>
                         </label>
-                        <input type="range" class="wf-slider-input" id="interestSlider" min="9" max="36" step="0.25" value="<?php echo $prod['default_rate']; ?>">
+                        <input type="range" class="wf-slider-input" id="interestSlider" min="9" max="36" step="0.25" value="<?php echo (float) $prod['default_rate']; ?>">
                     </div>
                     
                     <div class="wf-slider-group">
                         <label class="wf-slider-header" for="tenureSlider">Tenure (Months) 
-                            <span id="tenureVal"><?php echo $prod['default_tenure']; ?> months</span>
+                            <span id="tenureVal"><?php echo (int) $prod['default_tenure']; ?> months</span>
                         </label>
-                        <input type="range" class="wf-slider-input" id="tenureSlider" min="3" max="84" step="1" value="<?php echo $prod['default_tenure']; ?>">
+                        <input type="range" class="wf-slider-input" id="tenureSlider" min="3" max="84" step="1" value="<?php echo (int) $prod['default_tenure']; ?>">
                     </div>
                 </div>
                 
@@ -1383,7 +987,7 @@ include 'includes/main-header.php';
                         <strong>Total Repayment Amount</strong>
                         <span id="totalRepayResult" style="font-size: 19px; color: var(--wf-slate-600);">₹0</span>
                     </div>
-                    <a class="wf-local-btn" href="<?php echo $prod['apply_url']; ?>?city=<?php echo urlencode($city_key); ?>" style="background: var(--wf-primary); color: #fff !important; margin-top: 10px;">Apply for This Loan</a>
+                    <a class="wf-local-btn" href="<?php echo $e($prod['apply_url']); ?>?city=<?php echo urlencode($city_key); ?>" style="background: var(--wf-primary); color: #fff !important; margin-top: 10px;">Apply for This Loan</a>
                 </div>
             </div>
         </div>
@@ -1393,15 +997,15 @@ include 'includes/main-header.php';
     <?php if (isset($prod['choice_scenarios'])): ?>
     <section class="wf-local-section">
         <div class="container">
-            <h2><?php echo $prod['choice_scenarios']['title']; ?></h2>
+            <h2><?php echo $e($prod['choice_scenarios']['title']); ?></h2>
             <p class="wf-local-sub">Choosing the right loan setup is critical. Here are common scenarios where this fits perfectly:</p>
             
             <div class="wf-scenarios-grid">
                 <?php foreach ($prod['choice_scenarios']['items'] as $item): ?>
                     <div class="wf-scenario-card">
                         <div class="wf-scenario-icon"><i class="fa-solid fa-circle-check"></i></div>
-                        <h3><?php echo $item['q']; ?></h3>
-                        <p><?php echo $item['a']; ?></p>
+                        <h3><?php echo $e($item['q'] ?? ''); ?></h3>
+                        <p><?php echo $e($item['a'] ?? ''); ?></p>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -1432,8 +1036,8 @@ include 'includes/main-header.php';
                             $risk = $prod['benefits_vs_risks']['risks'][$i] ?? '';
                         ?>
                             <tr>
-                                <td><?php if ($benefit): ?><i class="fa-solid fa-circle-check" style="color: #22c55e; margin-right: 8px;"></i> <?php echo $benefit; ?><?php endif; ?></td>
-                                <td><?php if ($risk): ?><i class="fa-solid fa-triangle-exclamation" style="color: var(--wf-accent); margin-right: 8px;"></i> <?php echo $risk; ?><?php endif; ?></td>
+                                <td><?php if ($benefit): ?><i class="fa-solid fa-circle-check" style="color: #22c55e; margin-right: 8px;"></i> <?php echo $e($benefit); ?><?php endif; ?></td>
+                                <td><?php if ($risk): ?><i class="fa-solid fa-triangle-exclamation" style="color: var(--wf-accent); margin-right: 8px;"></i> <?php echo $e($risk); ?><?php endif; ?></td>
                             </tr>
                         <?php endfor; ?>
                     </tbody>
@@ -1453,8 +1057,8 @@ include 'includes/main-header.php';
             <div class="wf-mistakes-grid">
                 <?php foreach ($prod['common_mistakes'] as $index => $mistake): ?>
                     <div class="wf-mistake-card">
-                        <h4><?php echo ($index + 1) . ". " . $mistake['q']; ?></h4>
-                        <p><?php echo $mistake['a']; ?></p>
+                        <h3 class="wf-mistake-title"><?php echo ($index + 1) . '. ' . $e($mistake['q'] ?? ''); ?></h3>
+                        <p><?php echo $e($mistake['a'] ?? ''); ?></p>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -1466,7 +1070,7 @@ include 'includes/main-header.php';
     <section class="wf-local-section wf-local-band">
         <div class="container">
             <h2>Eligibility & Documents Required</h2>
-            <p class="wf-local-sub">Ensure you meet these criteria and have these documents handy to guarantee a fast approval cycle.</p>
+            <p class="wf-local-sub">Check these before you apply. Keeping your documents ready helps your application move faster.</p>
             
             <div class="wf-tabs-container">
                 <div class="wf-tabs-nav">
@@ -1478,7 +1082,7 @@ include 'includes/main-header.php';
                     <div class="wf-tab-pane active" id="tab-eligibility">
                         <ul class="wf-checklist">
                             <?php foreach ($prod['eligibility'] as $item): ?>
-                                <li><i class="fa-solid fa-circle-check"></i> <?php echo $item; ?></li>
+                                <li><i class="fa-solid fa-circle-check"></i> <?php echo $e($item); ?></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
@@ -1486,7 +1090,7 @@ include 'includes/main-header.php';
                     <div class="wf-tab-pane" id="tab-docs">
                         <ul class="wf-checklist">
                             <?php foreach ($prod['documents'] as $item): ?>
-                                <li><i class="fa-solid fa-file-invoice"></i> <?php echo $item; ?></li>
+                                <li><i class="fa-solid fa-file-invoice"></i> <?php echo $e($item); ?></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
@@ -1498,7 +1102,7 @@ include 'includes/main-header.php';
     <!-- Timeline Stepper Section -->
     <section class="wf-local-section wf-apply-stepper-section">
         <div class="container">
-            <h2>How to Apply for a <?php echo $prod['name']; ?> Online – Step-by-Step Guide</h2>
+            <h2>How to Apply for a <?php echo $e($prod['name']); ?> Online – Step-by-Step Guide</h2>
             
             <div class="wf-apply-card">
                 <div class="wf-apply-timeline">
@@ -1547,23 +1151,48 @@ include 'includes/main-header.php';
         </div>
     </section>
 
-    <!-- City Serving Description Block -->
-    <section class="wf-local-section wf-local-band">
+    <!-- City block: content comes from Admin > Location CMS for this city, so each city page is different -->
+    <section class="wf-local-section wf-local-band" aria-labelledby="city-title">
         <div class="container">
-            <h2>Waqt Finance Services in <?php echo $city['name']; ?></h2>
-            <p class="wf-local-sub">Professional NBFC lending options tailored for the <?php echo $city['name']; ?> region.</p>
-            
+            <h2 id="city-title"><?php echo $e($prod['name']); ?> for <?php echo $e($city['name']); ?> applicants</h2>
+            <?php if ($location['intro'] !== ''): ?><p class="wf-local-sub"><?php echo $e($location['intro']); ?></p><?php endif; ?>
+
+            <?php if ($location['scenarios']): ?>
+            <div class="wf-pcl-scenarios">
+                <?php foreach (array_slice($location['scenarios'], 0, 4) as $scenario): ?>
+                <article>
+                    <h3><?php echo $e($scenario[0] ?? ''); ?></h3>
+                    <p><?php echo $e($scenario[1] ?? ''); ?></p>
+                </article>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
             <div class="wf-city-services-grid">
                 <div class="wf-city-services-left">
-                    <p>Our digital process makes it simple to apply for <?php echo strtolower($prod['name']); ?> options from any corner of <?php echo $city['name']; ?>. Whether you are situated in <?php echo implode(', ', array_slice($city['areas'], 0, 4)); ?>, or surrounding sectors, you can upload documents and complete verification online after the required consent. Our local office footprint in Noida Sector 63 ensures backend stability and responsive customer support for applicants.</p>
-                    <p>We keep the process transparent with eligibility-led loan limits, document-based processing, and clear agreement terms before acceptance. Final approval, amount, tenure, charges and repayment terms are communicated after verification and policy review.</p>
+                    <?php if ($location['local_note'] !== ''): ?>
+                        <div class="wf-pcl-note"><?php echo waqt_sanitize_rich_html($location['local_note']); ?></div>
+                    <?php else: ?>
+                        <p>Applicants from <?php echo $e($city['name']); ?> apply online and upload documents after giving consent. Final approval, amount, tenure, charges and repayment terms are shared after verification and policy review.</p>
+                    <?php endif; ?>
+                    <ul class="wf-pcl-contact">
+                        <?php if ($city['is_office']): ?>
+                            <li><i class="fa-solid fa-building" aria-hidden="true"></i><span><strong>Office:</strong> <?php echo $e($city['address']); ?></span></li>
+                        <?php else: ?>
+                            <li><i class="fa-solid fa-laptop" aria-hidden="true"></i><span><strong>Online service</strong> for all of <?php echo $e($city['name']); ?>; no branch visit needed.</span></li>
+                        <?php endif; ?>
+                        <li><i class="fa-solid fa-phone" aria-hidden="true"></i><span><strong>Call:</strong> <a href="tel:<?php echo $e(preg_replace('/[^0-9+]/', '', $city['phone'])); ?>"><?php echo $e($city['phone']); ?></a> (Mon to Sat, 10 AM to 6 PM)</span></li>
+                        <?php if ($location['map_url'] !== '' && preg_match('#^https://#', $location['map_url'])): ?>
+                            <li><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><span><a href="<?php echo $e($location['map_url']); ?>" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></span></li>
+                        <?php endif; ?>
+                    </ul>
                 </div>
                 <div class="wf-city-services-right">
                     <div class="wf-localities-serviced">
-                        <h4>Localities Serviced in <?php echo $city['name']; ?>:</h4>
+                        <h3>Areas we serve in <?php echo $e($city['name']); ?></h3>
                         <div class="wf-localities-grid">
                             <?php foreach ($city['areas'] as $area): ?>
-                                <span><?php echo $area; ?></span>
+                                <span><?php echo $e($area); ?></span>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -1576,30 +1205,52 @@ include 'includes/main-header.php';
     <section class="wf-local-section">
         <div class="container">
             <h2>Frequently Asked Questions</h2>
-            <p class="wf-local-sub">Find quick answers to common questions about <?php echo strtolower($prod['name']); ?> options in <?php echo $city['name']; ?>.</p>
+            <p class="wf-local-sub">Find quick answers to common questions about <?php echo $e(strtolower($prod['name'])); ?> options in <?php echo $e($city['name']); ?>.</p>
             
             <div class="wf-faq-wrap">
-                <?php foreach ($prod['faqs'] as $index => $faq): ?>
+                <?php foreach ($prod['faqs'] as $index => $faq): $fid = 'pcl-faq-' . $index; ?>
                     <div class="wf-faq-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                        <button class="wf-faq-trigger" onclick="toggleLocalFaq(this)">
-                            <?php echo $faq['q']; ?>
-                            <span class="fa-solid fa-chevron-down"></span>
+                        <h3 class="wf-faq-h">
+                        <button type="button" class="wf-faq-trigger" id="<?php echo $fid; ?>-q" aria-expanded="<?php echo $index === 0 ? 'true' : 'false'; ?>" aria-controls="<?php echo $fid; ?>" onclick="toggleLocalFaq(this)">
+                            <?php echo $e($faq['q'] ?? ''); ?>
+                            <span class="fa-solid fa-chevron-down" aria-hidden="true"></span>
                         </button>
-                        <div class="wf-faq-content" style="<?php echo $index === 0 ? 'max-height: 200px;' : ''; ?>">
-                            <p><?php echo $faq['a']; ?></p>
+                        </h3>
+                        <div class="wf-faq-content" id="<?php echo $fid; ?>" role="region" aria-labelledby="<?php echo $fid; ?>-q">
+                            <p><?php echo waqt_sanitize_rich_html((string) ($faq['a'] ?? '')); ?></p>
                         </div>
                     </div>
                 <?php endforeach; ?>
-                
-                <div class="wf-faq-item">
-                    <button class="wf-faq-trigger" onclick="toggleLocalFaq(this)">
-                        Where is the nearest support center for Waqt Finance in <?php echo $city['name']; ?>?
-                        <span class="fa-solid fa-chevron-down"></span>
-                    </button>
-                    <div class="wf-faq-content">
-                        <p>Our corporate head office is located in Noida Sector 63. This central office serves as the processing hub for all digital loan operations in Delhi NCR, Delhi, Noida, and Gurugram. You can reach out directly via customercare@waqtfinance.com or by calling us at +91 95602 60240.</p>
+            </div>
+        </div>
+    </section>
+    <!-- Internal links: other products in this city, and this product in other cities -->
+    <?php
+    $otherProducts = array_filter($products, static fn($p, $k) => $k !== $product_key, ARRAY_FILTER_USE_BOTH);
+    $otherCities = array_filter(waqt_list_locations(), static fn($l) => $l['slug'] !== $city_key);
+    ?>
+    <section class="wf-local-section wf-local-band wf-local-related" aria-labelledby="related-title">
+        <div class="container">
+            <h2 id="related-title">Explore more</h2>
+            <div class="wf-local-related-grid">
+                <?php if ($otherProducts): ?>
+                <div>
+                    <h3>Other loans in <?php echo $e($city['name']); ?></h3>
+                    <div class="wf-local-related-links">
+                        <?php foreach ($otherProducts as $k => $p): ?><a href="<?php echo $e($k . '-in-' . $city_key); ?>"><?php echo $e($p['name']); ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a><?php endforeach; ?>
                     </div>
                 </div>
+                <?php endif; ?>
+                <?php if ($otherCities): ?>
+                <div>
+                    <h3><?php echo $e($prod['name']); ?> in other cities</h3>
+                    <div class="wf-local-related-links">
+                        <?php foreach ($otherCities as $l): ?><a href="<?php echo $e($product_key . '-in-' . $l['slug']); ?>"><?php echo $e($l['name']); ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a><?php endforeach; ?>
+                        <a href="loan-in-<?php echo $e($city_key); ?>" class="is-hub">All loans in <?php echo $e($city['name']); ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                        <?php if ($product_page !== ''): ?><a href="<?php echo $e($product_page); ?>" class="is-hub"><?php echo $e($prod['name']); ?> guide <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a><?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </section>
@@ -1626,14 +1277,19 @@ function toggleLocalFaq(btn) {
     container.querySelectorAll('.wf-faq-item').forEach(item => {
         item.classList.remove('active');
         item.querySelector('.wf-faq-content').style.maxHeight = null;
+        item.querySelector('.wf-faq-trigger').setAttribute('aria-expanded', 'false');
     });
     
     if (!isAlreadyActive) {
         faqItem.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
         const content = faqItem.querySelector('.wf-faq-content');
         content.style.maxHeight = content.scrollHeight + "px";
     }
 }
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.wf-faq-item.active .wf-faq-content').forEach(function (c) { c.style.maxHeight = c.scrollHeight + 'px'; });
+});
 
 // Live EMI Calculation logic
 document.addEventListener("DOMContentLoaded", function() {
@@ -1695,6 +1351,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 <?php 
 $footer_cta_title = "Ready to Apply for a " . $prod['name'] . " in " . $city['name'] . "?";
-$footer_cta_desc = "Get started with your secure online application today and receive quick approval.";
+$footer_cta_desc = "Start your secure online application. You will see the Key Fact Statement with all charges before you accept.";
 include 'includes/footer.php'; 
 ?>

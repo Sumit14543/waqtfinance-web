@@ -1,0 +1,378 @@
+[
+  {
+    "route": "/",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "about-us",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "contact-us",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "products",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "locations",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "blog",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "personal-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "business-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "edi-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "pay-day-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "vehicle-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "loan-against-property",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "shopkeeper-business-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "emi-calculator",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "eligibility-calculator",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "free-credit-score",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "repay",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "pay-online",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "partner",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "policies",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "privacy-policy",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "terms-condition",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "fair-practice-code",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "digital-lending",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "delete-account",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "refund-cancellation",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "interest-rate-policy",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "grievance-redressal-policy",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "anti-money-laundering",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "business-loan-guide",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "car-loan-guide",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "guide-to-home-loan",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "guide-to-lap",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "login",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "customer-login",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "application-status",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "personal-loan-apply",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "business-loan-apply",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "vehicle-loan-apply",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "loan-against-property-apply",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "edi-loan-apply",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "payday-apply",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "loan-in-delhi",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "personal-loan-in-delhi",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "loan-in-noida",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "business-loan-in-gurugram",
+    "status": 200,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  },
+  {
+    "route": "not-a-real-audit-page",
+    "status": 404,
+    "h1": 1,
+    "duplicate_ids": [],
+    "missing_assets": [],
+    "runtime_error": false
+  }
+]

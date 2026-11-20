@@ -256,7 +256,7 @@ $reports = $fetchStmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <td><?php echo date('d M Y, h:i A', strtotime($r['created_at'])); ?></td>
                             <td>
                                 <?php if (!empty($r['pdf_url'])): ?>
-                                    <a href="../<?php echo htmlspecialchars($r['pdf_url'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="doc-preview-link" style="font-size:13px;">
+                                    <a href="<?php echo htmlspecialchars(waqt_document_url((string) $r['pdf_url'], '../'), ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener" class="doc-preview-link" style="font-size:13px;">
                                         <i class="fa-solid fa-file-pdf"></i> Download PDF
                                     </a>
                                 <?php else: ?>
@@ -373,10 +373,18 @@ $reports = $fetchStmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 analysisHTML = formatJsonPre(r.analysis_json, '#a78bfa');
             }
 
-            const pdfUrl = String(r.pdf_url || '');
+            const adminDocUrl = (p) => {
+                // private:// documents (GCS or private storage) open through download-file.php; https links as they are.
+                const v = String(p || '');
+                if (v.startsWith('private://')) return '../download-file.php?file=' + encodeURIComponent(v);
+                if (/^https:\/\//.test(v)) return v;
+                if (/^uploads\/[\w\/.-]+$/.test(v)) return '../' + v;
+                return '';
+            };
+            const pdfUrl = adminDocUrl(r.pdf_url);
             const safePdfUrl = escapeHtml(pdfUrl);
             const pdfLinkHTML = pdfUrl
-                ? `<a href="../${safePdfUrl}" target="_blank" class="doc-preview-link"><i class="fa-solid fa-file-pdf"></i> View report</a>`
+                ? `<a href="${safePdfUrl}" target="_blank" rel="noopener" class="doc-preview-link"><i class="fa-solid fa-file-pdf"></i> View report</a>`
                 : 'N/A';
             const createdAt = r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : 'N/A';
 

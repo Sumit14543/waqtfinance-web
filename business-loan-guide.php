@@ -13,7 +13,7 @@ include 'includes/main-header.php';
    <div class="container" style="margin-top:10px;">
        <div class="cs-blog-detail box-shadow-card">
            <div class="cs-main-post">
-               <figure><img onload="pagespeed.CriticalImages.checkImageForCriticality(this);" data-pagespeed-url-hash="2714250504" alt="jobline-blog (8)" src="assets/images/businessloan1.webp"></figure>
+               <figure><img alt="jobline-blog (8)" src="assets/images/businessloan1.webp"></figure>
            </div>
            <div class="cs-post-option-panel">
                <div class="rich-editor-text">
@@ -122,7 +122,7 @@ include 'includes/main-header.php';
 
        </div>
    </div>
-   <?php include 'includes/mian-footer.php'; ?>
+   <?php include 'includes/footer.php'; ?>
    <script>
        const MAX_AMOUNT = "25 Lakhs";
 
@@ -174,7 +174,8 @@ include 'includes/main-header.php';
            document.getElementById("resultBox").style.display = "none";
        }
    </script>
-   <script>
+    <script>
+    if (document.getElementById("loanAmount")) {
        let emiChart;
 
        const loanInput = document.getElementById("loanAmount");
@@ -325,8 +326,10 @@ include 'includes/main-header.php';
        updateSliderColor(loanInput);
        updateSliderColor(tenureInput);
        updateSliderColor(interestInput);
-   </script>
+    }
+    </script>
    <script>
+   if (document.getElementById("scoreSlider")) {
        const slider = document.getElementById("scoreSlider");
        const scoreText = document.getElementById("scoreText");
        const rateValue = document.getElementById("rateValue");
@@ -400,14 +403,20 @@ include 'includes/main-header.php';
 
        updateUI();
        updateScoreSliderColor(slider);
+   }
    </script>
    <?php include 'includes/footer.php'; ?>
    <script>
-       $('.testimonial-slider').slick({
+       // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
+    $('.testimonial-slider').slick({
            slidesToShow: 3,
            slidesToScroll: 1,
            autoplay: true,
-           autoplaySpeed: 1500,
+           autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
            dots: true,
            arrows: true,
            responsive: [{
@@ -424,4 +433,5 @@ include 'includes/main-header.php';
                }
            ]
        });
+});
    </script>

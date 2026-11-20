@@ -10,37 +10,42 @@ $conn = db();
 
 // Pagination Config
 $limit = 10;
-$page = (int) ($_GET['page'] ?? 1);
-if ($page < 1) $page = 1;
+$page = max(1, (int) ($_GET['page'] ?? 1));
+
+// Stats (one query)
+$statsRes = $conn->query("SELECT COUNT(*) AS total, SUM(status = 'published') AS active, SUM(status <> 'published') AS inactive, COALESCE(SUM(views), 0) AS views FROM blogs");
+$statsRow = $statsRes ? ($statsRes->fetch_assoc() ?: []) : [];
+$totalRecords = (int) ($statsRow['total'] ?? 0);
+$activeRecords = (int) ($statsRow['active'] ?? 0);
+$inactiveRecords = (int) ($statsRow['inactive'] ?? 0);
+$totalViews = (int) ($statsRow['views'] ?? 0);
+
+$totalPages = max(1, (int) ceil($totalRecords / $limit));
+$page = min($page, $totalPages);
 $offset = ($page - 1) * $limit;
 
-// Count total
-$countRes = $conn->query("SELECT COUNT(*) FROM blogs");
-$totalRecords = (int) ($countRes->fetch_row()[0] ?? 0);
-$totalPages = (int) ceil($totalRecords / $limit);
-if ($totalPages < 1) $totalPages = 1;
-
-// Article visibility stats
-$activeRecords = (int) ($conn->query("SELECT COUNT(*) FROM blogs WHERE status = 'published'")->fetch_row()[0] ?? 0);
-$inactiveRecords = (int) ($conn->query("SELECT COUNT(*) FROM blogs WHERE status = 'draft'")->fetch_row()[0] ?? 0);
-$categoriesCount = (int) ($conn->query("SELECT COUNT(DISTINCT category) FROM blogs")->fetch_row()[0] ?? 0);
-
-// Fetch blogs
+// First page of the list: only the columns the table shows (the editor loads one full article on demand).
 $blogs = [];
-$stmt = $conn->prepare("SELECT * FROM blogs ORDER BY id DESC LIMIT ? OFFSET ?");
+$stmt = $conn->prepare("SELECT id, title, slug, category, read_time, image_url, status, views, author_name, created_at, updated_at FROM blogs ORDER BY id DESC LIMIT ? OFFSET ?");
 $stmt->bind_param('ii', $limit, $offset);
 $stmt->execute();
 $res = $stmt->get_result();
 if ($res) {
     $blogs = $res->fetch_all(MYSQLI_ASSOC);
 }
+
+$initialBlogData = [
+    'records' => $blogs,
+    'page' => $page,
+    'limit' => $limit,
+    'total_records' => $totalRecords,
+    'total_pages' => $totalPages,
+    'stats' => ['total' => $totalRecords, 'active' => $activeRecords, 'inactive' => $inactiveRecords, 'views' => $totalViews],
+];
 ?>
 
 <!-- TinyMCE Rich Text Editor CDN -->
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
-<!-- SweetAlert2 CDN -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
     /* TinyMCE Editor Customizations */
@@ -323,7 +328,7 @@ if ($res) {
     /* CMS Stats Dashboard Grid */
     .cms-stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
         gap: 20px;
         margin-bottom: 25px;
     }
@@ -733,198 +738,262 @@ if ($res) {
         letter-spacing: 0.5px;
         text-transform: uppercase;
     }
+    /* ==========================================================
+       Article list
+       ========================================================== */
+    .bl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .bl-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .bl-stat {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 16px 18px;
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xs);
+        text-align: left;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .bl-stat:hover { border-color: #b9cbe3; box-shadow: var(--shadow-sm); }
+    .bl-stat.static { cursor: default; }
+    .bl-stat.static:hover { border-color: var(--border-color); box-shadow: var(--shadow-xs); }
+    .bl-stat.is-current { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .bl-stat-label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+    .bl-stat-value { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .bl-stat-icon {
+        position: absolute; top: 16px; right: 18px; width: 34px; height: 34px; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center; font-size: 14px;
+        background: var(--primary-soft); color: var(--primary);
+    }
+    .bl-stat-icon.good { background: #f0fdf4; color: #15803d; }
+    .bl-stat-icon.warn { background: #fffbeb; color: #b45309; }
+
+    .bl-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); min-width: 0; }
+    .bl-toolbar {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        padding: 14px 20px; background: var(--bg-subtle); border-bottom: 1px solid var(--border-color);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .bl-toolbar [hidden] { display: none !important; }
+    .bl-search { position: relative; flex: 1 1 280px; }
+    .bl-search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12.5px; pointer-events: none; }
+    .bl-search input, .bl-select {
+        width: 100%; height: 38px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+        background: #ffffff; color: var(--text-main); font-size: 13px; outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .bl-search input { padding-left: 34px; }
+    .bl-select { width: auto; min-width: 160px; cursor: pointer; }
+    .bl-search input:focus, .bl-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .bl-btn {
+        height: 38px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px;
+        border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: #ffffff;
+        color: var(--text-main); font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .bl-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .bl-new { height: 38px; margin-left: auto; }
+
+    .bl-table-wrap { padding: 16px 20px 20px; }
+    .bl-table-wrap .table-responsive { border: 1px solid var(--border-color); border-radius: var(--radius); }
+    .bl-table th { padding: 11px 14px; }
+    .bl-table td { padding: 10px 14px; vertical-align: middle; }
+    .bl-table tbody tr:last-child td { border-bottom: none; }
+    .bl-table th:last-child, .bl-table td:last-child {
+        position: sticky; right: 0; z-index: 1; background: #ffffff; text-align: right;
+        box-shadow: -10px 0 10px -10px rgba(15, 23, 42, 0.18);
+    }
+    .bl-table th:last-child { background: var(--bg-subtle); }
+    .bl-table tbody tr:hover td:last-child { background: #f9fbfd; }
+    .bl-article { display: flex; align-items: center; gap: 12px; min-width: 280px; max-width: 460px; white-space: normal; }
+    .bl-thumb {
+        position: relative; flex-shrink: 0; width: 64px; height: 44px; border-radius: 8px; overflow: hidden;
+        background: #eef1f6; border: 1px solid var(--border-color);
+        display: flex; align-items: center; justify-content: center; color: #b6c2d2; font-size: 15px;
+    }
+    .bl-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .bl-title {
+        font-weight: 600; color: var(--text-main); line-height: 1.35;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .bl-slug { font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 440px; }
+    .bl-warn { color: #b45309; font-weight: 600; }
+    .bl-sub { font-size: 12px; color: var(--text-muted); }
+    .bl-table td:nth-child(5) { white-space: nowrap; }
+    .bl-num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .bl-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; background: #f1f5f9; color: var(--text-secondary); font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .bl-status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+    .bl-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .bl-status.on { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .bl-status.off { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+    .bl-actions { display: inline-flex; gap: 6px; justify-content: flex-end; }
+    .bl-ic {
+        width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 8px; border: 1px solid var(--border-strong); background: #ffffff; color: var(--text-secondary);
+        font-size: 12.5px; cursor: pointer; text-decoration: none;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    }
+    .bl-ic:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .bl-ic:disabled { opacity: 0.5; cursor: wait; }
+    .bl-ic.danger { color: #b91c1c; border-color: #fecaca; }
+    .bl-ic.danger:hover { background: #fef2f2; border-color: #dc2626; }
+    .bl-empty { padding: 48px 20px !important; text-align: center !important; color: var(--text-muted); white-space: normal; position: static !important; box-shadow: none !important; }
+    .bl-empty i { display: block; font-size: 26px; color: #cbd5e1; margin-bottom: 10px; }
+    .bl-empty strong { display: block; color: var(--text-main); margin-bottom: 8px; }
+    .bl-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: 12.5px; color: var(--text-muted); }
+    .bl-foot .pagination { display: flex; gap: 4px; list-style: none; margin: 0; flex-wrap: wrap; }
+    .bl-foot .page-item a, .bl-foot .page-item span {
+        min-width: 32px; height: 32px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--border-color); border-radius: 7px; background: #fff; color: var(--text-secondary);
+        font-size: 12.5px; font-weight: 600; text-decoration: none;
+    }
+    .bl-foot .page-item a:hover { background: #fff; border-color: var(--primary); color: var(--primary); }
+    .bl-foot .page-item.active span { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .bl-foot .page-item.disabled span { opacity: 0.45; cursor: not-allowed; }
+    .bl-foot .page-item.gap span { border: none; background: transparent; min-width: 16px; padding: 0; }
+
+    /* ==========================================================
+       Editor refinements
+       ========================================================== */
+    .form-grid { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); gap: 28px; }
+    .tabs-nav { gap: 2px; overflow-x: auto; scrollbar-width: none; border-bottom-width: 1px; }
+    .tabs-nav::-webkit-scrollbar { display: none; }
+    .tab-btn { white-space: nowrap; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; padding: 10px 12px; flex: 0 0 auto; }
+    .form-label { text-transform: none; letter-spacing: 0; font-size: 13px; }
+    .form-hint-missing { font-size: 12.5px; color: var(--text-muted); font-weight: 500; }
+    .form-hint-missing b { color: #b45309; font-weight: 600; }
+
+    @media (max-width: 1100px) {
+        .bl-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+        .bl-stats { grid-template-columns: minmax(0, 1fr); }
+        .bl-toolbar { padding: 12px 16px; }
+        .bl-select { flex: 1 1 140px; }
+        .bl-new { width: 100%; justify-content: center; margin-left: 0; }
+        .bl-table-wrap { padding: 12px 16px 16px; }
+    }
+
+    /* Writing workspace: keep secondary tools visible without competing with content. */
+    #formPanel { padding: 24px; max-width: 1520px; margin-inline: auto; }
+    #formPanel .form-grid > div { min-width: 0; }
+    #formPanel .form-sidebar { position: static; padding: 18px; border: 1px solid #e2e8f0; border-radius: 14px; background: #f8fafc; }
+    #formPanel .tabs-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; background: #eaf0f7; border: 0; border-radius: 10px; margin-bottom: 22px; }
+    #formPanel .tab-btn { border: 0; border-radius: 7px; padding: 11px 8px; justify-content: center; min-height: 42px; }
+    #formPanel .tab-btn.active { background: white; color: #18529c; box-shadow: 0 1px 4px #0f172a15; }
+    #formPanel .form-control-adm { min-height: 44px; font-size: 14px; }
+    #formPanel #title { font-size: 21px; font-weight: 600; padding: 14px; }
+    #formPanel #excerpt { min-height: 96px; }
+    #formPanel .form-label { color: #334155; margin-bottom: 7px; }
+    .editor-intro, .field-help { color: #64748b; font-size: 12px; line-height: 1.6; }
+    .editor-intro { margin: -12px 0 22px; }
+    #formPanel .upload-dropzone { padding: 20px 12px; background: white; }
+    #formPanel .preview-img-container { height: 150px; }
+    #formPanel .readiness-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #formPanel .form-actions-bar { padding: 16px 0 8px; gap: 12px; background: #fff; box-shadow: 0 -8px 16px #fff; }
+    #formPanel :is(button, [role="button"]):focus-visible { outline: 3px solid #18529c; outline-offset: 3px; }
+    #draftSaveStatus { font-size: 12px; color: #64748b; display: block; margin-top: 8px; }
+    @media (max-width: 1100px) { #formPanel .form-grid { grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; } }
+    @media (max-width: 900px) { #formPanel .form-grid { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 600px) {
+        #formPanel { padding: 16px; }
+        #formPanel .card-header-flex { flex-wrap: wrap; gap: 12px; }
+        #formPanel .form-sidebar { padding: 14px; }
+        #formPanel .form-actions-bar { flex-wrap: wrap; }
+        #formPanel #formFeedback { flex-basis: 100%; }
+        #formPanel #saveBlogBtn { flex: 1; padding-inline: 14px !important; }
+    }
+
 </style>
 
 <!-- BLOG LIST PANEL -->
-<div class="data-card panel-card" id="listPanel">
-    <!-- Dashboard Stats Grid -->
-    <div class="cms-stats-grid">
-        <div class="cms-stat-card">
-            <div class="cms-stat-icon stat-blue">
-                <i class="fa-solid fa-newspaper"></i>
-            </div>
-            <div class="cms-stat-info">
-                <h3><?php echo $totalRecords; ?></h3>
-                <p>Total Articles</p>
-            </div>
-        </div>
-        
-        <div class="cms-stat-card">
-            <div class="cms-stat-icon stat-green">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <div class="cms-stat-info">
-                <h3 id="activeArticlesCount"><?php echo $activeRecords; ?></h3>
-                <p>Active</p>
-            </div>
-        </div>
-        
-        <div class="cms-stat-card">
-            <div class="cms-stat-icon stat-yellow">
-                <i class="fa-solid fa-pen-nib"></i>
-            </div>
-            <div class="cms-stat-info">
-                <h3 id="inactiveArticlesCount"><?php echo $inactiveRecords; ?></h3>
-                <p>Inactive</p>
-            </div>
-        </div>
-        
-        <div class="cms-stat-card">
-            <div class="cms-stat-icon stat-red">
-                <i class="fa-solid fa-tags"></i>
-            </div>
-            <div class="cms-stat-info">
-                <h3><?php echo $categoriesCount; ?></h3>
-                <p>Categories</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-header-flex">
-        <h2 class="card-title-text"><i class="fa-solid fa-newspaper" style="color: var(--primary); margin-right: 8px;"></i> Articles</h2>
-        <button type="button" class="btn-primary-adm" id="createPostBtn">
-            <i class="fa-solid fa-plus"></i> Write New Article
+<div class="panel-card" id="listPanel">
+    <!-- Stats double as quick status filters -->
+    <div class="bl-stats">
+        <button type="button" class="bl-stat" data-stat-filter="">
+            <span class="bl-stat-label">Total articles</span>
+            <span class="bl-stat-value" id="statTotal"><?php echo number_format($totalRecords); ?></span>
+            <i class="fa-solid fa-newspaper bl-stat-icon"></i>
         </button>
-    </div>
-
-    <!-- Search & Filter Controls -->
-    <div class="list-controls-flex">
-        <div class="cms-search-input">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="cmsSearch" placeholder="Search by title, author, slug or status...">
+        <button type="button" class="bl-stat" data-stat-filter="published" title="Show only active articles">
+            <span class="bl-stat-label">Active (live)</span>
+            <span class="bl-stat-value" id="activeArticlesCount"><?php echo number_format($activeRecords); ?></span>
+            <i class="fa-solid fa-circle-check bl-stat-icon good"></i>
+        </button>
+        <button type="button" class="bl-stat" data-stat-filter="draft" title="Show only inactive articles">
+            <span class="bl-stat-label">Inactive (hidden)</span>
+            <span class="bl-stat-value" id="inactiveArticlesCount"><?php echo number_format($inactiveRecords); ?></span>
+            <i class="fa-solid fa-eye-slash bl-stat-icon warn"></i>
+        </button>
+        <div class="bl-stat static">
+            <span class="bl-stat-label">Total views</span>
+            <span class="bl-stat-value" id="statViews"><?php echo number_format($totalViews); ?></span>
+            <i class="fa-solid fa-chart-simple bl-stat-icon"></i>
         </div>
-        
-        <select id="cmsCategoryFilter" class="cms-filter-select">
-            <option value="">All Categories</option>
-            <option value="personal">Personal Loan</option>
-            <option value="business">Business Loan</option>
-            <option value="edi">EDI Small Loan</option>
-            <option value="vehicle">Vehicle Loan</option>
-            <option value="lap">Loan Against Property</option>
-            <option value="payday">PayDay Loan</option>
-            <option value="finance">Finance Tips</option>
-        </select>
-        
-        <select id="cmsStatusFilter" class="cms-filter-select">
-            <option value="">All Statuses</option>
-            <option value="published">Active</option>
-            <option value="draft">Inactive</option>
-        </select>
     </div>
 
-    <div class="table-responsive" style="position: relative;" id="blogsTableContainer">
-        <!-- Suspense Loader Overlay -->
-        <div class="table-loading-overlay" id="tableLoadingOverlay">
-            <div class="suspense-spinner">
-                <i class="fa-solid fa-circle-notch fa-spin"></i>
-                <span>Loading Articles...</span>
+    <section class="bl-card">
+        <div class="bl-toolbar">
+            <div class="bl-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <label for="cmsSearch" class="bl-sr">Search articles</label>
+                <input type="search" id="cmsSearch" placeholder="Search title, slug, author or keywords…" autocomplete="off">
             </div>
+            <label for="cmsCategoryFilter" class="bl-sr">Category</label>
+            <select id="cmsCategoryFilter" class="bl-select">
+                <option value="">All categories</option>
+                <option value="personal">Personal loan</option>
+                <option value="business">Business loan</option>
+                <option value="edi">EDI small loan</option>
+                <option value="vehicle">Vehicle loan</option>
+                <option value="lap">Loan against property</option>
+                <option value="payday">Payday loan</option>
+                <option value="finance">Finance tips</option>
+            </select>
+            <label for="cmsStatusFilter" class="bl-sr">Status</label>
+            <select id="cmsStatusFilter" class="bl-select">
+                <option value="">All statuses</option>
+                <option value="published">Published ? live on website</option>
+                <option value="draft">Draft ? hidden from website</option>
+            </select>
+            <button type="button" class="bl-btn" id="cmsClearFilters" hidden><i class="fa-solid fa-xmark"></i> Clear</button>
+            <button type="button" class="btn-primary-adm bl-new" id="createPostBtn">
+                <i class="fa-solid fa-plus"></i> Write new article
+            </button>
         </div>
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Cover</th>
-                    <th>Article Title</th>
-                    <th>Category</th>
-                    <th>Slug URL</th>
-                    <th>Read Time</th>
-                    <th>Views</th>
-                    <th>Status</th>
-                    <th>Created Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="blogsTableBody">
-                <?php if (empty($blogs)): ?>
-                    <tr>
-                        <td colspan="9" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No articles written yet. Click "Write New Article" to get started!</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($blogs as $b): ?>
-                        <?php
-                            $blogStatus = (($b['status'] ?? 'draft') === 'published') ? 'published' : 'draft';
-                            $isActive = $blogStatus === 'published';
-                            $statusLabel = $isActive ? 'Active' : 'Inactive';
-                            $nextStatus = $isActive ? 'draft' : 'published';
-                            $toggleTitle = $isActive ? 'Set Inactive' : 'Set Active';
-                        ?>
-                        <tr id="blog-row-<?php echo (int) $b['id']; ?>"
-                            data-status="<?php echo htmlspecialchars($blogStatus, ENT_QUOTES, 'UTF-8'); ?>"
-                            data-status-label="<?php echo strtolower($statusLabel); ?>"
-                            data-category="<?php echo htmlspecialchars(strtolower((string) ($b['category'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>"
-                            data-author="<?php echo htmlspecialchars(strtolower((string) ($b['author_name'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
-                            <td>
-                                <img src="../<?php echo htmlspecialchars($b['image_url'] ?? 'assets/images/default-blog.jpg', ENT_QUOTES, 'UTF-8'); ?>" class="blog-thumb" alt="cover">
-                            </td>
-                            <td>
-                                <strong style="color: var(--text-main); font-weight: 700;"><?php echo htmlspecialchars($b['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                            </td>
-                            <td><span style="text-transform: capitalize; color: var(--text-main);"><?php echo htmlspecialchars($b['category'], ENT_QUOTES, 'UTF-8'); ?></span></td>
-                            <td style="font-family: monospace; font-size:12px; color: var(--info);">/blog/<?php echo htmlspecialchars($b['slug'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($b['read_time'] ?? '5 Min Read', ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><strong style="color: var(--text-main);"><?php echo number_format((int)($b['views'] ?? 0)); ?></strong></td>
-                            <td>
-                                <span class="badge-status <?php echo $isActive ? 'badge-approved' : 'badge-draft'; ?> status-badge"><?php echo $statusLabel; ?></span>
-                            </td>
-                            <td><?php echo date('d M Y', strtotime($b['created_at'])); ?></td>
-                            <td>
-                                <div class="row-actions">
-                                    <button type="button" class="btn-action edit-btn" data-blog='<?php echo htmlspecialchars(json_encode($b, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8'); ?>' title="Edit Article">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
-                                    <button type="button"
-                                            class="btn-action status-toggle-btn <?php echo $isActive ? 'is-active' : 'is-inactive'; ?>"
-                                            data-id="<?php echo (int) $b['id']; ?>"
-                                            data-next-status="<?php echo htmlspecialchars($nextStatus, ENT_QUOTES, 'UTF-8'); ?>"
-                                            title="<?php echo $toggleTitle; ?>"
-                                            aria-label="<?php echo $toggleTitle; ?>">
-                                        <i class="fa-solid <?php echo $isActive ? 'fa-toggle-on' : 'fa-toggle-off'; ?>"></i>
-                                    </button>
-                                    <button type="button" class="btn-action delete-btn" data-id="<?php echo (int) $b['id']; ?>" title="Delete Article">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
 
-    <!-- Pagination -->
-    <div id="paginationWrapper" style="margin-top: 20px;">
-        <?php if ($totalPages > 1): ?>
-            <ul class="pagination">
-                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                    <?php if ($page <= 1): ?>
-                        <span style="opacity:0.5; cursor:not-allowed;">&laquo; Prev</span>
-                    <?php else: ?>
-                        <a href="#" data-page="<?php echo $page - 1; ?>">&laquo; Prev</a>
-                    <?php endif; ?>
-                </li>
-                
-                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                    <li class="page-item <?php echo $p === $page ? 'active' : ''; ?>">
-                        <?php if ($p === $page): ?>
-                            <span><?php echo $p; ?></span>
-                        <?php else: ?>
-                            <a href="#" data-page="<?php echo $p; ?>"><?php echo $p; ?></a>
-                        <?php endif; ?>
-                    </li>
-                <?php endfor; ?>
-                
-                <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
-                    <?php if ($page >= $totalPages): ?>
-                        <span style="opacity:0.5; cursor:not-allowed;">Next &raquo;</span>
-                    <?php else: ?>
-                        <a href="#" data-page="<?php echo $page + 1; ?>">Next &raquo;</a>
-                    <?php endif; ?>
-                </li>
-            </ul>
-        <?php endif; ?>
-    </div>
+        <div class="bl-table-wrap">
+            <div class="table-responsive" style="position: relative;" id="blogsTableContainer">
+                <div class="table-loading-overlay" id="tableLoadingOverlay">
+                    <div class="suspense-spinner">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Loading…</span>
+                    </div>
+                </div>
+                <table class="admin-table bl-table">
+                    <thead>
+                        <tr>
+                            <th>Article</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th style="text-align:right;">Views</th>
+                            <th>Updated</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blogsTableBody"></tbody>
+                </table>
+            </div>
+            <div id="paginationWrapper"></div>
+        </div>
+    </section>
 </div>
+<script type="application/json" id="blogInitialData"><?php echo json_encode($initialBlogData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?></script>
 
 <!-- BLOG FORM PANEL (EDIT / CREATE) -->
 <div class="data-card panel-card hidden" id="formPanel">
@@ -935,7 +1004,8 @@ if ($res) {
         </button>
     </div>
 
-    <form id="blogForm" method="POST" enctype="multipart/form-data">
+    <p class="editor-intro">Start with your story. Fields marked * are required. Save as a draft to keep the article off the website.</p>
+    <form id="blogForm" novalidate method="POST" enctype="multipart/form-data">
         <input type="hidden" name="action" value="save_blog">
         <input type="hidden" name="id" id="blog_id" value="0">
         <input type="hidden" name="remove_image" id="remove_image" value="0">
@@ -953,13 +1023,13 @@ if ($res) {
             <!-- Left Column: Content -->
             <div>
                 <div class="form-group">
-                    <label class="form-label" for="title">Article Title</label>
+                    <label class="form-label" for="title">Article title *</label>
                     <input type="text" name="title" id="title" class="form-control-adm" placeholder="Enter an engaging, catchy title..." required>
                     <div class="char-counter" id="title-counter">0 / 150 characters</div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="slug">URL Slug</label>
+                    <label class="form-label" for="slug">URL slug *</label>
                     <input type="text" name="slug" id="slug" class="form-control-adm" placeholder="url-slug-goes-here" required>
                     <div class="field-support-row">
                         <div class="slug-preview">
@@ -970,13 +1040,13 @@ if ($res) {
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Excerpt / Summary</label>
+                    <label class="form-label" for="excerpt">Excerpt / Summary</label>
                     <textarea name="excerpt" id="excerpt" class="form-control-adm" placeholder="Brief summary of the article (useful for feeds)..."></textarea>
                     <div class="char-counter" id="excerpt-counter">0 / 300 characters</div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Content Body</label>
+                    <label class="form-label" for="editor-container">Article content *</label>
                     <textarea name="content" id="editor-container" class="form-control-adm" style="min-height: 400px;" placeholder="Write your article content here..."></textarea>
                     <div class="content-metrics">
                         <span class="content-metric"><i class="fa-solid fa-file-lines"></i><strong id="wordCount">0</strong> words</span>
@@ -988,10 +1058,10 @@ if ($res) {
             <!-- Right Column: Settings, E-E-A-T, CTA & SEO Tabs -->
             <div class="form-sidebar">
                 <!-- Tab Navigation -->
-                <div class="tabs-nav">
+                <div class="tabs-nav" role="tablist" aria-label="Article settings">
                     <button type="button" class="tab-btn active" id="tabBtn-settings" onclick="switchSettingsTab('settings')"><i class="fa-solid fa-sliders"></i> Settings</button>
-                    <button type="button" class="tab-btn" id="tabBtn-trust" onclick="switchSettingsTab('trust')"><i class="fa-solid fa-user-pen"></i> EEAT & CTA</button>
-                    <button type="button" class="tab-btn" id="tabBtn-seo" onclick="switchSettingsTab('seo')"><i class="fa-solid fa-magnifying-glass-chart"></i> SEO Engine</button>
+                    <button type="button" class="tab-btn" id="tabBtn-trust" onclick="switchSettingsTab('trust')"><i class="fa-solid fa-user-pen"></i> Author & CTA</button>
+                    <button type="button" class="tab-btn" id="tabBtn-seo" onclick="switchSettingsTab('seo')"><i class="fa-solid fa-magnifying-glass-chart"></i> SEO</button>
                     <button type="button" class="tab-btn" id="tabBtn-faq" onclick="switchSettingsTab('faq')"><i class="fa-solid fa-circle-question"></i> FAQs</button>
                 </div>
 
@@ -1018,18 +1088,18 @@ if ($res) {
                     <div class="form-group">
                         <label class="form-label" for="status">Article Visibility</label>
                         <select name="status" id="status" class="form-control-adm">
-                            <option value="draft">Inactive</option>
-                            <option value="published">Active</option>
+                            <option value="draft">Draft ? hidden from website</option>
+                            <option value="published">Published ? live on website</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Featured Cover Image</label>
+                        <label class="form-label" for="featured_image">Featured Cover Image</label>
                         <!-- Drag & Drop Zone -->
-                        <div class="upload-dropzone" id="dropzone">
+                        <div class="upload-dropzone" id="dropzone" role="button" tabindex="0" aria-label="Choose cover image" aria-describedby="coverHelp">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <p id="dropzoneText">Drag and drop cover image here or click to select</p>
-                            <span>Supports JPG, PNG, WEBP up to 5MB</span>
+                            <span id="coverHelp">JPG, PNG or WEBP ? Up to 5 MB</span>
                             <input type="file" name="featured_image" id="featured_image" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
                         </div>
                         <div class="preview-img-container">
@@ -1140,19 +1210,25 @@ if ($res) {
         </div>
 
         <div class="form-actions-bar">
-            <span id="formFeedback" style="align-self: center; font-weight: 600; font-size: 13.5px;"></span>
+            <span id="formFeedback" style="align-self: center; margin-right: auto; font-weight: 600; font-size: 13.5px;" aria-live="polite"></span>
             <button type="button" class="btn-action" id="cancelBtn" style="width: auto; padding:0 24px; height: 42px;">Cancel</button>
-            <button type="submit" class="btn-primary-adm" id="saveBlogBtn" style="padding: 0 30px; height: 42px; display: inline-flex; align-items: center; justify-content: center;">Save Post</button>
+            <button type="submit" class="btn-primary-adm" id="saveBlogBtn" style="padding: 0 30px; height: 42px; display: inline-flex; align-items: center; justify-content: center;"><i class="fa-solid fa-check"></i> Save article</button>
         </div>
     </form>
 </div>
 
 <script>
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
     // Initialize TinyMCE Editor
     tinymce.init({
         selector: '#editor-container',
-        height: 500,
-        menubar: 'file edit view insert format tools table help',
+        height: 480,
+        toolbar_mode: "sliding",
+        content_style: "body { font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.75; margin: 24px; max-width: 760px; }",
+        menubar: 'edit insert format tools table',
         plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -1183,7 +1259,8 @@ if ($res) {
                         return;
                     }
 
-                    const json = JSON.parse(xhr.responseText);
+                    let json;
+                    try { json = JSON.parse(xhr.responseText); } catch (error) { reject('Upload returned an invalid response. Please try again.'); return; }
 
                     if (!json || typeof json.location != 'string') {
                         reject('Invalid JSON: ' + xhr.responseText);
@@ -1255,6 +1332,7 @@ if ($res) {
 
     // Validation Feedback Helpers
     function setInvalid(el, msg) {
+        el.setAttribute('aria-invalid', 'true');
         el.classList.add('is-invalid');
         el.classList.remove('is-valid');
         
@@ -1264,11 +1342,15 @@ if ($res) {
             feedback.className = 'invalid-feedback-text';
             el.parentNode.appendChild(feedback);
         }
+        feedback.id = el.id + '-error';
+        el.setAttribute('aria-describedby', feedback.id);
         feedback.textContent = msg;
         return false;
     }
 
     function setValid(el) {
+        el.removeAttribute('aria-invalid');
+        el.removeAttribute('aria-describedby');
         el.classList.remove('is-invalid');
         el.classList.add('is-valid');
         const feedback = el.parentNode.querySelector('.invalid-feedback-text');
@@ -1398,38 +1480,21 @@ if ($res) {
     
     window.checkRequiredFormFields = function() {
         if (!saveBlogBtn) return;
-        
-        const titleVal = titleInput.value.trim();
-        const slugVal = slugInput.value.trim();
-        const categoryVal = categoryInput.value;
-        
-        // TinyMCE content check
+        const missing = [];
+        const titleLen = titleInput.value.trim().length;
+        if (titleLen < 5) missing.push('title (5+ characters)');
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slugInput.value.trim())) missing.push('URL slug');
         const editorText = tinymce.get('editor-container') ? tinymce.get('editor-container').getContent({format: 'text'}).trim() : '';
-        
-        // E-E-A-T Author check if active
-        const authorVal = document.getElementById('author_name').value.trim();
-        const isPublished = statusInput.value === 'published';
-        const authorOk = !isPublished || authorVal !== '';
-        
-        // CTA Link check if CTA text is provided
-        const ctaText = document.getElementById('cta_text').value.trim();
-        const ctaLink = document.getElementById('cta_link').value.trim();
-        const ctaOk = ctaText === '' || ctaLink !== '';
-        
-        // Basic validators
-        const titleOk = titleVal.length >= 5 && titleVal.length <= 150;
-        const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-        const slugOk = slugRegex.test(slugVal);
-        const contentOk = editorText !== '';
-        
-        if (titleOk && slugOk && categoryVal !== '' && contentOk && authorOk && ctaOk) {
-            saveBlogBtn.removeAttribute('disabled');
-            saveBlogBtn.style.opacity = '1';
-            saveBlogBtn.style.cursor = 'pointer';
-        } else {
-            saveBlogBtn.setAttribute('disabled', 'true');
-            saveBlogBtn.style.opacity = '0.5';
-            saveBlogBtn.style.cursor = 'not-allowed';
+        if (editorText === '') missing.push('content');
+        if (statusInput.value === 'published' && document.getElementById('author_name').value.trim() === '') missing.push('author name (Author & CTA tab)');
+        if (document.getElementById('cta_text').value.trim() !== '' && document.getElementById('cta_link').value.trim() === '') missing.push('CTA link');
+        // The button stays clickable; submitting shows exactly which field needs attention.
+        if (formFeedback && !formFeedback.dataset.locked) {
+            formFeedback.innerHTML = missing.length
+                ? '<span class="form-hint-missing">Still needed: <b></b></span>'
+                : '<span class="form-hint-missing" style="color:#15803d;"><i class="fa-solid fa-check"></i> Ready to save</span>';
+            const b = formFeedback.querySelector('b');
+            if (b) b.textContent = missing.join(', ');
         }
     };
 
@@ -1456,9 +1521,10 @@ if ($res) {
         });
     }
 
+    let slugManuallyEdited = false;
     // Auto-generate slug from title
     titleInput.addEventListener('input', function() {
-        if (blogIdInput.value === "0") { // Only autogenerate for new posts
+        if (blogIdInput.value === "0" && !slugManuallyEdited) {
             slugInput.value = slugifyText(this.value);
         }
         updateSlugPreview();
@@ -1467,6 +1533,7 @@ if ($res) {
     });
 
     slugInput.addEventListener('input', function() {
+        slugManuallyEdited = true;
         const cleanedSlug = slugifyText(this.value);
         if (this.value !== cleanedSlug) {
             this.value = cleanedSlug;
@@ -1478,6 +1545,7 @@ if ($res) {
     // Drag & Drop Cover Image Handlers
     if (dropzone && fileInput) {
         dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
 
         dropzone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -1620,321 +1688,350 @@ if ($res) {
 
     let currentPage = <?php echo $page; ?>;
 
+    // ---------- Article list (rendered client-side from JSON) ----------
+    const CATEGORY_LABELS = {
+        personal: 'Personal', business: 'Business', edi: 'EDI', vehicle: 'Vehicle',
+        lap: 'LAP', payday: 'Payday', finance: 'Finance tips'
+    };
+    const listState = { page: currentPage, totalPages: 1 };
+    let listRequestId = 0;
+
+    function categoryLabel(c) {
+        const key = String(c || '').toLowerCase();
+        return CATEGORY_LABELS[key] || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '—');
+    }
+    function shortDate(v) {
+        const d = new Date(String(v || '').replace(' ', 'T'));
+        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    function coverSrc(url) {
+        const u = String(url || '');
+        if (/^https:\/\//.test(u)) return u;
+        if (/^(assets|uploads)\/[\w\/.-]+$/.test(u)) return '../' + u;
+        return '';
+    }
+    function thumbHtml(url) {
+        const src = coverSrc(url);
+        // A missing file shows a neutral placeholder instead of a broken-image icon.
+        return `<span class="bl-thumb">${src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}<i class="fa-regular fa-image"></i></span>`;
+    }
+
+    function blogRow(b) {
+        const active = b.status === 'published';
+        const id = escapeHtml(b.id);
+        const missingAuthor = !String(b.author_name || '').trim();
+        return `<tr id="blog-row-${id}" data-id="${id}" data-status="${active ? 'published' : 'draft'}">
+            <td>
+                <div class="bl-article">
+                    ${thumbHtml(b.image_url)}
+                    <div style="min-width:0;">
+                        <div class="bl-title" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</div>
+                        <div class="bl-slug">/blog/${escapeHtml(b.slug)}${missingAuthor ? ' · <span class="bl-warn" title="An author is required before the article can be activated">no author</span>' : ''}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="bl-chip">${escapeHtml(categoryLabel(b.category))}</span></td>
+            <td><span class="bl-status ${active ? 'on' : 'off'} status-badge">${active ? 'Active' : 'Inactive'}</span></td>
+            <td class="bl-num">${Number(b.views || 0).toLocaleString('en-IN')}</td>
+            <td><div>${shortDate(b.updated_at || b.created_at)}</div><div class="bl-sub">${escapeHtml(b.read_time || '')}</div></td>
+            <td>
+                <div class="bl-actions">
+                    ${active ? `<a class="bl-ic" href="../blog/${encodeURIComponent(b.slug)}" target="_blank" rel="noopener" title="View on website" aria-label="View on website"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
+                    <button type="button" class="bl-ic" data-act="edit" data-id="${id}" title="Edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>
+                    <button type="button" class="bl-ic ${active ? 'is-on' : ''}" data-act="toggle" data-id="${id}" data-next-status="${active ? 'draft' : 'published'}" title="${active ? 'Set inactive (hide from website)' : 'Set active (show on website)'}" aria-label="${active ? 'Set inactive' : 'Set active'}"><i class="fa-solid ${active ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
+                    <button type="button" class="bl-ic danger" data-act="delete" data-id="${id}" title="Delete" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }
+
+    function blogPagination(page, total) {
+        if (total <= 1) return '';
+        const set = new Set([1, total, page - 1, page, page + 1]);
+        if (page <= 3) [2, 3, 4].forEach(p => set.add(p));
+        if (page >= total - 2) [total - 1, total - 2, total - 3].forEach(p => set.add(p));
+        const pages = Array.from(set).filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+        let last = 0;
+        const items = [];
+        pages.forEach(p => {
+            if (last && p - last > 1) items.push('<li class="page-item gap"><span>…</span></li>');
+            items.push(p === page ? `<li class="page-item active"><span aria-current="page">${p}</span></li>` : `<li class="page-item"><a href="#" data-page="${p}">${p}</a></li>`);
+            last = p;
+        });
+        const prev = page <= 1 ? '<li class="page-item disabled"><span><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span></li>' : `<li class="page-item"><a href="#" data-page="${page - 1}" aria-label="Previous page"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a></li>`;
+        const next = page >= total ? '<li class="page-item disabled"><span><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span></li>' : `<li class="page-item"><a href="#" data-page="${page + 1}" aria-label="Next page"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a></li>`;
+        return `<ul class="pagination">${prev}${items.join('')}${next}</ul>`;
+    }
+
+    function renderStats(stats) {
+        if (!stats) return;
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = Number(v || 0).toLocaleString('en-IN'); };
+        set('statTotal', stats.total);
+        set('activeArticlesCount', stats.active);
+        set('inactiveArticlesCount', stats.inactive);
+        set('statViews', stats.views);
+    }
+
+    function renderBlogList(data) {
+        listState.page = data.page || 1;
+        listState.totalPages = data.total_pages || 1;
+        currentPage = listState.page;
+        const filtered = !!((cmsSearch && cmsSearch.value.trim()) || (cmsCategoryFilter && cmsCategoryFilter.value) || (cmsStatusFilter && cmsStatusFilter.value));
+        const records = data.records || [];
+        blogsTableBody.innerHTML = records.length ? records.map(blogRow).join('') : `
+            <tr><td colspan="6" class="bl-empty">
+                <i class="fa-regular fa-newspaper"></i>
+                <strong>${filtered ? 'No articles match these filters' : 'No articles yet'}</strong>
+                ${filtered ? '<button type="button" class="bl-btn" data-act="clear-filters"><i class="fa-solid fa-xmark"></i> Clear filters</button>' : 'Click “Write new article” to publish your first post.'}
+            </td></tr>`;
+        const total = Number(data.total_records || 0);
+        const limit = Number(data.limit || 10);
+        const start = total ? (listState.page - 1) * limit + 1 : 0;
+        const end = Math.min(listState.page * limit, total);
+        const wrapper = document.getElementById('paginationWrapper');
+        if (wrapper) {
+            wrapper.innerHTML = total ? `<div class="bl-foot"><span>Showing ${start}–${end} of ${total.toLocaleString('en-IN')} article${total === 1 ? '' : 's'}</span>${blogPagination(listState.page, listState.totalPages)}</div>` : '';
+        }
+        const clearBtn = document.getElementById('cmsClearFilters');
+        if (clearBtn) clearBtn.hidden = !filtered;
+        document.querySelectorAll('[data-stat-filter]').forEach(card => {
+            card.classList.toggle('is-current', (cmsStatusFilter ? cmsStatusFilter.value : '') === card.getAttribute('data-stat-filter') && card.getAttribute('data-stat-filter') !== '');
+        });
+        renderStats(data.stats);
+    }
+
     function fetchBlogs(page = 1) {
-        const query = cmsSearch ? cmsSearch.value.trim() : '';
-        const catVal = cmsCategoryFilter ? cmsCategoryFilter.value : '';
-        const statusVal = cmsStatusFilter ? cmsStatusFilter.value : '';
-        
-        // Show suspense overlay loader
+        const requestId = ++listRequestId;
         const loader = document.getElementById('tableLoadingOverlay');
         if (loader) loader.classList.add('active');
-        
+
         const formData = new FormData();
         formData.append('action', 'get_blogs');
         formData.append('page', page);
-        formData.append('search', query);
-        formData.append('category', catVal);
-        formData.append('status', statusVal);
+        formData.append('search', cmsSearch ? cmsSearch.value.trim() : '');
+        formData.append('category', cmsCategoryFilter ? cmsCategoryFilter.value : '');
+        formData.append('status', cmsStatusFilter ? cmsStatusFilter.value : '');
         formData.append('csrf_token', csrfToken);
 
-        fetch('api.php', {
-            method: 'POST',
-            body: formData
-        })
+        return fetch('api.php', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
-                // Hide loader
-                if (loader) loader.classList.remove('active');
-                if (data.status === 'success') {
-                    blogsTableBody.innerHTML = data.html;
-                    const paginationWrapper = document.getElementById('paginationWrapper');
-                    if (paginationWrapper) {
-                        paginationWrapper.innerHTML = data.pagination;
-                        bindPaginationEvents();
-                    }
-                    currentPage = data.page;
-                    
-                    const newUrl = window.location.pathname + '?page=' + data.page;
-                    history.pushState({ page: data.page }, '', newUrl);
-
-                    bindRowActionEvents();
-                } else {
-                    if (loader) loader.classList.remove('active');
-                    blogsTableBody.innerHTML = '<tr><td colspan="9" class="text-center" style="color: red; padding: 20px;">Error: ' + data.message + '</td></tr>';
-                }
+                if (requestId !== listRequestId) return;
+                if (data.status !== 'success') throw new Error(data.message || 'Could not load articles.');
+                renderBlogList(data);
+                // replaceState: paging/filtering should not fill the browser Back history.
+                const url = new URL(window.location.href);
+                if (data.page > 1) url.searchParams.set('page', data.page); else url.searchParams.delete('page');
+                history.replaceState(history.state, '', url.pathname + url.search + url.hash);
             })
             .catch(err => {
-                if (loader) loader.classList.remove('active');
-                blogsTableBody.innerHTML = '<tr><td colspan="9" class="text-center" style="color: red; padding: 20px;">Connection failed.</td></tr>';
-            });
+                if (requestId !== listRequestId) return;
+                blogsTableBody.innerHTML = `<tr><td colspan="6" class="bl-empty"><strong style="color:var(--danger);">${escapeHtml(err.message || 'Connection failed.')}</strong><button type="button" class="bl-btn" data-act="retry"><i class="fa-solid fa-rotate-right"></i> Try again</button></td></tr>`;
+            })
+            .finally(() => { if (requestId === listRequestId && loader) loader.classList.remove('active'); });
     }
 
     let searchTimeout = null;
     if (cmsSearch) {
-        cmsSearch.addEventListener('input', function() {
+        cmsSearch.addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                fetchBlogs(1);
-            }, 300);
+            searchTimeout = setTimeout(() => fetchBlogs(1), 300);
         });
     }
-    if (cmsCategoryFilter) {
-        cmsCategoryFilter.addEventListener('change', function() {
+    [cmsCategoryFilter, cmsStatusFilter].forEach(sel => sel && sel.addEventListener('change', () => fetchBlogs(1)));
+
+    function clearListFilters() {
+        if (cmsSearch) cmsSearch.value = '';
+        if (cmsCategoryFilter) cmsCategoryFilter.value = '';
+        if (cmsStatusFilter) cmsStatusFilter.value = '';
+        fetchBlogs(1);
+    }
+
+    // Stat cards double as quick status filters.
+    document.querySelectorAll('[data-stat-filter]').forEach(card => {
+        card.addEventListener('click', () => {
+            if (cmsStatusFilter) cmsStatusFilter.value = card.getAttribute('data-stat-filter');
             fetchBlogs(1);
         });
-    }
-    if (cmsStatusFilter) {
-        cmsStatusFilter.addEventListener('change', function() {
-            fetchBlogs(1);
-        });
-    }
+    });
+    const cmsClearFilters = document.getElementById('cmsClearFilters');
+    if (cmsClearFilters) cmsClearFilters.addEventListener('click', clearListFilters);
 
-    function getStatusMeta(status) {
-        const active = status === 'published';
-        return {
-            label: active ? 'Active' : 'Inactive',
-            labelSearch: active ? 'active' : 'inactive',
-            nextStatus: active ? 'draft' : 'published',
-            badgeClass: active ? 'badge-approved' : 'badge-draft',
-            buttonClass: active ? 'is-active' : 'is-inactive',
-            iconClass: active ? 'fa-toggle-on' : 'fa-toggle-off',
-            title: active ? 'Set Inactive' : 'Set Active'
-        };
-    }
-
-    function updateCountText(el, delta) {
-        if (!el || delta === 0) return;
-        const current = parseInt(el.textContent.replace(/[^\d]/g, ''), 10) || 0;
-        el.textContent = Math.max(0, current + delta).toLocaleString('en-IN');
-    }
-
-    function adjustStatusCounters(oldStatus, newStatus) {
-        if (oldStatus === newStatus) return;
-
-        const activeCount = document.getElementById('activeArticlesCount');
-        const inactiveCount = document.getElementById('inactiveArticlesCount');
-
-        if (oldStatus === 'published') updateCountText(activeCount, -1);
-        if (oldStatus === 'draft') updateCountText(inactiveCount, -1);
-        if (newStatus === 'published') updateCountText(activeCount, 1);
-        if (newStatus === 'draft') updateCountText(inactiveCount, 1);
-    }
-
-    function updateBlogRowStatus(row, status) {
-        if (!row) return;
-        const meta = getStatusMeta(status);
-        const badge = row.querySelector('.status-badge');
-        const toggleBtn = row.querySelector('.status-toggle-btn');
-
-        row.dataset.status = status;
-        row.dataset.statusLabel = meta.labelSearch;
-
-        if (badge) {
-            badge.textContent = meta.label;
-            badge.classList.remove('badge-approved', 'badge-draft');
-            badge.classList.add(meta.badgeClass);
-        }
-
-        if (toggleBtn) {
-            toggleBtn.setAttribute('data-next-status', meta.nextStatus);
-            toggleBtn.setAttribute('title', meta.title);
-            toggleBtn.setAttribute('aria-label', meta.title);
-            toggleBtn.className = `btn-action status-toggle-btn ${meta.buttonClass}`;
-            const icon = toggleBtn.querySelector('i');
-            if (icon) {
-                icon.classList.remove('fa-toggle-on', 'fa-toggle-off');
-                icon.classList.add(meta.iconClass);
-            }
-        }
-    }
-
-    function bindPaginationEvents() {
-        const paginationLinks = document.querySelectorAll('.pagination a');
-        paginationLinks.forEach(link => {
-            link.onclick = function(e) {
-                e.preventDefault();
-                const page = this.getAttribute('data-page');
-                if (page) {
-                    fetchBlogs(page);
-                }
-            };
-        });
-    }
-
-    function bindRowActionEvents() {
-        // Edit button binding
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.onclick = function() {
-                const blog = JSON.parse(btn.getAttribute('data-blog'));
-                blogIdInput.value = blog.id;
-                titleInput.value = blog.title;
-                slugInput.value = blog.slug;
-                excerptInput.value = blog.excerpt || '';
-                categoryInput.value = blog.category;
-                readTimeInput.value = blog.read_time || '5 Min Read';
-                readTimeTouched = true;
-                statusInput.value = blog.status || 'draft';
-                if (removeImageInput) removeImageInput.value = "0";
-                metaTitleInput.value = blog.meta_title || '';
-                metaDescInput.value = blog.meta_description || '';
-                metaKeywordsInput.value = blog.meta_keywords || '';
-                
-                document.getElementById('author_name').value = blog.author_name || '';
-                document.getElementById('author_designation').value = blog.author_designation || '';
-                document.getElementById('reviewed_by').value = blog.reviewed_by || '';
-                document.getElementById('cta_text').value = blog.cta_text || '';
-                document.getElementById('cta_link').value = blog.cta_link || '';
-                
-                if (tinymce.get('editor-container')) {
-                    tinymce.get('editor-container').setContent(blog.content || '');
-                }
-                
-                if (blog.image_url) {
-                    imgPreview.src = `../${blog.image_url}`;
-                    imgPreview.classList.remove('hidden');
-                    previewPlaceholder.classList.add('hidden');
-                    if (clearImageBtn) clearImageBtn.classList.remove('hidden');
-                    if (dropzoneText) dropzoneText.textContent = "Cover image selected";
-                } else {
-                    resetCoverPreview(false);
-                }
-                
-                // FAQs
-                const faqsContainer = document.getElementById('faqsRowContainer');
-                faqsContainer.innerHTML = '';
-                const faqsArr = JSON.parse(blog.faqs || '[]');
-                faqsArr.forEach(faq => {
-                    addFaqRow(faq.q || '', faq.a || '');
+    // btn is optional (Undo from the toast has no row button).
+    function toggleBlogStatus(id, nextStatus, btn = null, isUndo = false) {
+        const fd = new FormData();
+        fd.append('action', 'toggle_blog_status');
+        fd.append('id', id);
+        fd.append('status', nextStatus);
+        fd.append('csrf_token', csrfToken);
+        if (btn) btn.disabled = true;
+        fetch('api.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success') throw new Error(data.message || 'Status update failed.');
+                const nowLive = nextStatus === 'published';
+                adminToast(
+                    data.message || (nowLive ? 'Article is now live on the website.' : 'Article is now hidden from the website.'),
+                    'success',
+                    isUndo ? {} : { actionText: 'Undo', onAction: () => toggleBlogStatus(id, nowLive ? 'draft' : 'published', null, true) }
+                );
+                fetchBlogs(currentPage);
+            })
+            .catch(err => {
+                const needsAuthor = /author/i.test(err.message || '');
+                Swal.fire({
+                    title: 'Status not updated',
+                    text: err.message || 'Network error.',
+                    icon: 'error',
+                    showCancelButton: needsAuthor,
+                    confirmButtonText: needsAuthor ? 'Add author now' : 'OK',
+                    cancelButtonText: 'Later',
+                    confirmButtonColor: '#18529c'
+                }).then(r => {
+                    if (needsAuthor && r.isConfirmed) {
+                        loadBlogForEdit(id, 'trust');
+                    }
                 });
-                
-                switchSettingsTab('settings');
-                updateSlugPreview();
-                updateContentMetrics();
-                updateGooglePreview();
-                updateReadiness();
-                if (typeof checkRequiredFormFields === 'function') {
-                    setTimeout(checkRequiredFormFields, 150);
-                }
-                location.hash = 'edit-' + blog.id;
-                showForm("Edit Article");
-            };
-        });
+            })
+            .finally(() => { if (btn) btn.disabled = false; });
+    }
 
-        // Status Toggle button binding
-        document.querySelectorAll('.status-toggle-btn').forEach(btn => {
-            btn.onclick = function() {
-                const id = btn.getAttribute('data-id');
-                const nextStatus = btn.getAttribute('data-next-status') || 'draft';
-                const fd = new FormData();
-                fd.append('action', 'toggle_blog_status');
-                fd.append('id', id);
-                fd.append('status', nextStatus);
-                fd.append('csrf_token', csrfToken);
-
-                btn.disabled = true;
-
-                fetch('api.php', {
-                    method: 'POST',
-                    body: fd
-                })
+    function deleteBlog(id) {
+        const row = document.getElementById(`blog-row-${id}`);
+        const title = row ? (row.querySelector('.bl-title')?.textContent || '') : '';
+        Swal.fire({
+            title: 'Delete this article?',
+            html: '<b></b><br>It will be removed from the website and this list. A copy is kept in the deleted-records archive.',
+            icon: 'warning',
+            showCancelButton: true,
+            focusCancel: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Delete',
+            didOpen: popup => { const b = popup.querySelector('.swal2-html-container b'); if (b) b.textContent = title || `Article #${id}`; }
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            Swal.fire({ title: 'Deleting…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const fd = new FormData();
+            fd.append('action', 'delete_blog');
+            fd.append('id', id);
+            fd.append('csrf_token', csrfToken);
+            fetch('api.php', { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status !== 'success') {
-                        throw new Error(data.message || 'Status update failed.');
-                    }
-
-                    const row = document.getElementById(`blog-row-${id}`);
-                    const newStatus = data.blog_status || nextStatus;
-                    const oldStatus = row ? row.dataset.status : '';
-                    adjustStatusCounters(oldStatus, newStatus);
-                    updateBlogRowStatus(row, newStatus);
-
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: data.message || 'Blog status updated.',
-                        showConfirmButton: false,
-                        timer: 1600
-                    });
+                    if (data.status !== 'success') throw new Error(data.message || 'Deletion failed.');
+                    Swal.fire({ title: 'Deleted', text: data.message || 'Article deleted.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    fetchBlogs(currentPage);
                 })
-                .catch(err => {
-                    Swal.fire({
-                        title: 'Status Not Updated',
-                        text: err.message || 'Network error.',
-                        icon: 'error',
-                        confirmButtonColor: '#dc2626'
-                    });
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                });
-            };
+                .catch(err => Swal.fire({ title: 'Deletion failed', text: err.message || 'Network error.', icon: 'error', confirmButtonColor: '#dc2626' }));
         });
+    }
 
-        // Delete button binding
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.onclick = function() {
-                const id = btn.getAttribute('data-id');
-                Swal.fire({
-                    title: 'Delete Blog Post?',
-                    text: "Are you absolutely sure you want to delete this blog post? This action cannot be undone.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc2626',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Delete It!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Deleting...',
-                            text: 'Removing post from database...',
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
+    // One delegated handler for every row/pagination control (rows are re-rendered on each fetch).
+    document.getElementById('listPanel').addEventListener('click', e => {
+        const pageLink = e.target.closest('[data-page]');
+        if (pageLink) {
+            e.preventDefault();
+            fetchBlogs(parseInt(pageLink.getAttribute('data-page'), 10) || 1);
+            return;
+        }
+        const actEl = e.target.closest('[data-act]');
+        if (!actEl) return;
+        const act = actEl.getAttribute('data-act');
+        if (act === 'edit') loadBlogForEdit(actEl.getAttribute('data-id'));
+        else if (act === 'toggle') toggleBlogStatus(actEl.getAttribute('data-id'), actEl.getAttribute('data-next-status') || 'draft', actEl);
+        else if (act === 'delete') deleteBlog(actEl.getAttribute('data-id'));
+        else if (act === 'clear-filters') clearListFilters();
+        else if (act === 'retry') fetchBlogs(currentPage);
+    });
 
-                        const fd = new FormData();
-                        fd.append('action', 'delete_blog');
-                        fd.append('id', id);
-                        fd.append('csrf_token', csrfToken);
+    // ---------- Editor: load one article by id (works for any page and for #edit-ID links) ----------
+    function populateEditor(blog) {
+        blogIdInput.value = blog.id;
+        titleInput.value = blog.title || '';
+        slugInput.value = blog.slug || '';
+        excerptInput.value = blog.excerpt || '';
+        categoryInput.value = blog.category || 'personal';
+        readTimeInput.value = blog.read_time || '5 Min Read';
+        readTimeTouched = true;
+        statusInput.value = blog.status === 'published' ? 'published' : 'draft';
+        if (removeImageInput) removeImageInput.value = '0';
+        if (fileInput) fileInput.value = '';
+        metaTitleInput.value = blog.meta_title || '';
+        metaDescInput.value = blog.meta_description || '';
+        metaKeywordsInput.value = blog.meta_keywords || '';
+        document.getElementById('author_name').value = blog.author_name || '';
+        document.getElementById('author_designation').value = blog.author_designation || '';
+        document.getElementById('reviewed_by').value = blog.reviewed_by || '';
+        document.getElementById('cta_text').value = blog.cta_text || '';
+        document.getElementById('cta_link').value = blog.cta_link || '';
+        if (tinymce.get('editor-container')) tinymce.get('editor-container').setContent(blog.content || '');
 
-                        fetch('api.php', {
-                            method: 'POST',
-                            body: fd
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.status !== 'success') {
-                                throw new Error(data.message || 'Deletion failed.');
-                            }
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: data.message || 'Post deleted.',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                fetchBlogs(currentPage);
-                            });
-                        })
-                        .catch(err => {
-                            Swal.fire({
-                                title: 'Deletion Failed',
-                                text: err.message || 'Network error.',
-                                icon: 'error',
-                                confirmButtonColor: '#dc2626'
-                            });
-                        });
-                    }
-                });
+        const src = coverSrc(blog.image_url);
+        if (src) {
+            imgPreview.onerror = () => {
+                imgPreview.classList.add('hidden');
+                previewPlaceholder.classList.remove('hidden');
+                previewPlaceholder.textContent = 'Current cover file was not found on this server. Upload a new one to replace it.';
+                updateReadiness();
             };
-        });
+            imgPreview.src = src;
+            imgPreview.classList.remove('hidden');
+            previewPlaceholder.classList.add('hidden');
+            previewPlaceholder.textContent = 'No cover selected';
+            if (clearImageBtn) clearImageBtn.classList.remove('hidden');
+            if (dropzoneText) dropzoneText.textContent = 'Click or drop an image to replace the cover';
+        } else {
+            resetCoverPreview(false);
+        }
+
+        const faqsContainer = document.getElementById('faqsRowContainer');
+        faqsContainer.innerHTML = '';
+        let faqsArr = [];
+        try { faqsArr = JSON.parse(blog.faqs || '[]') || []; } catch (err) { faqsArr = []; }
+        faqsArr.forEach(faq => addFaqRow(faq.q || '', faq.a || ''));
+
+        refreshCharCounters();
+        updateSlugPreview();
+        updateContentMetrics();
+        updateGooglePreview();
+        updateReadiness();
+        checkRequiredFormFields();
+    }
+
+    function refreshCharCounters() {
+        [titleInput, excerptInput, metaTitleInput, metaDescInput].forEach(el => el && el.dispatchEvent(new Event('change')));
+    }
+
+    function loadBlogForEdit(id, tab = 'settings') {
+        Swal.fire({ title: 'Opening article…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        const fd = new FormData();
+        fd.append('action', 'get_blog');
+        fd.append('id', id);
+        fd.append('csrf_token', csrfToken);
+        return fetch('api.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success' || !data.blog) throw new Error(data.message || 'Article not found.');
+                Swal.close();
+                populateEditor(data.blog);
+                switchSettingsTab(tab);
+                if (location.hash !== '#edit-' + data.blog.id) history.replaceState(null, '', location.pathname + location.search + '#edit-' + data.blog.id);
+                showForm('Edit article');
+                markFormClean();
+            })
+            .catch(err => {
+                Swal.fire({ title: 'Could not open article', text: err.message || 'Network error.', icon: 'error', confirmButtonColor: '#18529c' });
+                showList(true);
+            });
     }
 
     // Draft Auto-Save system
+    const draftStorage = {
+        getItem(key) { try { return localStorage.getItem(key); } catch (error) { return null; } },
+        setItem(key, value) { try { localStorage.setItem(key, value); } catch (error) {} },
+        removeItem(key) { try { localStorage.removeItem(key); } catch (error) {} }
+    };
     const AUTO_SAVE_KEY = 'waqt_finance_blog_draft';
     const recoveryBanner = document.getElementById('recoveryBanner');
     const restoreDraftBtn = document.getElementById('restoreDraftBtn');
@@ -1942,7 +2039,7 @@ if ($res) {
     const recoveryTime = document.getElementById('recoveryTime');
 
     function saveDraftToLocalStorage() {
-        if (blogIdInput.value !== "0") return;
+        if (blogIdInput.value !== "0" || formPanel.classList.contains("hidden") || !recoveryBanner.classList.contains("hidden")) return;
 
         const title = titleInput.value.trim();
         const excerpt = excerptInput.value.trim();
@@ -1966,10 +2063,11 @@ if ($res) {
             title, slug, excerpt, content, category, readTime,
             authorName, authorDesignation, reviewedBy, ctaText, ctaLink,
             metaTitle, metaDesc, metaKeywords,
+            faqs: Array.from(document.querySelectorAll("#faqsRowContainer .dynamic-row-item")).map(row => ({ q: row.querySelector(".faq-question-input").value, a: row.querySelector(".faq-answer-input").value })),
             savedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
-        localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(draftData));
+        try { draftStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(draftData)); } catch (error) { console.warn("Browser draft storage unavailable", error); }
     }
 
     setInterval(saveDraftToLocalStorage, 10000);
@@ -1977,7 +2075,7 @@ if ($res) {
     function checkAndShowDraftRecovery() {
         if (blogIdInput.value !== "0") return;
 
-        const savedDataStr = localStorage.getItem(AUTO_SAVE_KEY);
+        const savedDataStr = draftStorage.getItem(AUTO_SAVE_KEY);
         if (savedDataStr) {
             try {
                 const draft = JSON.parse(savedDataStr);
@@ -1986,14 +2084,14 @@ if ($res) {
                     recoveryBanner.classList.remove('hidden');
                 }
             } catch (e) {
-                localStorage.removeItem(AUTO_SAVE_KEY);
+                draftStorage.removeItem(AUTO_SAVE_KEY);
             }
         }
     }
 
     if (restoreDraftBtn) {
         restoreDraftBtn.addEventListener('click', () => {
-            const savedDataStr = localStorage.getItem(AUTO_SAVE_KEY);
+            const savedDataStr = draftStorage.getItem(AUTO_SAVE_KEY);
             if (savedDataStr) {
                 try {
                     const draft = JSON.parse(savedDataStr);
@@ -2019,6 +2117,10 @@ if ($res) {
                         tinymce.get('editor-container').setContent(draft.content);
                     }
 
+                    slugManuallyEdited = true;
+                    document.getElementById('faqsRowContainer').innerHTML = '';
+                    (draft.faqs || []).forEach(faq => addFaqRow(faq.q, faq.a));
+                    refreshCharCounters();
                     updateSlugPreview();
                     updateContentMetrics();
                     updateGooglePreview();
@@ -2040,7 +2142,7 @@ if ($res) {
 
     if (discardDraftBtn) {
         discardDraftBtn.addEventListener('click', () => {
-            localStorage.removeItem(AUTO_SAVE_KEY);
+            draftStorage.removeItem(AUTO_SAVE_KEY);
             if (recoveryBanner) recoveryBanner.classList.add('hidden');
         });
     }
@@ -2056,6 +2158,33 @@ if ($res) {
         if (activeBtn) activeBtn.classList.add('active');
         if (activeContent) activeContent.classList.add('active');
     };
+
+    document.querySelectorAll('.tab-btn').forEach((btn, index, buttons) => {
+        const key = btn.id.replace('tabBtn-', '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-controls', 'tabContent-' + key);
+        const panel = document.getElementById('tabContent-' + key);
+        panel.setAttribute('role', 'tabpanel');
+        panel.setAttribute('aria-labelledby', btn.id);
+        btn.addEventListener('keydown', e => {
+            let next = index;
+            if (e.key === 'ArrowRight') next = (index + 1) % buttons.length;
+            else if (e.key === 'ArrowLeft') next = (index + buttons.length - 1) % buttons.length;
+            else if (e.key === 'Home') next = 0;
+            else if (e.key === 'End') next = buttons.length - 1;
+            else return;
+            e.preventDefault(); buttons[next].click(); buttons[next].focus();
+        });
+    });
+    const switchTab = window.switchSettingsTab;
+    window.switchSettingsTab = function(key) {
+        switchTab(key);
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            const active = btn.classList.contains('active');
+            btn.setAttribute('aria-selected', String(active)); btn.tabIndex = active ? 0 : -1;
+        });
+    };
+    switchSettingsTab('settings');
 
     // Dynamic row handlers for FAQs
     window.addFaqRow = function(q = '', a = '') {
@@ -2088,10 +2217,10 @@ if ($res) {
         
         row.innerHTML = `
             <div style="flex:1; display:flex; flex-direction:column; gap:6px; margin-bottom: 8px;">
-                <input type="text" class="form-control-adm faq-question-input" value="${q}" placeholder="Question (e.g. Is parking available?)" required style="width: 100%;">
-                <textarea class="form-control-adm faq-answer-input" placeholder="Answer..." required style="width: 100%; min-height: 60px;">${a}</textarea>
+                <input type="text" class="form-control-adm faq-question-input" value="${escapeHtml(q)}" aria-label="FAQ question" placeholder="Question about this article" required style="width: 100%;">
+                <textarea class="form-control-adm faq-answer-input" aria-label="FAQ answer" placeholder="Answer..." required style="width: 100%; min-height: 60px;">${escapeHtml(a)}</textarea>
             </div>
-            <button type="button" class="btn-remove-row" onclick="removeRow('faq-row-${randId}')">
+            <button type="button" class="btn-remove-row" aria-label="Remove FAQ" onclick="removeRow('faq-row-${randId}')">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         `;
@@ -2105,218 +2234,119 @@ if ($res) {
         }
     };
 
-    // Toggle panels helper
+    // ---------- Unsaved-changes tracking ----------
+    let formSnapshot = '';
+    function formStateString() {
+        const fields = Array.from(blogForm.querySelectorAll('input:not([type="file"]):not([type="hidden"]), select, textarea'))
+            .filter(el => el.id !== 'editor-container')
+            .map(el => el.value);
+        const editor = tinymce.get('editor-container');
+        fields.push(editor ? editor.getContent() : '');
+        fields.push(fileInput && fileInput.files && fileInput.files.length ? 'new-file' : '');
+        fields.push(removeImageInput ? removeImageInput.value : '');
+        return JSON.stringify(fields);
+    }
+    function markFormClean() {
+        // TinyMCE normalises content a moment after setContent, so take the snapshot after that settles.
+        setTimeout(() => { formSnapshot = formStateString(); }, 200);
+    }
+    function isFormDirty() {
+        return !formPanel.classList.contains('hidden') && formSnapshot !== '' && formStateString() !== formSnapshot;
+    }
+    function confirmDiscard() {
+        if (!isFormDirty()) return Promise.resolve(true);
+        return Swal.fire({
+            title: 'Discard unsaved changes?',
+            text: 'Your edits to this article have not been saved.',
+            icon: 'warning',
+            showCancelButton: true,
+            focusCancel: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#475569',
+            confirmButtonText: 'Discard',
+            cancelButtonText: 'Keep editing'
+        }).then(r => r.isConfirmed);
+    }
+    window.addEventListener('beforeunload', e => {
+        if (isFormDirty()) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    // ---------- Panels & routing ----------
     function showForm(titleText) {
         listPanel.classList.add('hidden');
         formPanel.classList.remove('hidden');
-        formTitle.innerHTML = `<i class="fa-solid fa-pen-nib" style="color: var(--primary); margin-right: 8px;"></i> ${titleText}`;
-        formFeedback.innerText = "";
+        formTitle.innerHTML = `<i class="fa-solid fa-pen-nib" style="color: var(--primary); margin-right: 8px;"></i> ${escapeHtml(titleText)}`;
+        checkRequiredFormFields();
+        window.scrollTo({ top: 0 });
     }
 
-    function showList() {
-        formPanel.classList.add('hidden');
-        listPanel.classList.remove('hidden');
-        if (recoveryBanner) recoveryBanner.classList.add('hidden');
-        if (location.hash) {
-            history.pushState("", document.title, window.location.pathname + window.location.search);
-        }
+    function showList(force = false) {
+        const go = () => {
+            formSnapshot = '';
+            formPanel.classList.add('hidden');
+            listPanel.classList.remove('hidden');
+            if (recoveryBanner) recoveryBanner.classList.add('hidden');
+            if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+        };
+        if (force) { go(); return Promise.resolve(true); }
+        return confirmDiscard().then(ok => { if (ok) go(); return ok; });
     }
 
-    // Handle Routing based on URL Hash
-    function handleRouting() {
-        const hash = location.hash;
-        if (hash === '#create') {
-            if (formPanel.classList.contains('hidden')) {
-                const createBtn = document.getElementById('createPostBtn');
-                if (createBtn) {
-                    createBtn.click();
-                } else {
-                    showForm("Write New Article");
-                }
-            }
-        } else if (hash.startsWith('#edit-')) {
-            const id = hash.replace('#edit-', '');
-            if (formPanel.classList.contains('hidden') || blogIdInput.value != id) {
-                let found = false;
-                document.querySelectorAll('.edit-btn').forEach(btn => {
-                    const blog = JSON.parse(btn.getAttribute('data-blog'));
-                    if (blog && blog.id == id) {
-                        btn.click();
-                        found = true;
-                    }
-                });
-                if (!found) {
-                    showList();
-                }
-            }
-        } else {
-            showList();
-        }
-    }
-
-    // Handle hash change for browser back/forward buttons
-    window.addEventListener('hashchange', handleRouting);
-
-    // Buttons
-    document.getElementById('createPostBtn').addEventListener('click', () => {
+    function openCreateForm() {
         blogForm.reset();
-        blogIdInput.value = "0";
+        slugManuallyEdited = false;
+        blogIdInput.value = '0';
         readTimeTouched = false;
-        if (tinymce.get('editor-container')) {
-            tinymce.get('editor-container').setContent('');
-        }
+        if (tinymce.get('editor-container')) tinymce.get('editor-container').setContent('');
         resetCoverPreview(false);
+        if (removeImageInput) removeImageInput.value = '0';
         document.getElementById('faqsRowContainer').innerHTML = '';
+        blogForm.querySelectorAll('.is-invalid, .is-valid').forEach(el => el.classList.remove('is-invalid', 'is-valid'));
+        blogForm.querySelectorAll('.invalid-feedback-text').forEach(el => el.remove());
         switchSettingsTab('settings');
+        refreshCharCounters();
         updateSlugPreview();
         updateContentMetrics();
         updateGooglePreview();
         updateReadiness();
         checkAndShowDraftRecovery();
-        if (typeof checkRequiredFormFields === 'function') checkRequiredFormFields();
-        location.hash = 'create';
-        showForm("Write New Article");
-    });
+        checkRequiredFormFields();
+        if (location.hash !== '#create') history.replaceState(null, '', location.pathname + location.search + '#create');
+        showForm('Write new article');
+        markFormClean();
+        setTimeout(() => titleInput.focus(), 50);
+    }
 
-    document.getElementById('backToListBtn').addEventListener('click', () => {
-        location.hash = '';
-        showList();
-    });
-    document.getElementById('cancelBtn').addEventListener('click', () => {
-        location.hash = '';
-        showList();
-    });
+    function handleRouting() {
+        const hash = location.hash;
+        if (hash === '#create') {
+            if (formPanel.classList.contains('hidden') || blogIdInput.value !== '0') openCreateForm();
+        } else if (hash.startsWith('#edit-')) {
+            const id = parseInt(hash.replace('#edit-', ''), 10);
+            if (id > 0 && (formPanel.classList.contains('hidden') || String(blogIdInput.value) !== String(id))) loadBlogForEdit(id);
+            else if (!(id > 0)) showList(true);
+        } else if (!formPanel.classList.contains('hidden')) {
+            showList();
+        }
+    }
+    window.addEventListener('hashchange', handleRouting);
 
-    // Edit Blog Handler
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const blog = JSON.parse(btn.getAttribute('data-blog'));
-            
-            // Populate form
-            blogIdInput.value = blog.id;
-            titleInput.value = blog.title;
-            slugInput.value = blog.slug;
-            excerptInput.value = blog.excerpt || '';
-            categoryInput.value = blog.category;
-            readTimeInput.value = blog.read_time || '5 Min Read';
-            readTimeTouched = true;
-            statusInput.value = blog.status || 'draft';
-            if (removeImageInput) removeImageInput.value = "0";
-            metaTitleInput.value = blog.meta_title || '';
-            metaDescInput.value = blog.meta_description || '';
-            metaKeywordsInput.value = blog.meta_keywords || '';
-            
-            // E-E-A-T & CTA fields
-            document.getElementById('author_name').value = blog.author_name || '';
-            document.getElementById('author_designation').value = blog.author_designation || '';
-            document.getElementById('reviewed_by').value = blog.reviewed_by || '';
-            document.getElementById('cta_text').value = blog.cta_text || '';
-            document.getElementById('cta_link').value = blog.cta_link || '';
-            
-            // Set TinyMCE content
-            if (tinymce.get('editor-container')) {
-                tinymce.get('editor-container').setContent(blog.content || '');
-            }
-            
-            // Image Preview
-            if (blog.image_url) {
-                imgPreview.src = `../${blog.image_url}`;
-                imgPreview.classList.remove('hidden');
-                previewPlaceholder.classList.add('hidden');
-                if (clearImageBtn) clearImageBtn.classList.remove('hidden');
-                if (dropzoneText) dropzoneText.textContent = "Cover image selected";
-            } else {
-                resetCoverPreview(false);
-            }
-
-            // Load FAQs
-            const faqsContainer = document.getElementById('faqsRowContainer');
-            faqsContainer.innerHTML = '';
-            const faqsArr = JSON.parse(blog.faqs || '[]');
-            faqsArr.forEach(faq => {
-                addFaqRow(faq.q || '', faq.a || '');
-            });
-            
-            switchSettingsTab('settings');
-            updateSlugPreview();
-            updateContentMetrics();
-            updateGooglePreview();
-            updateReadiness();
-            if (typeof checkRequiredFormFields === 'function') {
-                setTimeout(checkRequiredFormFields, 150);
-            }
-            location.hash = 'edit-' + blog.id;
-            showForm("Edit Article");
-        });
-    });
-
-    // Delete Blog Handler
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id');
-            
-            Swal.fire({
-                title: 'Delete Blog Post?',
-                text: "Are you absolutely sure you want to delete this blog post? This action cannot be undone.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, Delete It!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Deleting...',
-                        text: 'Removing post from database...',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    const fd = new FormData();
-                    fd.append('action', 'delete_blog');
-                    fd.append('id', id);
-                    fd.append('csrf_token', csrfToken);
-
-                    fetch('api.php', {
-                        method: 'POST',
-                        body: fd
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            const row = document.getElementById(`blog-row-${id}`);
-                            if (row) row.remove();
-                            
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: data.message,
-                                icon: 'success',
-                                confirmButtonColor: '#18529c'
-                            });
-                        } else {
-                            throw new Error(data.message || 'Deletion failed.');
-                        }
-                    })
-                    .catch(err => {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: err.message || 'Network error.',
-                            icon: 'error',
-                            confirmButtonColor: '#dc2626'
-                        });
-                    });
-                }
-            });
-        });
-    });
+    document.getElementById('createPostBtn').addEventListener('click', openCreateForm);
+    document.getElementById('backToListBtn').addEventListener('click', () => showList());
+    document.getElementById('cancelBtn').addEventListener('click', () => showList());
 
     // Form Submit Handler
-    blogForm.addEventListener('submit', function(e) {
+    blogForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!blogForm.checkValidity()) {
+            const invalid = blogForm.querySelector(':invalid');
+            const panel = invalid && invalid.closest('.tab-content');
+            if (panel) switchSettingsTab(panel.id.replace('tabContent-', ''));
+            if (invalid) { invalid.focus(); invalid.reportValidity(); }
+            return;
+        }
         
+        if (document.getElementById('saveBlogBtn').disabled) return;
         // Sync editor content back to textarea
         tinymce.triggerSave();
         
@@ -2368,7 +2398,7 @@ if ($res) {
             
             Swal.fire({
                 title: 'E-E-A-T Trust Score Alert',
-                text: 'Please provide an Author Name in the "EEAT & CTA" tab before activating this article.',
+                text: 'Please add an author name in the "Author & CTA" tab before making this article active.',
                 icon: 'info',
                 confirmButtonColor: '#18529c'
             });
@@ -2386,7 +2416,7 @@ if ($res) {
             
             Swal.fire({
                 title: 'CTA Field Required',
-                text: 'Please enter a target link for your Call-to-Action in the "EEAT & CTA" tab.',
+                text: 'Please enter a target link for your call-to-action in the "Author & CTA" tab.',
                 icon: 'warning',
                 confirmButtonColor: '#18529c'
             });
@@ -2396,6 +2426,8 @@ if ($res) {
         }
         
         if (!isValid) {
+            const first = blogForm.querySelector('.is-invalid');
+            if (first) first.focus();
             Swal.fire({
                 title: 'Validation Errors',
                 text: 'Please review and fix the highlighted fields before saving.',
@@ -2414,6 +2446,20 @@ if ($res) {
             }
         });
 
+        const saveButton = document.getElementById('saveBlogBtn');
+        saveButton.disabled = true;
+        try {
+            const editor = tinymce.get('editor-container');
+            if (editor) {
+                const uploads = await editor.uploadImages();
+                if (uploads.some(upload => upload.status === false)) throw new Error('An article image could not upload. Retry before saving.');
+                editor.save();
+            }
+        } catch (error) {
+            saveButton.disabled = false;
+            Swal.fire({ title: 'Image upload failed', text: error.message || 'Please retry the image upload.', icon: 'error' });
+            return;
+        }
         const formData = new FormData(this);
         formData.append('csrf_token', csrfToken);
 
@@ -2436,16 +2482,17 @@ if ($res) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                localStorage.removeItem(AUTO_SAVE_KEY);
+                draftStorage.removeItem(AUTO_SAVE_KEY);
+                const wasNew = blogIdInput.value === '0';
                 Swal.fire({
-                    title: 'Saved Successfully!',
-                    text: 'The blog article has been stored successfully.',
+                    title: 'Article saved',
+                    text: statusInput.value === 'published' ? 'It is live on the website.' : 'It is saved as inactive (hidden from the website).',
                     icon: 'success',
                     timer: 1500,
                     showConfirmButton: false
-                }).then(() => {
-                    window.location.reload();
                 });
+                showList(true);
+                fetchBlogs(wasNew ? 1 : currentPage);
             } else {
                 throw new Error(data.message || 'Operation failed.');
             }
@@ -2457,12 +2504,11 @@ if ($res) {
                 icon: 'error',
                 confirmButtonColor: '#dc2626'
             });
-        });
+        }).finally(() => { saveButton.disabled = false; });
     });
 
     // Initial bindings & routing check on page load
-    bindRowActionEvents();
-    bindPaginationEvents();
+    renderBlogList(JSON.parse(document.getElementById('blogInitialData').textContent || '{}'));
     handleRouting();
 </script>
 

@@ -181,6 +181,16 @@ include 'includes/main-header.php';
             text-align: center;
         }
     }
+
+/* Policy tabs: keep every tab reachable (safe centering) and use a scrolling row on small screens */
+.wf-policy-nav-tabs { justify-content: flex-start !important; flex-direction: row !important; width: auto !important; padding-left: 2px !important; padding-right: 2px !important; }
+.wf-policy-nav-tabs > :first-child { margin-left: auto; }
+.wf-policy-nav-tabs > :last-child { margin-right: auto; }
+.wf-policy-tab-btn { flex-shrink: 0; }
+@media (min-width: 1200px) {
+    .wf-policy-nav-tabs { gap: 6px !important; }
+    .wf-policy-tab-btn { padding: 8px 13px !important; }
+}
 </style>
 
 <main>
@@ -188,8 +198,9 @@ include 'includes/main-header.php';
         <div class="container">
             <div class="wf-policy-hero-content">
                 <span class="wf-policy-badge"><i class="fa-solid fa-shield-halved"></i> Upholding Customer Rights and Trust</span>
-                <h1>Fair Practice Code</h1>
-                <p>We are committed to maintaining transparency, honesty, and ethical standards in all our dealings. Our fair practice code ensures clear communication, responsible lending, and respect for customer rights.</p>
+                <h1>Fair Practices Code</h1>
+                <p>How we treat you at every step of your loan, from application and pricing to recovery and complaints, as required by the Reserve Bank of India.</p>
+                <div class="pd-hero-meta"><span data-pd-reading hidden></span><button type="button" class="pd-print" data-pd-print><i class="fas fa-print" aria-hidden="true"></i> Print or save PDF</button></div>
             </div>
         </div>
     </section>
@@ -204,9 +215,28 @@ include 'includes/main-header.php';
                 <a href="privacy-policy" class="wf-policy-tab-btn">Privacy Policy</a>
                 <a href="terms-condition" class="wf-policy-tab-btn">Terms & Conditions</a>
                 <a href="refund-cancellation" class="wf-policy-tab-btn">Refund Policy</a>
+                <a href="digital-lending" class="wf-policy-tab-btn">Digital Lending</a>
             </div>
         </div>
     </div>
+
+<!-- Plain-language summary -->
+<section class="pd-glance-section" aria-labelledby="pd-glance-title">
+    <div class="container">
+        <div class="pd-glance">
+            <div class="pd-glance-head">
+                <div><span class="pd-eyebrow">At a glance</span><h2 id="pd-glance-title">The key points</h2></div>
+                <p>A plain-language summary. The full policy below is the binding text.</p>
+            </div>
+            <ul class="pd-glance-list">
+                <li><span class="pd-glance-icon"><i class="fas fa-language" aria-hidden="true"></i></span><div><strong>Loan terms in writing, in your language</strong><span>Your sanction letter states the loan amount, the annualised interest rate and all terms, in a language you understand.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-bell" aria-hidden="true"></i></span><div><strong>7 working days' notice of changes</strong><span>We tell you at least 7 working days before changing terms such as interest rates or charges. Changes apply only going forward.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-handshake" aria-hidden="true"></i></span><div><strong>Respectful recovery</strong><span>No threats, abuse or harassment of you or your family. Collection calls are made only between 9:00 AM and 6:00 PM.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-unlock" aria-hidden="true"></i></span><div><strong>Securities released on repayment</strong><span>When you repay your loan in full, we release all securities, subject to any lawful claim we notify you about.</span></div></li>
+            </ul>
+        </div>
+    </div>
+</section>
 
     <section class="wf-policy-document-section">
         <div class="container">
@@ -299,4 +329,5 @@ include 'includes/main-header.php';
     </section>
 </main>
 
+<?php include 'includes/policy-help.php'; ?>
 <?php include 'includes/footer.php'; ?>

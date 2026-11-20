@@ -3,7 +3,7 @@ $page_title = "Instant Personal Loan Online in India | Waqt Finance";
 $meta_description = "Get collateral-free personal loans from 50,000 up to 25 Lakh with Waqt Finance. Instant online approval, competitive interest & flexible EMIs. Apply now!";
 $meta_keywords = "personal loan in India, instant personal loan online, personal loan apply online, personal loan interest rates, quick personal loan India";
 $canonical_url = "https://waqtfinance.com/personal-loan";
-$meta_image = "assets/images/personal-loan.webp";
+$meta_image = "assets/images/og-personal-loan.jpg";
 $meta_image_alt = "Personal loan in India by Waqt Finance";
 $breadcrumb_label = "Personal Loan";
 
@@ -189,7 +189,7 @@ include 'includes/header.php';
 
     <!-- Right -->
     <div class="prop-right">
-        <img src="assets/images/ppp-img.webp" alt="Image">
+        <img src="assets/images/ppp-img.webp" alt="Customer shaking hands with a loan officer">
     </div>
 </section>
 
@@ -623,7 +623,7 @@ include 'includes/header.php';
                         <li>Apply with your main bank</li>
                     </ul>
 
-                    <a href="#" class="btn btn-danger w-100 mt-2">
+                    <a href="eligibility-calculator" class="btn btn-danger w-100 mt-2">
                         Check Your Eligibility →
                     </a>
 
@@ -975,7 +975,7 @@ include 'includes/header.php';
         <!-- CTA -->
         <div class="text-center mt-5">
 
-            <a href="#" class="apply-btn btn-lg py-3  w-100 w-md-auto" style="font-size:18px;">
+            <a href="eligibility-calculator" class="apply-btn btn-lg py-3  w-100 w-md-auto" style="font-size:18px;">
 
                 Check Your Eligibility →
 
@@ -1661,11 +1661,16 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <script>
+    // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
     $('.testimonial-slider').slick({
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        autoplaySpeed: 1500,
+        autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
         dots: true,
         arrows: true,
         responsive: [{
@@ -1682,6 +1687,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         ]
     });
+});
 </script>
 
 <script>
@@ -1757,6 +1763,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 
+<?php $footer_cta_title = 'Ready to apply for a personal loan?'; $footer_cta_desc = 'Apply online in a few minutes. All charges are shown before you sign.'; ?>
 <?php include 'includes/footer.php'; ?>
 </body>
 

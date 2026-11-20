@@ -3,7 +3,7 @@ $page_title = "Business Loan in India | Fast Disbursal | Waqt Finance";
 $meta_description = "Apply for collateral-free Business Loans up to 10 Lakh with Waqt Finance. Enjoy 24-48 hr disbursal, minimal paperwork & low interest. Apply online now!";
 $meta_keywords = "business loan in India, MSME loan India, startup loan India, business loan online, working capital loan India, small business loan";
 $canonical_url = "https://waqtfinance.com/business-loan";
-$meta_image = "assets/images/business-loan-home-img.webp";
+$meta_image = "assets/images/og-business-loan.jpg";
 $meta_image_alt = "Business loan in India for MSME and startups";
 $breadcrumb_label = "Business Loan";
 
@@ -236,7 +236,7 @@ include 'includes/header.php';
 
     <!-- Right -->
     <div class="prop-right">
-        <img style="position:relative; top:45px !important;" src="assets/images/buss-img.webp" alt="Image">
+        <img src="assets/images/buss-img.webp" alt="Business owner in his shop">
     </div>
 </section>
 
@@ -609,7 +609,7 @@ include 'includes/header.php';
                         <li>Apply with your main bank</li>
                     </ul>
 
-                    <a href="#" class="btn btn-danger w-100 mt-2">
+                    <a href="eligibility-calculator" class="btn btn-danger w-100 mt-2">
                         Check Your Eligibility →
                     </a>
 
@@ -977,7 +977,7 @@ include 'includes/header.php';
         <!-- CTA -->
         <div class="text-center mt-4">
 
-            <a href="#" class="apply-btn btn-lg py-3" style="font-size:18px;">
+            <a href="eligibility-calculator" class="apply-btn btn-lg py-3" style="font-size:18px;">
 
                 Check Your Eligibility →
 
@@ -1432,12 +1432,12 @@ include 'includes/header.php';
                 <div class="accordion-item ui-card border-0 mb-3">
                     <h3 class="accordion-header">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#faq5">
+                            data-bs-target="#faq-extra-5">
                             <!-- Is WaqtFinance RBI registered? -->
                             What is the repayment tenure?
                         </button>
                     </h3>
-                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div id="faq-extra-5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                         <div class="accordion-body">
                             <!-- Yes. WaqtFinance is a registered NBFC regulated by the Reserve Bank of India,
                                 following strict compliance and data protection standards. -->
@@ -1450,13 +1450,13 @@ include 'includes/header.php';
             <div class="accordion-item ui-card border-0 mb-3">
                     <h3 class="accordion-header">
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#faq5">
+                            data-bs-target="#faq-extra-6">
                             <!-- Is WaqtFinance RBI registered? -->
                             <!--Can I repay the loan early?-->
                             What is the minimum and maximum business loan amount?
                         </button>
                     </h3>
-                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div id="faq-extra-6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                         <div class="accordion-body">
                             <!--Yes. You can prepay or foreclose the loan before the tenure ends, subject to applicable prepayment and foreclosure charges.-->
                             Waqt Finance offers Business Loans starting from ₹50,000 up to ₹10 Lakh, based on your turnover, credit profile, and repayment capacity.
@@ -1785,11 +1785,16 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <script>
+    // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
     $('.testimonial-slider').slick({
         slidesToShow: 3,
         slidesToScroll: 1,
         autoplay: true,
-        autoplaySpeed: 1500,
+        autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
         dots: true,
         arrows: true,
         responsive: [{
@@ -1806,6 +1811,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         ]
     });
+});
 </script>
 
 <script>

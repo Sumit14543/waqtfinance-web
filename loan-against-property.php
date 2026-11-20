@@ -3,7 +3,7 @@ $page_title = "Loan Against Property (LAP) Online India | Waqt Finance";
 $meta_description = "Unlock your property's value with Waqt Finance LAP up to 5 Crore. Attractive interest rates, high LTV & flexible repayment tenure. Check eligibility!";
 $meta_keywords = "loan against property India, LAP loan online, property loan India, mortgage loan India, secured loan against property, commercial property loan";
 $canonical_url = "https://waqtfinance.com/loan-against-property";
-$meta_image = "assets/images/against-property-img.webp";
+$meta_image = "assets/images/og-loan-against-property.jpg";
 $meta_image_alt = "Loan against property in India";
 $breadcrumb_label = "Loan Against Property";
 
@@ -143,7 +143,7 @@ include 'includes/header.php';
 
         <!-- Right -->
         <div class="prop-right">
-            <img src="assets/images/against-property-img.webp" alt="Image">
+            <img src="assets/images/against-property-img.webp" alt="Family discussing a loan against their property with an advisor">
         </div>
 
     </section>
@@ -491,7 +491,7 @@ include 'includes/header.php';
                             <li>Apply with your main bank</li>
                         </ul>
 
-                        <a href="#" class="btn btn-danger w-100 mt-2">
+                        <a href="eligibility-calculator" class="btn btn-danger w-100 mt-2">
                             Check Your Eligibility →
                         </a>
 
@@ -848,7 +848,7 @@ include 'includes/header.php';
             <!-- CTA -->
             <div class="text-center mt-5">
 
-                <a href="#" class="apply-btn btn-lg py-3" style="font-size:18px;">
+                <a href="eligibility-calculator" class="apply-btn btn-lg py-3" style="font-size:18px;">
 
                     Check Your Eligibility →
 
@@ -1268,11 +1268,11 @@ include 'includes/header.php';
             <div class="accordion-item ui-card border-0 mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#faq5">
+                                data-bs-target="#faq-extra-5">
                                 What is the maximum repayment tenure available?
                             </button>
                         </h3>
-                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div id="faq-extra-5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 Most lenders offer flexible repayment tenures ranging from 5 years to 20 years, allowing borrowers to manage their monthly EMIs comfortably.
                             </div>
@@ -1285,11 +1285,11 @@ include 'includes/header.php';
                 <div class="accordion-item ui-card border-0 mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#faq5">
+                                data-bs-target="#faq-extra-6">
                                 Can I transfer my existing Loan Against Property to another lender?
                             </button>
                         </h3>
-                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div id="faq-extra-6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 Yes, borrowers can opt for a balance transfer facility, which allows them to transfer their existing loan to another lender offering lower interest rates or better loan terms..
                             </div>
@@ -1299,11 +1299,11 @@ include 'includes/header.php';
             <div class="accordion-item ui-card border-0 mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#faq5">
+                                data-bs-target="#faq-extra-7">
                                 How long does it take to get the loan approved?
                             </button>
                         </h3>
-                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div id="faq-extra-7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 The approval process for Loan Against Property usually takes 3 to 7 working days, depending on document verification, property valuation, and lender policies.
                             </div>
@@ -1313,11 +1313,11 @@ include 'includes/header.php';
             <div class="accordion-item ui-card border-0 mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#faq5">
+                                data-bs-target="#faq-extra-8">
                                 What documents are required for Loan Against Property?
                             </button>
                         </h3>
-                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div id="faq-extra-8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 Applicants typically need to provide identity proof, address proof, income documents, bank statements, and property-related documents. The exact document list may vary depending on the lender.
                             </div>
@@ -1486,13 +1486,19 @@ include 'includes/header.php';
         </section>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php $footer_cta_title = 'Need funds against your property?'; $footer_cta_desc = 'Apply online for a loan against property. All charges are shown before you sign.'; ?>
+<?php include 'includes/footer.php'; ?>
     <script>
-        $('.testimonial-slider').slick({
+        // jQuery and Slick load with `defer`, so wait for them before starting the slider.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.slick) return;
+    $('.testimonial-slider').slick({
             slidesToShow: 3,
             slidesToScroll: 1,
             autoplay: true,
-            autoplaySpeed: 1500,
+            autoplaySpeed: 5000,
+        pauseOnHover: true,
+        pauseOnFocus: true,
             dots: true,
             arrows: true,
             responsive: [{
@@ -1509,6 +1515,7 @@ include 'includes/header.php';
                 }
             ]
         });
+});
     </script>
 
 <script>

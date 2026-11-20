@@ -75,14 +75,14 @@ function master_build_query(array $baseParams, array $overrides = []): string
 function master_format_money(float $amount): string
 {
     if ($amount >= 10000000) {
-        return 'Rs. ' . number_format($amount / 10000000, 2) . ' Cr';
+        return '₹' . number_format($amount / 10000000, 2) . ' Cr';
     }
 
     if ($amount >= 100000) {
-        return 'Rs. ' . number_format($amount / 100000, 2) . ' L';
+        return '₹' . number_format($amount / 100000, 2) . ' L';
     }
 
-    return 'Rs. ' . number_format($amount, 0);
+    return '₹' . number_format($amount, 0);
 }
 
 function master_fetch_filter_options(mysqli $conn, string $table, string $column): array
@@ -274,272 +274,322 @@ if ($totalPages < 1) $totalPages = 1;
 ?>
 
 <style>
+    /* ---------- Tabs (underline style) ---------- */
     .tab-nav {
         display: flex;
-        width: 100%;
-        background: #f1f5f9;
-        padding: 6px;
-        border-radius: 12px;
-        gap: 6px;
-        margin-bottom: 30px;
-        border: 1px solid var(--border-color);
+        gap: 4px;
+        border-bottom: 1px solid var(--border-color);
+        margin: -6px 0 22px;
+        overflow-x: auto;
+        scrollbar-width: none;
     }
+    .tab-nav::-webkit-scrollbar { display: none; }
     .tab-btn {
-        flex: 1;
-        justify-content: center;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px 12px;
         background: transparent;
         border: none;
         color: var(--text-muted);
         font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        padding: 10px 20px;
-        border-radius: 9px;
-        transition: all 0.25s ease;
+        font-weight: 600;
         text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: color 0.15s var(--ease);
     }
-    .tab-btn:hover {
-        color: var(--primary);
-        background: rgba(24, 82, 156, 0.04);
-    }
-    .tab-btn.active {
-        color: #ffffff !important;
+    .tab-btn:hover { color: var(--text-main); }
+    .tab-btn.active { color: var(--primary) !important; }
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: -1px;
+        height: 2px;
+        border-radius: 2px 2px 0 0;
         background: var(--primary);
-        box-shadow: 0 4px 10px rgba(24, 82, 156, 0.2);
     }
+
+    /* ---------- KPI cards (compact) ---------- */
     .master-kpi-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 16px;
-        margin: -10px 0 28px;
+        margin: 0 0 22px;
     }
     .master-kpi-card {
         display: flex;
-        align-items: center;
-        gap: 14px;
-        min-height: 104px;
-        padding: 18px;
-        border: 1px solid #dbe4ef;
-        border-radius: 8px;
+        flex-direction: row-reverse;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
         background: #ffffff;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+        box-shadow: var(--shadow-xs);
+        min-width: 0;
     }
     .master-kpi-icon {
-        width: 48px;
-        height: 48px;
-        flex: 0 0 48px;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
-        font-size: 20px;
-    }
-    .master-kpi-card.kpi-blue .master-kpi-icon {
-        background: rgba(24, 82, 156, 0.08);
+        border-radius: 9px;
+        font-size: 14px;
+        background: var(--primary-soft);
         color: var(--primary);
     }
-    .master-kpi-card.kpi-green .master-kpi-icon {
-        background: rgba(22, 163, 74, 0.09);
-        color: #16a34a;
-    }
-    .master-kpi-card.kpi-yellow .master-kpi-icon {
-        background: rgba(202, 138, 4, 0.11);
-        color: #ca8a04;
-    }
-    .master-kpi-card.kpi-red .master-kpi-icon {
-        background: rgba(239, 68, 68, 0.08);
-        color: #dc2626;
-    }
+    .master-kpi-info { display: flex; flex-direction: column; min-width: 0; }
     .master-kpi-info h3 {
-        margin: 0;
+        order: 2;
+        margin: 2px 0 0;
+        font-family: 'Outfit', sans-serif;
         color: var(--text-main);
-        font-size: 24px;
-        line-height: 1.15;
-        font-weight: 800;
+        font-size: 26px;
+        line-height: 1.2;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
     }
     .master-kpi-info p {
-        margin: 4px 0 0;
+        order: 1;
+        margin: 0;
         color: var(--text-muted);
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-    }
-    .master-kpi-info span {
-        display: block;
-        margin-top: 4px;
-        color: #64748b;
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 600;
     }
-    .master-filter-panel {
-        display: grid;
-        gap: 16px;
-        padding: 18px;
-        margin-bottom: 24px;
-        border: 1px solid #dbe4ef;
-        border-radius: 8px;
-        background: #fbfdff;
-    }
-    .master-filter-grid {
-        display: grid;
-        grid-template-columns: minmax(260px, 1.4fr) repeat(6, minmax(140px, 1fr));
-        gap: 12px;
-        align-items: end;
-    }
-    .filter-field {
-        display: grid;
-        gap: 6px;
-    }
-    .filter-field label {
+    .master-kpi-info span {
+        order: 3;
+        display: block;
+        margin-top: 2px;
         color: var(--text-muted);
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
+        font-size: 12px;
     }
-    .filter-field input,
-    .filter-field select {
+
+    /* ---------- Compact filter toolbar ---------- */
+    .master-filter-panel {
+        margin: -24px -24px 18px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-subtle);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .master-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .master-filter-panel .filter-field { position: relative; min-width: 0; }
+    /* Selects are self-describing ("All Cities"), so labels here are for screen readers only. */
+    .master-filter-panel .filter-field label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+    .master-toolbar .fld-search { flex: 1 1 260px; }
+    .master-toolbar .fld-search i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 12.5px;
+        pointer-events: none;
+    }
+    .master-toolbar .fld-search input { padding-left: 34px; }
+    .master-toolbar .filter-field:not(.fld-search) { flex: 0 1 170px; }
+
+    .master-filter-panel input,
+    .master-filter-panel select {
         width: 100%;
-        height: 42px;
-        padding: 9px 12px;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
+        height: 38px;
+        padding: 0 11px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
         background: #ffffff;
         color: var(--text-main);
-        font-size: 13.5px;
+        font-size: 13px;
         outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
     }
-    .filter-field input:focus,
-    .filter-field select:focus {
+    .master-filter-panel select { cursor: pointer; }
+    .master-filter-panel input:focus,
+    .master-filter-panel select:focus {
         border-color: var(--primary);
         box-shadow: 0 0 0 3px var(--primary-glow);
     }
-    .master-filter-actions {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .master-filter-summary {
-        color: var(--text-muted);
-        font-size: 13px;
-        font-weight: 750;
-    }
-    .master-filter-buttons {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
+    /* A filter that is set gets a tinted border so it is easy to spot. */
+    .master-filter-panel select.has-value,
+    .master-filter-panel input.has-value { border-color: #93b4dc; background: #f5f9ff; }
+
+    .master-toolbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
     .btn-outline-adm,
-    .btn-export-adm {
-        height: 42px;
+    .btn-export-adm,
+    .btn-more-filters {
+        height: 38px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        padding: 0 16px;
-        border-radius: 8px;
+        padding: 0 14px;
+        border-radius: var(--radius-sm);
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 600;
         text-decoration: none;
+        white-space: nowrap;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: border-color 0.15s var(--ease), color 0.15s var(--ease), background-color 0.15s var(--ease);
     }
-    .btn-outline-adm {
-        border: 1px solid #cbd5e1;
+    .btn-outline-adm,
+    .btn-more-filters {
+        border: 1px solid var(--border-strong);
         background: #ffffff;
         color: var(--text-main);
     }
-    .btn-outline-adm:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: rgba(24, 82, 156, 0.05);
+    .btn-outline-adm:hover,
+    .btn-more-filters:hover,
+    .btn-more-filters[aria-expanded="true"] { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .btn-more-filters .more-count {
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
     }
+    .btn-more-filters .more-count[hidden] { display: none; }
+    .btn-more-filters .chev { font-size: 10px; transition: transform 0.15s var(--ease); }
+    .btn-more-filters[aria-expanded="true"] .chev { transform: rotate(180deg); }
     .btn-export-adm {
-        border: 1px solid rgba(22, 163, 74, 0.25);
-        background: rgba(22, 163, 74, 0.08);
+        border: 1px solid var(--border-strong);
+        background: #ffffff;
         color: #15803d;
     }
-    .btn-export-adm:hover {
-        background: #16a34a;
-        color: #ffffff;
+    .btn-export-adm:hover { border-color: #16a34a; background: #f0fdf4; }
+
+    /* Date + amount row, hidden until asked for */
+    .master-advanced {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px 20px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed var(--border-color);
     }
-    @media (max-width: 1320px) {
-        .master-filter-grid {
-            grid-template-columns: repeat(4, minmax(180px, 1fr));
-        }
+    .master-advanced[hidden] { display: none; }
+    .master-advanced .adv-group { display: flex; flex-direction: column; gap: 5px; }
+    .master-advanced .adv-label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+    .master-advanced .adv-pair { display: flex; align-items: center; gap: 6px; }
+    .master-advanced .adv-pair > span { color: var(--text-muted); font-size: 12px; }
+    .master-advanced .filter-field { width: 150px; }
+    .master-advanced .adv-quick { display: flex; gap: 6px; flex-wrap: wrap; }
+    .master-advanced .adv-quick button {
+        height: 38px;
+        padding: 0 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        background: #ffffff;
+        color: var(--text-secondary);
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
     }
+    .master-advanced .adv-quick button:hover { border-color: var(--primary); color: var(--primary); }
+
+    .master-filter-summary {
+        margin-top: 10px;
+        color: var(--text-muted);
+        font-size: 12.5px;
+        font-weight: 500;
+    }
+
     @media (max-width: 1180px) {
-        .master-kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
+        .master-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 720px) {
-        .master-kpi-grid,
-        .master-filter-grid {
-            grid-template-columns: 1fr;
-        }
-        .master-filter-actions {
-            align-items: stretch;
-        }
-        .master-filter-buttons,
-        .master-filter-buttons > * {
-            width: 100%;
-        }
+        .master-kpi-grid { grid-template-columns: minmax(0, 1fr); }
+        .master-filter-panel { margin: -18px -18px 16px; padding: 12px 16px; }
+        .master-toolbar .filter-field:not(.fld-search) { flex: 1 1 140px; }
+        .btn-more-filters { flex: 1 1 140px; }
+        .master-toolbar-actions { width: 100%; margin-left: 0; }
+        .master-toolbar-actions > * { flex: 1; }
+        .master-advanced .adv-group, .master-advanced .adv-pair { width: 100%; }
+        .master-advanced .filter-field { width: auto; flex: 1; }
     }
 
     /* Details Drawer Modal */
+    /* Backdrop fades in; only the panel slides. */
     .drawer-overlay {
         position: fixed;
-        top: 0;
-        right: -100%;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
+        inset: 0;
         z-index: 1000;
-        transition: right 0.4s ease;
         display: flex;
         justify-content: flex-end;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.25s ease, visibility 0s linear 0.25s;
     }
     .drawer-overlay.active {
-        right: 0;
+        visibility: visible;
+        opacity: 1;
+        transition: opacity 0.25s ease, visibility 0s;
     }
     .drawer-content {
         width: 100%;
-        max-width: 650px;
+        max-width: 720px;
         height: 100%;
-        background: #ffffff;
-        border-left: 1px solid var(--border-color);
-        padding: 35px;
+        background: var(--bg-dark);
         overflow-y: auto;
-        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.05);
+        overscroll-behavior: contain;
+        box-shadow: -16px 0 40px rgba(15, 23, 42, 0.18);
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
     }
+    .drawer-overlay.active .drawer-content { transform: translateX(0); }
     .drawer-header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 25px;
+        gap: 12px;
+        min-height: 56px;
+        padding: 10px 16px 10px 24px;
+        background: #ffffff;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 15px;
     }
+    .drawer-header .card-title-text { font-size: 14px; font-weight: 600; color: var(--text-muted); }
     .drawer-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
         background: none;
         border: none;
         color: var(--text-muted);
-        font-size: 20px;
+        font-size: 17px;
         cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
     }
-    .drawer-close:hover {
-        color: var(--text-main);
-    }
+    .drawer-close:hover { background: #f1f5f9; color: var(--text-main); }
+    #drawerBody { padding: 20px 24px 40px; flex: 1; }
     .section-title {
         font-family: 'Outfit', sans-serif;
         color: var(--primary);
@@ -905,51 +955,173 @@ if ($totalPages < 1) $totalPages = 1;
         to { transform: rotate(360deg); }
     }
 
-    /* Premium Table overrides */
-    .admin-table {
-        border-collapse: separate !important;
-        border-spacing: 0 8px !important;
-        margin-top: 15px;
-    }
-    .admin-table thead tr {
-        background: #f8fafc;
-    }
-    .admin-table th {
-        padding: 14px 16px !important;
-        font-size: 11px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        color: var(--text-muted) !important;
+    /* ---------- Leads table (clean, fits without cutting the Actions column) ---------- */
+    #masterResultsArea .table-responsive { border: 1px solid var(--border-color); border-radius: var(--radius); }
+    #masterResultsArea .admin-table { border-collapse: collapse; margin: 0; }
+    #masterResultsArea .admin-table th {
+        padding: 11px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
         letter-spacing: 0.6px;
-        border-bottom: 2px solid #e2e8f0 !important;
+        color: var(--text-muted);
+        background: var(--bg-subtle);
+        border-bottom: 1px solid var(--border-color);
     }
-    .admin-table tbody tr {
+    #masterResultsArea .admin-table td {
+        padding: 12px 14px;
+        font-size: 13.5px;
+        color: var(--text-main);
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f4f8;
+    }
+    #masterResultsArea .admin-table tbody tr:last-child td { border-bottom: none; }
+    #masterResultsArea .admin-table tbody tr[data-row-id] { cursor: pointer; }
+    #masterResultsArea .admin-table tbody tr[data-row-id]:hover td { background: #f9fbfd; }
+    #masterResultsArea .th-right, #masterResultsArea .td-right { text-align: right; }
+    #masterResultsArea .cell-main { font-weight: 600; color: var(--text-main); }
+    #masterResultsArea .cell-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
+    #masterResultsArea .cell-muted { color: #94a3b8; }
+    #masterResultsArea .cell-id { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    #masterResultsArea .cell-amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+    #masterResultsArea .cell-date { font-size: 13px; font-variant-numeric: tabular-nums; }
+    #masterResultsArea .type-chip {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    /* Actions stay visible even when a wide table scrolls sideways. */
+    #masterResultsArea .admin-table th:last-child,
+    #masterResultsArea .admin-table td:last-child {
+        position: sticky;
+        right: 0;
+        z-index: 1;
         background: #ffffff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-        transition: all 0.2s ease;
+        box-shadow: -10px 0 10px -10px rgba(15, 23, 42, 0.18);
     }
-    .admin-table tbody tr:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
-        background: #fafcff;
+    #masterResultsArea .admin-table th:last-child { background: var(--bg-subtle); }
+    #masterResultsArea .admin-table tbody tr[data-row-id]:hover td:last-child { background: #f9fbfd; }
+    #masterResultsArea .admin-table td { white-space: nowrap; }
+    .badge-pending { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    #masterResultsArea .row-actions { display: inline-flex; gap: 6px; justify-content: flex-end; }
+    .ml-icon-btn {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--border-strong);
+        background: #ffffff;
+        color: var(--text-secondary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
     }
-    .admin-table td {
-        padding: 16px !important;
-        border-top: 1px solid #f1f5f9 !important;
-        border-bottom: 1px solid #f1f5f9 !important;
-        font-size: 13.5px !important;
-        color: var(--text-main) !important;
-        vertical-align: middle !important;
+    .ml-icon-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .ml-icon-btn.danger { color: #b91c1c; border-color: #fecaca; }
+    .ml-icon-btn.danger:hover { background: #fef2f2; border-color: #dc2626; color: #dc2626; }
+    #masterResultsArea .empty-block { padding: 48px 20px; text-align: center; color: var(--text-muted); white-space: normal; }
+    #masterResultsArea .empty-block i.big { display: block; font-size: 26px; color: #cbd5e1; margin-bottom: 10px; }
+    #masterResultsArea .empty-block strong { display: block; color: var(--text-main); margin-bottom: 4px; }
+    .results-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+        font-size: 12.5px;
+        color: var(--text-muted);
     }
-    .admin-table td:first-child {
-        border-left: 1px solid #f1f5f9 !important;
-        border-top-left-radius: 8px;
-        border-bottom-left-radius: 8px;
+    .results-foot .pagination { margin: 0; gap: 4px; }
+    .results-foot .page-item a, .results-foot .page-item span {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        border-radius: 7px;
+        background: #ffffff;
+        color: var(--text-secondary);
+        font-size: 12.5px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: border-color 0.15s ease, color 0.15s ease;
     }
-    .admin-table td:last-child {
-        border-right: 1px solid #f1f5f9 !important;
-        border-top-right-radius: 8px;
-        border-bottom-right-radius: 8px;
+    .results-foot .page-item a:hover { background: #ffffff; border-color: var(--primary); color: var(--primary); }
+    .results-foot .page-item.active span { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+    .results-foot .page-item.disabled span { opacity: 0.45; cursor: not-allowed; }
+    .results-foot .page-item.gap span { border: none; background: transparent; min-width: 16px; padding: 0; }
+
+    /* ---------- Drawer edit form ---------- */
+    .edit-banner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        margin-bottom: 14px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: var(--radius-lg);
+    }
+    .edit-banner i { color: #b45309; }
+    .edit-banner .t { font-weight: 700; color: var(--text-main); font-size: 14px; }
+    .edit-banner .s { font-size: 12.5px; color: var(--text-secondary); }
+    .edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+    .edit-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+    .edit-field.span-2 { grid-column: 1 / -1; }
+    .edit-field label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+    .edit-field .req { color: #dc2626; }
+    .edit-field input, .edit-field select, .edit-field textarea {
+        width: 100%;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        background: #ffffff;
+        color: var(--text-main);
+        font-size: 13.5px;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .edit-field textarea { height: auto; min-height: 70px; padding: 10px 12px; resize: vertical; font-family: inherit; }
+    .edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .edit-field input.changed, .edit-field select.changed, .edit-field textarea.changed { border-color: #d97706; background: #fffdf5; }
+    .edit-field .hint { font-size: 11.5px; color: var(--text-muted); }
+    .edit-prefix { position: relative; }
+    .edit-prefix > span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13.5px; pointer-events: none; }
+    .edit-prefix > input { padding-left: 26px; }
+    .edit-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 6px -24px -40px;
+        padding: 12px 24px;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(6px);
+        border-top: 1px solid var(--border-color);
+    }
+    .edit-actions .state { font-size: 12.5px; color: var(--text-muted); }
+    .edit-actions .state.dirty { color: #b45309; font-weight: 600; }
+    .edit-actions .btns { display: flex; gap: 8px; }
+    .edit-actions .btn-primary-adm { height: 38px; padding: 0 18px; box-shadow: none; }
+    .edit-actions .btn-primary-adm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .edit-actions .lead-action { height: 38px; }
+    @media (max-width: 560px) {
+        .edit-grid { grid-template-columns: minmax(0, 1fr); }
+        .edit-actions { margin: 6px -16px -32px; padding: 12px 16px; }
     }
     #masterResultsArea,
     #masterKpiGrid {
@@ -1097,6 +1269,380 @@ if ($totalPages < 1) $totalPages = 1;
         color: #ffffff;
         box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
     }
+
+    /* ==========================================================
+       Lead detail drawer (view mode)
+       ========================================================== */
+    #drawerBody .info-card {
+        border: 1px solid var(--border-color);
+        border-left: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        box-shadow: var(--shadow-xs);
+        margin-bottom: 14px;
+        scroll-margin-top: 112px;
+    }
+    #drawerBody .card-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 14.5px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--text-main);
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 14px;
+    }
+    #drawerBody .card-title > i:first-child,
+    #drawerBody .card-title > span > i:first-child { color: var(--primary); font-size: 13px; width: 16px; text-align: center; }
+    #drawerBody .grid-fields { gap: 14px 20px; }
+    #drawerBody .field-item { margin: 0; min-width: 0; }
+    #drawerBody .field-label {
+        font-size: 11.5px;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--text-muted);
+        margin-bottom: 3px;
+    }
+    #drawerBody .field-value {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text-main);
+        word-break: break-word;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    #drawerBody .field-value.mono { font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
+    #drawerBody .field-value .empty { color: #94a3b8; font-weight: 500; }
+    #drawerBody .span-2 { grid-column: 1 / -1; }
+
+    /* Hero */
+    .lead-hero {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow-xs);
+    }
+    .lead-hero-top { display: flex; align-items: flex-start; gap: 14px; }
+    .lead-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #2563eb, #18529c);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .lead-hero-main { flex: 1; min-width: 0; }
+    .lead-name {
+        font-family: 'Outfit', sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1.25;
+        word-break: break-word;
+    }
+    .lead-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px 10px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+    }
+    .lead-meta .sep { color: #cbd5e1; }
+    .lead-id { font-weight: 600; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .lead-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        font-size: 11.5px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .lead-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .lead-action {
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-strong);
+        background: #ffffff;
+        color: var(--text-main);
+        font-size: 12.5px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    }
+    .lead-action:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .lead-action.wa { color: #15803d; }
+    .lead-action.wa:hover { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+    .lead-action.primary { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+    .lead-action.primary:hover { background: var(--primary-hover); color: #ffffff; }
+
+    /* Key metrics strip */
+    .lead-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        margin-top: 16px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+    .lead-stat { padding: 10px 14px; border-right: 1px solid var(--border-color); min-width: 0; }
+    .lead-stat:last-child { border-right: none; }
+    .lead-stat-label { font-size: 11.5px; color: var(--text-muted); }
+    .lead-stat-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .lead-stat-value.good { color: #15803d; }
+    .lead-stat-value.bad { color: #b91c1c; }
+    .lead-stat-value.warn { color: #b45309; }
+    .lead-stat-value.muted { color: #94a3b8; }
+
+    /* Sticky section nav */
+    .drawer-nav {
+        position: sticky;
+        top: 56px;
+        z-index: 4;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin: 0 -24px 14px;
+        padding: 10px 24px;
+        background: rgba(244, 246, 250, 0.94);
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .drawer-nav::-webkit-scrollbar { display: none; }
+    .drawer-nav button {
+        flex-shrink: 0;
+        height: 30px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background: #ffffff;
+        color: var(--text-secondary);
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    }
+    .drawer-nav button:hover { border-color: var(--primary); color: var(--primary); }
+    .drawer-nav button.current { background: #0f172a; border-color: #0f172a; color: #ffffff; }
+    .drawer-nav .nav-count {
+        margin-left: 4px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #fee2e2;
+        color: #b91c1c;
+        font-size: 10.5px;
+    }
+
+    /* Decision banner */
+    .decision {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 16px 18px;
+        border-radius: var(--radius-lg);
+        border: 1px solid;
+        margin-bottom: 14px;
+        scroll-margin-top: 112px;
+    }
+    .decision.declined { background: #fef2f2; border-color: #fecaca; }
+    .decision.approved { background: #f0fdf4; border-color: #bbf7d0; }
+    .decision.other { background: #fffbeb; border-color: #fde68a; }
+    .decision-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        background: #ffffff;
+    }
+    .decision.declined .decision-icon { color: #dc2626; }
+    .decision.approved .decision-icon { color: #16a34a; }
+    .decision.other .decision-icon { color: #d97706; }
+    .decision-title { font-size: 14.5px; font-weight: 700; color: var(--text-main); }
+    .decision-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+    .decision-reasons { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .decision-reasons li {
+        display: flex;
+        gap: 8px;
+        font-size: 13px;
+        color: #7f1d1d;
+        line-height: 1.45;
+    }
+    .decision-reasons li i { color: #dc2626; font-size: 11px; margin-top: 4px; }
+    .decision-figures { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; }
+    .decision-figures div { font-size: 12px; color: var(--text-muted); }
+    .decision-figures strong { display: block; font-size: 14px; color: var(--text-main); font-variant-numeric: tabular-nums; }
+
+    /* Verified tick / pills */
+    .vpill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .vpill.ok { background: #dcfce7; color: #166534; }
+    .vpill.no { background: #f1f5f9; color: #64748b; }
+
+    .copy-inline {
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        font-size: 11px;
+        padding: 0;
+    }
+    .copy-inline:hover { background: #eef1f6; color: var(--primary); }
+    .copy-inline.copied { color: #15803d; }
+    .reveal-btn {
+        border: none;
+        background: none;
+        color: var(--primary);
+        font-size: 11.5px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    /* Collapsible groups */
+    #drawerBody details.info-card > summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    #drawerBody details.info-card > summary::-webkit-details-marker { display: none; }
+    #drawerBody details.info-card > summary .card-title { margin-bottom: 0; }
+    #drawerBody details.info-card > summary .chev { color: var(--text-muted); font-size: 11px; transition: transform 0.15s ease; }
+    #drawerBody details.info-card[open] > summary .chev { transform: rotate(180deg); }
+    #drawerBody details.info-card[open] > summary { margin-bottom: 14px; }
+    .kv-sub {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 14px;
+        width: 100%;
+    }
+    .kv-sub .k { font-size: 11px; color: var(--text-muted); }
+    .kv-sub .v { font-size: 12.5px; font-weight: 600; color: var(--text-main); word-break: break-word; }
+    .photo-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .photo-row a img {
+        width: 84px;
+        height: 84px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid var(--border-color);
+        display: block;
+        transition: transform 0.15s ease;
+    }
+    .photo-row a:hover img { transform: scale(1.03); }
+
+    /* Statement buttons inside AA card */
+    #drawerBody .aa-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color); }
+
+    /* Document checklist as rows */
+    .doc-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12.5px; color: var(--text-muted); }
+    .doc-progress .track { flex: 1; height: 6px; background: #eef1f6; border-radius: 3px; overflow: hidden; }
+    .doc-progress .fill { height: 100%; background: #16a34a; border-radius: 3px; }
+    .doc-list { display: flex; flex-direction: column; border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; }
+    .doc-item { padding: 12px 14px; border-bottom: 1px solid var(--border-color); background: #ffffff; }
+    .doc-item:last-child { border-bottom: none; }
+    .doc-item-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .doc-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
+    .doc-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+    .doc-item-right { display: flex; align-items: center; gap: 10px; }
+    .doc-item .checklist-status-badge { text-transform: capitalize; font-size: 11px; border-radius: 999px; padding: 2px 9px; }
+    .doc-review { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .doc-review input {
+        flex: 1;
+        min-width: 160px;
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid var(--border-strong);
+        border-radius: 7px;
+        font-size: 12.5px;
+        outline: none;
+    }
+    .doc-review input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .doc-review .checklist-action-btn { height: 32px; padding: 0 10px; font-size: 12px; border-radius: 7px; display: inline-flex; align-items: center; gap: 5px; }
+    .doc-missing { font-size: 12px; color: #94a3b8; font-style: italic; }
+
+    /* Activity */
+    #drawerBody .note-form { display: flex; gap: 8px; margin-bottom: 16px; }
+    #drawerBody .note-form input {
+        flex: 1;
+        height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+    }
+    #drawerBody .note-form input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    #drawerBody .note-form .btn-primary-adm { height: 38px; padding: 0 14px; box-shadow: none; }
+    #drawerBody .timeline-item-header { font-weight: 600; gap: 10px; }
+    #drawerBody .timeline-item-desc { background: var(--bg-subtle); border-color: var(--border-color); font-size: 13px; }
+
+    /* Status control */
+    #drawerBody .status-select-wrap select { height: 38px !important; padding: 0 12px !important; border-radius: 8px; }
+    #drawerBody .status-select-wrap .btn-primary-adm { height: 38px !important; }
+
+    /* Loading skeleton */
+    .skel { background: linear-gradient(90deg, #eef1f6 25%, #f6f8fb 50%, #eef1f6 75%); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; border-radius: 8px; }
+    @keyframes skel { to { background-position: -200% 0; } }
+
+    @media (max-width: 560px) {
+        #drawerBody { padding: 16px 16px 32px; }
+        .drawer-nav { margin: 0 -16px 14px; padding: 10px 16px; }
+        #drawerBody .grid-fields, .kv-sub { grid-template-columns: minmax(0, 1fr); }
+        .lead-stat { border-right: none; border-bottom: 1px solid var(--border-color); }
+    }
 </style>
 
 <!-- Tab Navigation -->
@@ -1124,13 +1670,17 @@ if ($totalPages < 1) $totalPages = 1;
     <?php endforeach; ?>
 </div>
 
+<?php $advancedActive = $dateFrom !== '' || $dateTo !== '' || $amountMin !== '' || $amountMax !== ''; ?>
 <div class="data-card">
-    <form method="GET" action="master-loans.php" id="masterFilterForm" class="master-filter-panel">
+    <!-- Filters apply automatically (typing is debounced), so there is no Apply button. -->
+    <form method="GET" action="master-loans.php" id="masterFilterForm" class="master-filter-panel" role="search">
         <input type="hidden" name="tab" value="<?php echo htmlspecialchars($activeTab, ENT_QUOTES, 'UTF-8'); ?>">
-        <div class="master-filter-grid">
-            <div class="filter-field">
+
+        <div class="master-toolbar">
+            <div class="filter-field fld-search">
                 <label for="master-search">Search</label>
-                <input id="master-search" type="text" name="search"
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="master-search" type="search" name="search" autocomplete="off"
                        placeholder="<?php echo $activeTab === 'general' ? 'ID, name, mobile, PAN, city...' : 'ID, name, mobile, PAN, shop...'; ?>"
                        value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
             </div>
@@ -1173,202 +1723,102 @@ if ($totalPages < 1) $totalPages = 1;
                 </div>
             <?php endif; ?>
 
-            <div class="filter-field">
-                <label for="master-date-from">From Date</label>
-                <input id="master-date-from" type="date" name="date_from" value="<?php echo htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
+            <button type="button" class="btn-more-filters" id="masterMoreFiltersBtn" aria-expanded="<?php echo $advancedActive ? 'true' : 'false'; ?>" aria-controls="masterAdvancedFilters">
+                <i class="fa-solid fa-sliders"></i> Date &amp; amount
+                <span class="more-count" id="masterMoreCount" hidden>0</span>
+                <i class="fa-solid fa-chevron-down chev"></i>
+            </button>
 
-            <div class="filter-field">
-                <label for="master-date-to">To Date</label>
-                <input id="master-date-to" type="date" name="date_to" value="<?php echo htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-
-            <div class="filter-field">
-                <label for="master-amount-min">Min Amount</label>
-                <input id="master-amount-min" type="number" name="amount_min" min="0" step="1000" placeholder="0" value="<?php echo htmlspecialchars($amountMin, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-
-            <div class="filter-field">
-                <label for="master-amount-max">Max Amount</label>
-                <input id="master-amount-max" type="number" name="amount_max" min="0" step="1000" placeholder="100000" value="<?php echo htmlspecialchars($amountMax, ENT_QUOTES, 'UTF-8'); ?>">
-            </div>
-        </div>
-
-        <div class="master-filter-actions">
-            <div class="master-filter-summary" id="masterFilterSummary">
-                <?php echo number_format($totalRecords); ?> matching <?php echo $activeTab === 'general' ? 'general leads' : 'EDI applications'; ?>
-                <?php if ($filtersActive): ?>
-                    <span style="color: var(--primary); margin-left: 8px;">Filters active</span>
-                <?php endif; ?>
-            </div>
-
-            <div class="master-filter-buttons">
-                <button type="submit" class="btn-primary-adm" style="height:42px; box-shadow:none;">
-                    <i class="fa-solid fa-filter"></i> Apply Filter
-                </button>
-                <a href="master-loans.php?tab=<?php echo urlencode($activeTab); ?>" class="btn-outline-adm" data-master-reset title="Reset filters" style="<?php echo $filtersActive ? '' : 'display:none;'; ?>">
-                    <i class="fa-solid fa-rotate-left"></i> Reset
+            <div class="master-toolbar-actions">
+                <a href="master-loans.php?tab=<?php echo urlencode($activeTab); ?>" class="btn-outline-adm" data-master-reset title="Clear all filters" style="<?php echo $filtersActive ? '' : 'display:none;'; ?>">
+                    <i class="fa-solid fa-xmark"></i> Clear
                 </a>
-                <button type="button" class="btn-export-adm" onclick="exportLeadsCsv()">
-                    <i class="fa-solid fa-file-excel"></i> Download Excel
+                <button type="button" class="btn-export-adm" onclick="exportLeadsCsv()" title="Download the current (filtered) list">
+                    <i class="fa-solid fa-file-arrow-down"></i> Export
                 </button>
             </div>
         </div>
+
+        <div class="master-advanced" id="masterAdvancedFilters"<?php echo $advancedActive ? '' : ' hidden'; ?>>
+            <div class="adv-group">
+                <span class="adv-label">Applied between</span>
+                <div class="adv-pair">
+                    <div class="filter-field">
+                        <label for="master-date-from">From date</label>
+                        <input id="master-date-from" type="date" name="date_from" max="<?php echo date('Y-m-d'); ?>" value="<?php echo htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8'); ?>">
+                    </div>
+                    <span>to</span>
+                    <div class="filter-field">
+                        <label for="master-date-to">To date</label>
+                        <input id="master-date-to" type="date" name="date_to" max="<?php echo date('Y-m-d'); ?>" value="<?php echo htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8'); ?>">
+                    </div>
+                </div>
+            </div>
+
+            <div class="adv-group">
+                <span class="adv-label">Quick range</span>
+                <div class="adv-quick">
+                    <button type="button" data-range="today">Today</button>
+                    <button type="button" data-range="7">Last 7 days</button>
+                    <button type="button" data-range="30">Last 30 days</button>
+                    <button type="button" data-range="month">This month</button>
+                </div>
+            </div>
+
+            <div class="adv-group">
+                <span class="adv-label">Loan amount (₹)</span>
+                <div class="adv-pair">
+                    <div class="filter-field">
+                        <label for="master-amount-min">Min amount</label>
+                        <input id="master-amount-min" type="number" name="amount_min" min="0" step="1000" inputmode="numeric" placeholder="Min" value="<?php echo htmlspecialchars($amountMin, ENT_QUOTES, 'UTF-8'); ?>">
+                    </div>
+                    <span>–</span>
+                    <div class="filter-field">
+                        <label for="master-amount-max">Max amount</label>
+                        <input id="master-amount-max" type="number" name="amount_max" min="0" step="1000" inputmode="numeric" placeholder="Max" value="<?php echo htmlspecialchars($amountMax, ENT_QUOTES, 'UTF-8'); ?>">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="master-filter-summary" id="masterFilterSummary">
+            <?php echo number_format($totalRecords); ?> matching <?php echo $activeTab === 'general' ? 'general leads' : 'EDI applications'; ?>
+            <?php if ($filtersActive): ?>
+                <span style="color: var(--primary); margin-left: 8px;">Filters active</span>
+            <?php endif; ?>
+        </div>
+
+        <!-- Lets Enter in a field submit (the AJAX submit listener handles it). -->
+        <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
     </form>
 
-    <div id="masterResultsArea">
-    <?php if ($activeTab === 'general'): ?>
-        <div class="card-header-flex" style="margin-top: 15px;">
-            <h2 class="card-title-text"><i class="fa-solid fa-layer-group" style="color: var(--primary); margin-right: 8px;"></i> Business & Personal Leads (New)</h2>
-        </div>
-
-        <div class="table-responsive">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>App ID</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>PAN</th>
-                        <th>City</th>
-                        <th>Amount</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th style="width: 120px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($generalLeads)): ?>
-                        <tr>
-                            <td colspan="9" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No general leads found.</td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($generalLeads as $lead): ?>
-                            <tr id="lead-row-general-<?php echo $lead['id']; ?>">
-                                <td><span class="app-id-code"><?php echo htmlspecialchars($lead['application_id'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
-                                <td><strong style="color: var(--text-main);"><?php echo htmlspecialchars($lead['applicant_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></strong></td>
-                                <td><?php echo htmlspecialchars($lead['mobile_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><span style="font-family: monospace; font-weight: 700; font-size:13.5px;"><?php echo htmlspecialchars($lead['pancard_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
-                                <td><?php echo htmlspecialchars($lead['city'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><strong style="color: var(--text-main);">â‚¹<?php echo number_format((float)($lead['loan_amount'] ?? 0), 2); ?></strong></td>
-                                <td><span style="text-transform: uppercase; background: rgba(24,82,156,0.08); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: var(--primary);"><?php echo htmlspecialchars($lead['loan_type'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
-                                <td style="color: var(--text-muted); font-size: 12.5px;"><?php echo date('d M Y, h:i A', strtotime($lead['created_at'])); ?></td>
-                                <td style="white-space: nowrap;">
-                                    <div class="action-btn-group">
-                                        <button type="button" class="btn-action-premium btn-action-view view-gen-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="View Details">
-                                            <i class="fa-solid fa-eye"></i> View
-                                        </button>
-                                        <button type="button" class="btn-action-premium btn-action-edit edit-gen-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="Edit Lead">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-                                        <button type="button" class="btn-action-premium btn-action-delete delete-gen-btn" data-id="<?php echo $lead['id']; ?>" title="Delete Lead">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
-    <?php else: ?>
-        <div class="card-header-flex" style="margin-top: 15px;">
-            <h2 class="card-title-text"><i class="fa-solid fa-store" style="color: var(--primary); margin-right: 8px;"></i> EDI Loan Applications</h2>
-        </div>
-
-        <div class="table-responsive">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>App ID</th>
-                        <th>Applicant Name</th>
-                        <th>Mobile</th>
-                        <th>PAN</th>
-                        <th>Shop Name</th>
-                        <th>Amount</th>
-                        <th>Pincode</th>
-                        <th>Status</th>
-                        <th style="width: 120px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($ediLeads)): ?>
-                        <tr>
-                            <td colspan="9" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No EDI applications found.</td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($ediLeads as $lead): ?>
-                            <tr id="lead-row-edi-<?php echo $lead['id']; ?>">
-                                <td><span class="app-id-code"><?php echo htmlspecialchars($lead['application_id'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
-                                <td><strong style="color: var(--text-main);"><?php echo htmlspecialchars($lead['applicant_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></strong></td>
-                                <td><?php echo htmlspecialchars($lead['mobile_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><span style="font-family: monospace; font-weight: 700; font-size:13.5px;"><?php echo htmlspecialchars($lead['pan_number'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></span></td>
-                                <td><?php echo htmlspecialchars($lead['shop_business_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><strong style="color: var(--text-main);">â‚¹<?php echo number_format((float)($lead['loan_amount'] ?? 0), 2); ?></strong></td>
-                                <td><?php echo htmlspecialchars($lead['pincode'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><span class="badge-status badge-<?php echo htmlspecialchars($lead['status'] ?? 'pending', ENT_QUOTES, 'UTF-8'); ?>" id="badge-<?php echo $lead['id']; ?>"><?php echo htmlspecialchars($lead['status'] ?? 'pending', ENT_QUOTES, 'UTF-8'); ?></span></td>
-                                <td style="white-space: nowrap;">
-                                    <div class="action-btn-group">
-                                        <button type="button" class="btn-action-premium btn-action-view view-edi-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="View Details">
-                                            <i class="fa-solid fa-eye"></i> View
-                                        </button>
-                                        <button type="button" class="btn-action-premium btn-action-edit edit-edi-btn" data-lead='<?php echo htmlspecialchars(json_encode($lead), ENT_QUOTES, 'UTF-8'); ?>' title="Edit Lead">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-                                        <button type="button" class="btn-action-premium btn-action-delete delete-edi-btn" data-id="<?php echo $lead['id']; ?>" title="Delete Lead">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                        <button type="button" class="btn-action-premium sync-edi-crm-btn" data-id="<?php echo htmlspecialchars($lead['application_id'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" title="Sync Documents with CRM" style="background: #2563eb; color: #ffffff;">
-                                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    <?php endif; ?>
-
-    <!-- Pagination -->
-    <?php if ($totalPages > 1): ?>
-        <ul class="pagination">
-            <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                <?php if ($page <= 1): ?>
-                    <span style="opacity:0.5; cursor:not-allowed;">&laquo; Prev</span>
-                <?php else: ?>
-                    <a href="?<?php echo htmlspecialchars(master_build_query($baseQueryParams, ['page' => $page - 1]), ENT_QUOTES, 'UTF-8'); ?>">&laquo; Prev</a>
-                <?php endif; ?>
-            </li>
-            
-            <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                <li class="page-item <?php echo $p === $page ? 'active' : ''; ?>">
-                    <?php if ($p === $page): ?>
-                        <span><?php echo $p; ?></span>
-                    <?php else: ?>
-                        <a href="?<?php echo htmlspecialchars(master_build_query($baseQueryParams, ['page' => $p]), ENT_QUOTES, 'UTF-8'); ?>"><?php echo $p; ?></a>
-                    <?php endif; ?>
-                </li>
-            <?php endfor; ?>
-            
-            <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
-                <?php if ($page >= $totalPages): ?>
-                    <span style="opacity:0.5; cursor:not-allowed;">Next &raquo;</span>
-                <?php else: ?>
-                    <a href="?<?php echo htmlspecialchars(master_build_query($baseQueryParams, ['page' => $page + 1]), ENT_QUOTES, 'UTF-8'); ?>">Next &raquo;</a>
-                <?php endif; ?>
-            </li>
-        </ul>
-    <?php endif; ?>
-    </div>
+    <!-- Rendered by renderMasterResults() so the first load and every AJAX refresh share one template. -->
+    <div id="masterResultsArea" aria-live="polite"></div>
+    <?php
+    $initialKeys = $activeTab === 'general'
+        ? ['id', 'application_id', 'applicant_name', 'mobile_number', 'pancard_number', 'city', 'loan_amount', 'loan_type', 'created_at']
+        : ['id', 'application_id', 'applicant_name', 'mobile_number', 'pan_number', 'shop_business_name', 'loan_amount', 'pincode', 'status', 'created_at'];
+    // Only the columns the table shows are sent to the browser.
+    $initialRecords = array_map(
+        static fn(array $row): array => array_intersect_key($row, array_flip($initialKeys)),
+        $activeTab === 'general' ? $generalLeads : $ediLeads
+    );
+    $initialMasterData = [
+        'tab' => $activeTab,
+        'page' => $page,
+        'limit' => $limit,
+        'total_records' => $totalRecords,
+        'total_pages' => $totalPages,
+        'filters_active' => $filtersActive,
+        'records' => $initialRecords,
+    ];
+    ?>
+    <script type="application/json" id="masterInitialData"><?php echo json_encode($initialMasterData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?></script>
 </div>
 
 <!-- Details Drawer Modal -->
 <div class="drawer-overlay" id="detailDrawer">
-    <div class="drawer-content">
+    <div class="drawer-content" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
         <div class="drawer-header">
             <h2 class="card-title-text" id="drawerTitle">Application Detail</h2>
             <button type="button" class="drawer-close" id="closeDrawer"><i class="fa-solid fa-xmark"></i></button>
@@ -1386,9 +1836,9 @@ if ($totalPages < 1) $totalPages = 1;
     const drawerTitle = document.getElementById('drawerTitle');
     const closeDrawer = document.getElementById('closeDrawer');
     
-    closeDrawer.addEventListener('click', () => drawer.classList.remove('active'));
+    closeDrawer.addEventListener('click', () => closeLeadDrawer());
     drawer.addEventListener('click', (e) => {
-        if (e.target === drawer) drawer.classList.remove('active');
+        if (e.target === drawer) closeLeadDrawer();
     });
 
     const csrfToken = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
@@ -1406,6 +1856,11 @@ if ($totalPages < 1) $totalPages = 1;
     let masterSearchTimer = null;
     let masterRequestId = 0;
 
+    // Value for a quoted-free JS argument inside an HTML attribute: JSON string, then HTML-escaped.
+    function jsArg(value) {
+        return escapeHtml(JSON.stringify(String(value ?? '')));
+    }
+
     function escapeHtml(value) {
         return String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -1418,10 +1873,7 @@ if ($totalPages < 1) $totalPages = 1;
     function formatCurrency(value) {
         const amount = Number(String(value ?? 0).replace(/,/g, ''));
         const safeAmount = Number.isFinite(amount) ? amount : 0;
-        return 'Rs. ' + safeAmount.toLocaleString('en-IN', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        return '₹' + safeAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 });
     }
 
     function formatDateTime(value) {
@@ -1565,56 +2017,95 @@ if ($totalPages < 1) $totalPages = 1;
         history.replaceState(null, '', `master-loans.php?${params.toString()}`);
     }
 
-    function renderGeneralRows(records) {
-        if (!records.length) {
-            return '<tr><td colspan="9" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No general leads found.</td></tr>';
-        }
-
-        return records.map(lead => `
-            <tr id="lead-row-general-${escapeHtml(lead.id)}">
-                <td><span class="app-id-code">${escapeHtml(lead.application_id || 'N/A')}</span></td>
-                <td><strong style="color: var(--text-main);">${escapeHtml(lead.applicant_name || 'N/A')}</strong></td>
-                <td>${escapeHtml(lead.mobile_number || 'N/A')}</td>
-                <td><span style="font-family: monospace; font-weight: 700; font-size:13.5px;">${escapeHtml(lead.pancard_number || 'N/A')}</span></td>
-                <td>${escapeHtml(lead.city || 'N/A')}</td>
-                <td><strong style="color: var(--text-main);">${formatCurrency(lead.loan_amount)}</strong></td>
-                <td><span style="text-transform: uppercase; background: rgba(24,82,156,0.08); padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: var(--primary);">${escapeHtml(lead.loan_type || 'N/A')}</span></td>
-                <td style="color: var(--text-muted); font-size: 12.5px;">${formatDateTime(lead.created_at)}</td>
-                <td style="white-space: nowrap;">
-                    <div class="action-btn-group">
-                        <button type="button" class="btn-action-premium btn-action-view js-master-action" data-action="view" data-type="general" data-id="${escapeHtml(lead.id)}" title="View Details"><i class="fa-solid fa-eye"></i> View</button>
-                        <button type="button" class="btn-action-premium btn-action-edit js-master-action" data-action="edit" data-type="general" data-id="${escapeHtml(lead.id)}" title="Edit Lead"><i class="fa-solid fa-pen"></i></button>
-                        <button type="button" class="btn-action-premium btn-action-delete js-master-action" data-action="delete" data-type="general" data-id="${escapeHtml(lead.id)}" title="Delete Lead"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+    // ---------- Table cells ----------
+    function amountCell(value) {
+        const raw = String(value ?? '').replace(/,/g, '').trim();
+        const n = Number(raw);
+        if (raw === '' || !Number.isFinite(n)) return '<span class="cell-muted">—</span>';
+        return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+    function dateCell(value) {
+        if (!value) return '<span class="cell-muted">—</span>';
+        const d = new Date(String(value).replace(' ', 'T'));
+        if (Number.isNaN(d.getTime())) return escapeHtml(value);
+        return `<div class="cell-date">${d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                <div class="cell-sub">${d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })}</div>`;
+    }
+    function nameCell(name, subHtml) {
+        const n = String(name || '').trim();
+        const main = n && n.toUpperCase() !== 'N/A'
+            ? escapeHtml(n)
+            : '<span class="cell-muted" style="font-style:italic; font-weight:500;">Name not provided</span>';
+        return `<div class="cell-main">${main}</div>${subHtml ? `<div class="cell-sub">${subHtml}</div>` : ''}`;
+    }
+    function categoryLabel(value) {
+        const v = String(value || '').trim().toLowerCase();
+        if (!v) return '';
+        if (v === 'lap') return 'LAP';
+        if (v === 'edi') return 'EDI';
+        return v.replace(/[_-]+/g, ' ');
+    }
+    function rowActions(type, lead) {
+        const id = escapeHtml(lead.id);
+        return `
+            <div class="row-actions">
+                <button type="button" class="ml-icon-btn js-master-action" data-action="view" data-type="${type}" data-id="${id}" title="View details" aria-label="View details"><i class="fa-solid fa-eye"></i></button>
+                <button type="button" class="ml-icon-btn js-master-action" data-action="edit" data-type="${type}" data-id="${id}" title="Edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>
+                ${type === 'edi' && lead.application_id ? `<button type="button" class="ml-icon-btn sync-edi-crm-btn" data-id="${escapeHtml(lead.application_id)}" title="Sync documents to CRM" aria-label="Sync documents to CRM"><i class="fa-solid fa-cloud-arrow-up"></i></button>` : ''}
+                <button type="button" class="ml-icon-btn danger js-master-action" data-action="delete" data-type="${type}" data-id="${id}" title="Delete" aria-label="Delete"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+    }
+    function emptyRow(colspan, filtersActive, label) {
+        return `<tr><td colspan="${colspan}" class="empty-block">
+            <i class="fa-solid fa-inbox big"></i>
+            <strong>${filtersActive ? `No ${label} match these filters` : `No ${label} yet`}</strong>
+            ${filtersActive
+                ? 'Try widening the date range or clearing a filter.<br><button type="button" class="lead-action" style="margin-top:12px;" onclick="document.querySelector(\'[data-master-reset]\')?.click()"><i class="fa-solid fa-xmark"></i> Clear filters</button>'
+                : 'New applications will appear here as they come in.'}
+        </td></tr>`;
     }
 
-    function renderEdiRows(records) {
-        if (!records.length) {
-            return '<tr><td colspan="9" class="text-center" style="color: var(--text-muted); padding: 40px 0;">No EDI applications found.</td></tr>';
-        }
+    function renderGeneralRows(records, filtersActive = false) {
+        if (!records.length) return emptyRow(7, filtersActive, 'leads');
 
         return records.map(lead => {
-            const status = lead.status || 'pending';
+            const sub = [lead.mobile_number, lead.pancard_number ? String(lead.pancard_number).toUpperCase() : '']
+                .filter(Boolean).map(escapeHtml).join(' · ');
+            const cat = categoryLabel(lead.loan_type);
             return `
-                <tr id="lead-row-edi-${escapeHtml(lead.id)}">
-                    <td><span class="app-id-code">${escapeHtml(lead.application_id || 'N/A')}</span></td>
-                    <td><strong style="color: var(--text-main);">${escapeHtml(lead.applicant_name || 'N/A')}</strong></td>
-                    <td>${escapeHtml(lead.mobile_number || 'N/A')}</td>
-                    <td><span style="font-family: monospace; font-weight: 700; font-size:13.5px;">${escapeHtml(lead.pan_number || 'N/A')}</span></td>
-                    <td>${escapeHtml(lead.shop_business_name || 'N/A')}</td>
-                    <td><strong style="color: var(--text-main);">${formatCurrency(lead.loan_amount)}</strong></td>
-                    <td>${escapeHtml(lead.pincode || 'N/A')}</td>
-                    <td><span class="badge-status badge-${escapeHtml(status)}" id="badge-${escapeHtml(lead.id)}">${escapeHtml(status)}</span></td>
-                    <td style="white-space: nowrap;">
-                        <div class="action-btn-group">
-                            <button type="button" class="btn-action-premium btn-action-view js-master-action" data-action="view" data-type="edi" data-id="${escapeHtml(lead.id)}" title="View Details"><i class="fa-solid fa-eye"></i> View</button>
-                            <button type="button" class="btn-action-premium btn-action-edit js-master-action" data-action="edit" data-type="edi" data-id="${escapeHtml(lead.id)}" title="Edit Lead"><i class="fa-solid fa-pen"></i></button>
-                            <button type="button" class="btn-action-premium btn-action-delete js-master-action" data-action="delete" data-type="edi" data-id="${escapeHtml(lead.id)}" title="Delete Lead"><i class="fa-solid fa-trash"></i></button>
-                        </div>
+                <tr id="lead-row-general-${escapeHtml(lead.id)}" data-row-id="${escapeHtml(lead.id)}" data-row-type="general">
+                    <td>${nameCell(lead.applicant_name, sub)}</td>
+                    <td><span class="cell-id">${escapeHtml(lead.application_id || '—')}</span></td>
+                    <td>${lead.city ? escapeHtml(lead.city) : '<span class="cell-muted">—</span>'}</td>
+                    <td>${cat ? `<span class="type-chip">${escapeHtml(cat)}</span>` : '<span class="cell-muted">Not set</span>'}</td>
+                    <td class="td-right cell-amount">${amountCell(lead.loan_amount)}</td>
+                    <td>${dateCell(lead.created_at)}</td>
+                    <td class="td-right">${rowActions('general', lead)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderEdiRows(records, filtersActive = false) {
+        if (!records.length) return emptyRow(7, filtersActive, 'EDI applications');
+
+        return records.map(lead => {
+            const status = String(lead.status || 'pending').toLowerCase();
+            const sub = [lead.mobile_number, lead.pan_number ? String(lead.pan_number).toUpperCase() : '']
+                .filter(Boolean).map(escapeHtml).join(' · ');
+            return `
+                <tr id="lead-row-edi-${escapeHtml(lead.id)}" data-row-id="${escapeHtml(lead.id)}" data-row-type="edi">
+                    <td>${nameCell(lead.applicant_name, sub)}</td>
+                    <td><span class="cell-id">${escapeHtml(lead.application_id || '—')}</span></td>
+                    <td>
+                        <div class="cell-main" style="font-weight:500;">${lead.shop_business_name ? escapeHtml(lead.shop_business_name) : '<span class="cell-muted">—</span>'}</div>
+                        ${lead.pincode ? `<div class="cell-sub">PIN ${escapeHtml(lead.pincode)}</div>` : ''}
                     </td>
+                    <td class="td-right cell-amount">${amountCell(lead.loan_amount)}</td>
+                    <td><span class="badge-status badge-${escapeHtml(status)}" id="badge-${escapeHtml(lead.id)}">${escapeHtml(status)}</span></td>
+                    <td>${dateCell(lead.created_at)}</td>
+                    <td class="td-right">${rowActions('edi', lead)}</td>
                 </tr>
             `;
         }).join('');
@@ -1622,42 +2113,31 @@ if ($totalPages < 1) $totalPages = 1;
 
     function renderPagination(data) {
         if (data.total_pages <= 1) return '';
-        const pages = [];
         const current = data.page;
         const total = data.total_pages;
-        const addPage = value => {
-            if (!pages.includes(value)) pages.push(value);
-        };
-
-        addPage(1);
-        for (let p = current - 2; p <= current + 2; p++) {
-            if (p > 1 && p < total) addPage(p);
-        }
-        addPage(total);
-        pages.sort((a, b) => a - b);
+        const pages = new Set([1, total, current - 1, current, current + 1]);
+        if (current <= 3) [2, 3, 4].forEach(p => pages.add(p));
+        if (current >= total - 2) [total - 1, total - 2, total - 3].forEach(p => pages.add(p));
+        const list = Array.from(pages).filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
 
         let last = 0;
-        const pageItems = [];
-        pages.forEach(p => {
-            if (last && p - last > 1) {
-                pageItems.push('<li class="page-item disabled"><span style="border: none; background: transparent; cursor: default;">...</span></li>');
-            }
-            pageItems.push(`
-                <li class="page-item ${p === current ? 'active' : ''}">
-                    ${p === current ? `<span>${p}</span>` : `<a href="#" data-master-page="${p}">${p}</a>`}
-                </li>
-            `);
+        const items = [];
+        list.forEach(p => {
+            if (last && p - last > 1) items.push('<li class="page-item gap"><span>…</span></li>');
+            items.push(p === current
+                ? `<li class="page-item active"><span aria-current="page">${p}</span></li>`
+                : `<li class="page-item"><a href="#" data-master-page="${p}">${p}</a></li>`);
             last = p;
         });
 
         return `
-            <ul class="pagination">
+            <ul class="pagination" aria-label="Pagination">
                 <li class="page-item ${current <= 1 ? 'disabled' : ''}">
-                    ${current <= 1 ? '<span style="opacity:0.5; cursor:not-allowed;">&laquo; Prev</span>' : `<a href="#" data-master-page="${current - 1}">&laquo; Prev</a>`}
+                    ${current <= 1 ? '<span aria-hidden="true"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></span>' : `<a href="#" data-master-page="${current - 1}" aria-label="Previous page"><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></a>`}
                 </li>
-                ${pageItems.join('')}
+                ${items.join('')}
                 <li class="page-item ${current >= total ? 'disabled' : ''}">
-                    ${current >= total ? '<span style="opacity:0.5; cursor:not-allowed;">Next &raquo;</span>' : `<a href="#" data-master-page="${current + 1}">Next &raquo;</a>`}
+                    ${current >= total ? '<span aria-hidden="true"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></span>' : `<a href="#" data-master-page="${current + 1}" aria-label="Next page"><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></a>`}
                 </li>
             </ul>
         `;
@@ -1665,42 +2145,38 @@ if ($totalPages < 1) $totalPages = 1;
 
     function renderMasterResults(data) {
         const isGeneral = data.tab === 'general';
-        const title = isGeneral
-            ? '<i class="fa-solid fa-layer-group" style="color: var(--primary); margin-right: 8px;"></i> Business & Personal Leads (New)'
-            : '<i class="fa-solid fa-store" style="color: var(--primary); margin-right: 8px;"></i> EDI Loan Applications';
         const head = isGeneral
-            ? `
-                <tr>
-                    <th>App ID</th><th>Name</th><th>Mobile</th><th>PAN</th><th>City</th><th>Amount</th><th>Category</th><th>Date</th><th style="width: 120px;">Actions</th>
-                </tr>
-            `
-            : `
-                <tr>
-                    <th>App ID</th><th>Applicant Name</th><th>Mobile</th><th>PAN</th><th>Shop Name</th><th>Amount</th><th>Pincode</th><th>Status</th><th style="width: 120px;">Actions</th>
-                </tr>
-            `;
-        const rows = isGeneral ? renderGeneralRows(data.records || []) : renderEdiRows(data.records || []);
+            ? '<tr><th>Applicant</th><th>Application ID</th><th>City</th><th>Category</th><th class="th-right">Amount</th><th>Applied</th><th class="th-right">Actions</th></tr>'
+            : '<tr><th>Applicant</th><th>Application ID</th><th>Shop</th><th class="th-right">Amount</th><th>Status</th><th>Applied</th><th class="th-right">Actions</th></tr>';
+        const rows = isGeneral
+            ? renderGeneralRows(data.records || [], !!data.filters_active)
+            : renderEdiRows(data.records || [], !!data.filters_active);
+
+        const total = Number(data.total_records || 0);
+        const limit = Number(data.limit || 10);
+        const start = total ? (data.page - 1) * limit + 1 : 0;
+        const end = Math.min(data.page * limit, total);
 
         masterResultsArea.innerHTML = `
             <div style="position: relative;">
-                <!-- Suspense Loader Overlay -->
                 <div class="table-loading-overlay" id="masterTableLoadingOverlay">
                     <div class="suspense-spinner">
                         <i class="fa-solid fa-circle-notch fa-spin"></i>
-                        <span>Loading Leads...</span>
+                        <span>Loading…</span>
                     </div>
-                </div>
-                <div class="card-header-flex" style="margin-top: 15px;">
-                    <h2 class="card-title-text">${title}</h2>
                 </div>
                 <div class="table-responsive">
                     <table class="admin-table">
-                    <thead>${head}</thead>
-                    <tbody>${rows}</tbody>
-                </table>
+                        <thead>${head}</thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                ${total ? `
+                    <div class="results-foot">
+                        <span>Showing ${start.toLocaleString('en-IN')}–${end.toLocaleString('en-IN')} of ${total.toLocaleString('en-IN')} · click a row to open it</span>
+                        ${renderPagination(data)}
+                    </div>` : ''}
             </div>
-            ${renderPagination(data)}
-        </div>
         `;
     }
 
@@ -1727,6 +2203,7 @@ if ($totalPages < 1) $totalPages = 1;
             resetButton.setAttribute('href', `master-loans.php?tab=${encodeURIComponent(data.tab)}`);
         }
 
+        updateFilterUi();
         if (updateUrl) updateBrowserUrl(data);
     }
 
@@ -1773,7 +2250,7 @@ if ($totalPages < 1) $totalPages = 1;
         const url = path.startsWith('private://')
             ? '../download-file.php?file=' + encodeURIComponent(path)
             : (path.startsWith('http') ? path : '../' + path);
-        return `<a href="${url}" class="doc-preview-link" onclick="viewImageLightbox('${url}', '${name}'); return false;"><i class="fa-solid fa-file-image"></i> View ${name}</a>`;
+        return `<a href="${escapeHtml(url)}" class="doc-preview-link" onclick="viewImageLightbox(${jsArg(url)}, ${jsArg(name)}); return false;"><i class="fa-solid fa-file-image"></i> View ${escapeHtml(name)}</a>`;
     };
 
     // Export leads form trigger
@@ -1809,24 +2286,40 @@ if ($totalPages < 1) $totalPages = 1;
     }
 
     // Dynamic AJAX lead details fetcher
+    let drawerLastFocus = null;
     function loadLeadDetails(id, type, mode = 'view') {
         drawerTitle.innerText = type === 'general'
-            ? (mode === 'edit' ? 'Edit General Lead' : 'General Lead Details')
-            : (mode === 'edit' ? 'Edit EDI Application' : 'EDI Application Details');
-            
+            ? (mode === 'edit' ? 'Edit general lead' : 'General lead')
+            : (mode === 'edit' ? 'Edit EDI application' : 'EDI application');
+
+        // Skeleton keeps the layout stable while the record loads.
         drawerBody.innerHTML = `
-            <div class="drawer-loading">
-                <div class="drawer-spinner"></div>
-                <div style="font-family:'Outfit'; font-weight:700; font-size:14px;">Fetching lead data...</div>
+            <div class="lead-hero" aria-busy="true">
+                <div class="lead-hero-top">
+                    <div class="skel" style="width:46px;height:46px;border-radius:50%;"></div>
+                    <div style="flex:1;">
+                        <div class="skel" style="height:20px;width:55%;"></div>
+                        <div class="skel" style="height:12px;width:75%;margin-top:10px;"></div>
+                    </div>
+                </div>
+                <div class="skel" style="height:58px;margin-top:16px;"></div>
             </div>
+            <div class="skel" style="height:150px;border-radius:16px;margin-bottom:14px;"></div>
+            <div class="skel" style="height:220px;border-radius:16px;"></div>
         `;
-        drawer.classList.add('active');
+        if (!drawer.classList.contains('active')) {
+            drawerLastFocus = document.activeElement;
+            drawer.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => closeDrawer.focus(), 50);
+        }
+        drawer.querySelector('.drawer-content').scrollTop = 0;
 
         const formData = new FormData();
         formData.append('action', 'get_lead_details');
         formData.append('id', id);
         formData.append('type', type);
-        formData.append('csrf_token', '<?php echo $_SESSION['csrf_token'] ?? ''; ?>');
+        formData.append('csrf_token', csrfToken);
 
         fetch('api.php', {
             method: 'POST',
@@ -1846,389 +2339,543 @@ if ($totalPages < 1) $totalPages = 1;
         })
         .catch(err => {
             drawerBody.innerHTML = `
-                <div style="padding:20px; text-align:center; color:var(--danger); font-weight:700;">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size:30px; margin-bottom:10px;"></i>
-                    <div>${err.message || 'Failed to load details.'}</div>
+                <div class="info-card" style="text-align:center; padding:36px 20px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:26px; color:var(--danger);"></i>
+                    <div style="font-weight:600; margin-top:10px;">${escapeHtml(err.message || 'Failed to load details.')}</div>
+                    <button type="button" class="lead-action" style="margin-top:14px;" onclick="loadLeadDetails(${jsArg(id)}, ${jsArg(type)}, ${jsArg(mode)})"><i class="fa-solid fa-rotate-right"></i> Try again</button>
                 </div>
             `;
         });
     }
 
+    function closeLeadDrawer(force = false) {
+        if (!drawer.classList.contains('active')) return;
+        const editForm = document.getElementById('drawerEditForm');
+        if (!force && editForm && editForm.dataset.dirty === '1') {
+            Swal.fire({
+                title: 'Discard unsaved changes?',
+                icon: 'warning',
+                showCancelButton: true,
+                focusCancel: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Discard',
+                cancelButtonText: 'Keep editing'
+            }).then(r => { if (r.isConfirmed) closeLeadDrawer(true); });
+            return;
+        }
+        drawer.classList.remove('active');
+        document.body.style.overflow = '';
+        if (drawerLastFocus && typeof drawerLastFocus.focus === 'function') drawerLastFocus.focus();
+    }
+
+    // ---------- Drawer formatting helpers ----------
+    const DRAWER_ACRONYMS = { pan: 'PAN', gst: 'GST', ifsc: 'IFSC', ip: 'IP', bre: 'BRE', cibil: 'CIBIL', aa: 'AA', upi: 'UPI', eod: 'EOD', gps: 'GPS', url: 'URL', id: 'ID', crif: 'CRIF', emi: 'EMI', kyc: 'KYC', otp: 'OTP', amb: 'AMB', crm: 'CRM', pdf: 'PDF' };
+    function humanizeKey(key) {
+        return String(key || '').split(/[_\s]+/).filter(Boolean).map((w, i) => {
+            const lower = w.toLowerCase();
+            if (DRAWER_ACRONYMS[lower]) return DRAWER_ACRONYMS[lower];
+            return i === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+        }).join(' ');
+    }
+    function isBlank(v) {
+        return v === null || v === undefined || (typeof v === 'string' && v.trim() === '') || (Array.isArray(v) && v.length === 0);
+    }
+    const EMPTY = '<span class="empty">—</span>';
+    function fmtInr(v) {
+        const n = typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(/,/g, ''));
+        if (!isFinite(n)) return isBlank(v) ? EMPTY : escapeHtml(v);
+        return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+    function fmtDateTime(v) {
+        if (isBlank(v)) return EMPTY;
+        const d = new Date(String(v).replace(' ', 'T'));
+        if (isNaN(d.getTime())) return escapeHtml(v);
+        return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    function relTime(v) {
+        const d = new Date(String(v || '').replace(' ', 'T'));
+        if (isNaN(d.getTime())) return '';
+        const s = Math.round((Date.now() - d.getTime()) / 1000);
+        if (s < 60) return 'just now';
+        if (s < 3600) return Math.floor(s / 60) + ' min ago';
+        if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+        const days = Math.floor(s / 86400);
+        return days === 1 ? 'yesterday' : days + ' days ago';
+    }
+    function safeAssetUrl(p) {
+        const value = String(p || '');
+        if (/^uploads\/[\w\/.-]+$/.test(value)) return '../' + value;
+        if (/^https:\/\//.test(value)) return value;
+        return '';
+    }
+    function copyBtn(text, label) {
+        if (isBlank(text)) return '';
+        return `<button type="button" class="copy-inline" data-copy="${escapeHtml(text)}" title="Copy ${escapeHtml(label || '')}" aria-label="Copy ${escapeHtml(label || 'value')}"><i class="fa-regular fa-copy"></i></button>`;
+    }
+    function verifiedPill(flag) {
+        if (flag === undefined || flag === null || flag === '') return '';
+        return flag === true || flag === 1 || flag === '1' || flag === 'true'
+            ? '<span class="vpill ok"><i class="fa-solid fa-circle-check"></i> Verified</span>'
+            : '<span class="vpill no">Not verified</span>';
+    }
+    // Renders any JSON value readably: scalars inline, objects as a small key/value grid.
+    function renderAny(v) {
+        if (isBlank(v)) return EMPTY;
+        if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+        if (Array.isArray(v)) {
+            if (v.every(x => typeof x !== 'object' || x === null)) return v.map(x => escapeHtml(x)).join(', ');
+            return v.map(x => renderAny(x)).join('');
+        }
+        if (typeof v === 'object') {
+            const entries = Object.entries(v).filter(([, x]) => !isBlank(x));
+            if (!entries.length) return EMPTY;
+            return `<div class="kv-sub">${entries.map(([k, x]) => `
+                <div><div class="k">${escapeHtml(humanizeKey(k))}</div><div class="v">${typeof x === 'object' ? escapeHtml(JSON.stringify(x)) : (typeof x === 'boolean' ? (x ? 'Yes' : 'No') : escapeHtml(x))}</div></div>
+            `).join('')}</div>`;
+        }
+        return escapeHtml(v);
+    }
+    function field(label, valueHtml, opts = {}) {
+        return `<div class="field-item${opts.span ? ' span-2' : ''}">
+            <div class="field-label">${escapeHtml(label)}</div>
+            <div class="field-value${opts.mono ? ' mono' : ''}">${isBlank(valueHtml) ? EMPTY : valueHtml}${opts.after || ''}</div>
+        </div>`;
+    }
+    function textField(label, raw, opts = {}) {
+        const shown = isBlank(raw) ? '' : escapeHtml(raw);
+        return field(label, shown, { ...opts, after: (opts.copy && !isBlank(raw) ? copyBtn(raw, label) : '') + (opts.after || '') });
+    }
+    function section(id, icon, title, inner, opts = {}) {
+        const extra = opts.right ? `<span>${opts.right}</span>` : '';
+        if (opts.collapsible) {
+            return `<details class="info-card" id="${id}"${opts.open ? ' open' : ''}>
+                <summary><h3 class="card-title"><i class="fa-solid ${icon}"></i> ${escapeHtml(title)}</h3><i class="fa-solid fa-chevron-down chev"></i></summary>
+                ${inner}
+            </details>`;
+        }
+        return `<section class="info-card" id="${id}">
+            <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center; gap:10px;"><span><i class="fa-solid ${icon}"></i> ${escapeHtml(title)}</span>${extra}</h3>
+            ${inner}
+        </section>`;
+    }
+    function maskAadhaar(v) {
+        const digits = String(v || '').replace(/\D/g, '');
+        if (digits.length < 4) return escapeHtml(v || '');
+        return 'XXXX XXXX ' + digits.slice(-4);
+    }
+    function initialsOf(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        return ((parts[0] || '?').charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
+    }
+    function phoneActions(mobile) {
+        const digits = String(mobile || '').replace(/\D/g, '');
+        if (digits.length < 10) return '';
+        const ten = digits.slice(-10);
+        return `
+            <a class="lead-action" href="tel:+91${ten}"><i class="fa-solid fa-phone"></i> Call</a>
+            <a class="lead-action wa" href="https://wa.me/91${ten}" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+        `;
+    }
+
     // Render lead drawer content dynamically
     function renderLeadDrawerContent(data, type) {
-        const lead = data.application;
+        const lead = data.application || {};
         const cibil = data.cibil;
         const docChecks = data.docChecks || {};
         const activities = data.activities || [];
-        
+        const isGeneral = type === 'general';
+
         const appDisplayId = lead.application_id || 'N/A';
-        const sourceSystem = lead.source || 'Portal Direct';
-        
-        let headerHtml = `
-            <div style="background: rgba(24,82,156,0.05); padding:16px; border-radius:12px; border:1px dashed var(--primary); margin-bottom: 20px;">
-                <div class="grid-fields">
-                    <div class="field-item">
-                        <div class="field-label">${type === 'general' ? 'General Application ID' : 'EDI Application ID'}</div>
-                        <div class="field-value" style="color:var(--primary); font-size:15px; font-weight:800;">${appDisplayId}</div>
+        let details = {};
+        if (isGeneral) {
+            try { details = JSON.parse(lead.loan_details || '{}') || {}; } catch (e) { details = { _parse_error: true }; }
+        }
+        const used = new Set(); // detail keys already shown in a structured section
+        const d = (key) => { used.add(key); return details[key]; };
+        // Shown via the table columns or a fallback chain, so never repeat them under "More".
+        ['applicant_name', 'mobile_number', 'city', 'company_name', 'business_name', 'loan_type', 'created_at'].forEach(k => used.add(k));
+
+        const name = isGeneral ? (lead.applicant_name || d('applicant_name')) : lead.applicant_name;
+        const mobile = isGeneral ? (lead.mobile_number || d('mobile_number')) : lead.mobile_number;
+        const category = isGeneral ? (lead.loan_type || d('loan_type')) : (lead.business_type || 'EDI loan');
+        const source = isGeneral ? (d('source') || 'Portal direct') : (lead.source || 'EDI portal');
+        const amount = lead.loan_amount;
+
+        // ---------- Key figures ----------
+        const breStatus = isGeneral ? String(d('bre_status') || '').toUpperCase() : '';
+        let cibilScore = cibil && cibil.score !== null && cibil.score !== undefined ? parseInt(cibil.score, 10) : (isGeneral && !isBlank(d('cibil_score')) ? parseInt(d('cibil_score'), 10) : null);
+        // A score of 0 or a "not checked" status means no bureau pull happened, not a poor score.
+        if (cibilScore !== null && (isNaN(cibilScore) || cibilScore <= 0 || /not\s*checked/i.test(String((cibil && cibil.analysis_status) || details.cibil_status || '')))) cibilScore = null;
+        const scoreTone = cibilScore === null || isNaN(cibilScore) ? 'muted' : (cibilScore >= 750 ? 'good' : (cibilScore >= 650 ? 'warn' : 'bad'));
+        const stats = [
+            { label: 'Requested', value: fmtInr(amount) },
+        ];
+        if (isGeneral) {
+            stats.push({ label: 'Auto decision', value: breStatus ? escapeHtml(breStatus.charAt(0) + breStatus.slice(1).toLowerCase()) : '—', tone: breStatus === 'APPROVED' ? 'good' : (breStatus === 'DECLINED' || breStatus === 'REJECTED' ? 'bad' : (breStatus ? 'warn' : 'muted')) });
+        } else {
+            const st = String(lead.status || 'pending');
+            stats.push({ label: 'Status', value: escapeHtml(st.charAt(0).toUpperCase() + st.slice(1)), tone: st === 'approved' ? 'good' : (st === 'rejected' ? 'bad' : 'warn') });
+        }
+        stats.push({ label: 'CIBIL score', value: cibilScore === null || isNaN(cibilScore) ? '—' : String(cibilScore), tone: scoreTone });
+        if (isGeneral && !isBlank(details.monthly_inflow)) {
+            stats.push({ label: 'Monthly inflow', value: fmtInr(details.monthly_inflow) });
+        } else if (!isGeneral && !isBlank(lead.monthly_income)) {
+            stats.push({ label: 'Monthly income', value: fmtInr(lead.monthly_income) });
+        }
+
+        const heroHtml = `
+            <div class="lead-hero" id="sec-overview">
+                <div class="lead-hero-top">
+                    <div class="lead-avatar">${escapeHtml(initialsOf(name))}</div>
+                    <div class="lead-hero-main">
+                        <div class="lead-name">${isBlank(name) ? '<span class="empty">Name not provided</span>' : escapeHtml(name)}</div>
+                        <div class="lead-meta">
+                            <span class="lead-id">${escapeHtml(appDisplayId)}</span>${copyBtn(appDisplayId, 'application ID')}
+                            ${!isBlank(category) ? `<span class="lead-chip">${escapeHtml(String(category).replace(/[_-]+/g, ' '))}</span>` : ''}
+                            <span class="sep">•</span>
+                            <span title="${escapeHtml(lead.created_at || '')}">Applied ${escapeHtml(relTime(lead.created_at) || '')}</span>
+                            <span class="sep">•</span>
+                            <span>${escapeHtml(String(source).replace(/[_-]+/g, ' '))}</span>
+                        </div>
                     </div>
-                    <div class="field-item">
-                        <div class="field-label">Source System</div>
-                        <div class="field-value" style="text-transform:uppercase; font-weight:800;">${sourceSystem}</div>
-                    </div>
+                </div>
+                <div class="lead-actions">
+                    ${phoneActions(mobile)}
+                    <button type="button" class="lead-action" onclick="loadLeadDetails(${jsArg(lead.id)}, ${jsArg(type)}, 'edit')"><i class="fa-solid fa-pen"></i> Edit</button>
+                </div>
+                <div class="lead-stats">
+                    ${stats.map(s => `<div class="lead-stat"><div class="lead-stat-label">${escapeHtml(s.label)}</div><div class="lead-stat-value ${s.tone || ''}">${s.value}</div></div>`).join('')}
                 </div>
             </div>
         `;
 
-        let timelineHtml = '';
-        if (type === 'edi') {
+        const nav = [{ id: 'sec-overview', label: 'Overview' }];
+        let body = '';
+
+        // ---------- EDI: status first (it is the action an underwriter takes) ----------
+        if (!isGeneral) {
             const currentStatus = (lead.status || 'pending').toLowerCase();
             const steps = ['pending', 'submitted', 'approved'];
             const isRejected = currentStatus === 'rejected';
             let statusIndex = steps.indexOf(currentStatus);
-            if (statusIndex === -1) {
-                statusIndex = isRejected ? 2 : 0;
-            }
-            let progressPct = 0;
-            if (statusIndex > 0) {
-                progressPct = (statusIndex / (steps.length - 1)) * 90;
-            }
-            if (currentStatus === 'approved') progressPct = 90;
+            if (statusIndex === -1) statusIndex = isRejected ? 2 : 0;
+            const progressPct = currentStatus === 'approved' ? 90 : (statusIndex > 0 ? (statusIndex / (steps.length - 1)) * 90 : 0);
 
-            timelineHtml = `
-                <div class="info-card" style="border-left-color: var(--primary);">
-                    <h3 class="card-title" style="border: none; margin-bottom: 5px;"><i class="fa-solid fa-route"></i> Application Stepper Timeline</h3>
-                    <div class="status-timeline">
-                        <div class="timeline-progress-bar" style="width: ${progressPct}%;"></div>
-                        <div class="timeline-step ${statusIndex >= 0 ? 'completed' : ''} ${currentStatus === 'pending' ? 'active' : ''}">
-                            <div class="step-circle">${currentStatus === 'pending' ? '<i class="fa-solid fa-spinner fa-spin"></i>' : '1'}</div>
-                            <div class="step-label">Pending</div>
-                        </div>
-                        <div class="timeline-step ${statusIndex >= 1 ? 'completed' : ''} ${currentStatus === 'submitted' ? 'active' : ''}">
-                            <div class="step-circle">${currentStatus === 'submitted' ? '<i class="fa-solid fa-spinner fa-spin"></i>' : '2'}</div>
-                            <div class="step-label">Submitted</div>
-                        </div>
-                        ${isRejected ? `
-                            <div class="timeline-step rejected">
-                                <div class="step-circle">&times;</div>
-                                <div class="step-label">Rejected</div>
-                            </div>
-                        ` : `
-                            <div class="timeline-step ${statusIndex >= 2 ? 'completed' : ''} ${currentStatus === 'approved' ? 'active' : ''}">
-                                <div class="step-circle">${currentStatus === 'approved' ? '<i class="fa-solid fa-spinner fa-spin"></i>' : '3'}</div>
-                                <div class="step-label">Approved</div>
-                            </div>
-                        `}
-                    </div>
+            body += section('sec-status', 'fa-clipboard-check', 'Status', `
+                <div class="status-timeline" style="margin-bottom:12px;">
+                    <div class="timeline-progress-bar" style="width:${progressPct}%;"></div>
+                    <div class="timeline-step ${statusIndex >= 0 ? 'completed' : ''} ${currentStatus === 'pending' ? 'active' : ''}"><div class="step-circle">1</div><div class="step-label">Pending</div></div>
+                    <div class="timeline-step ${statusIndex >= 1 ? 'completed' : ''} ${currentStatus === 'submitted' ? 'active' : ''}"><div class="step-circle">2</div><div class="step-label">Submitted</div></div>
+                    ${isRejected
+                        ? '<div class="timeline-step rejected"><div class="step-circle">&times;</div><div class="step-label">Rejected</div></div>'
+                        : `<div class="timeline-step ${statusIndex >= 2 ? 'completed' : ''} ${currentStatus === 'approved' ? 'active' : ''}"><div class="step-circle">3</div><div class="step-label">Approved</div></div>`}
                 </div>
-            `;
+                <div class="field-label">Change status</div>
+                <div class="status-select-wrap" style="margin-top:4px;">
+                    <select id="updateStatusSelect" class="select-filter" style="flex:1;">
+                        <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="submitted" ${currentStatus === 'submitted' ? 'selected' : ''}>Submitted</option>
+                        <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
+                        <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                    <button type="button" class="btn-primary-adm" id="saveStatusBtn" onclick="updateLeadStatus(${jsArg(lead.id)}, '${type}')" style="box-shadow:none;">Update</button>
+                </div>
+                <small id="statusMsg" style="display:block; margin-top:8px; font-weight:600;"></small>
+            `);
+            nav.push({ id: 'sec-status', label: 'Status' });
         }
 
-        let cibilHtml = '';
-        if (cibil) {
-            const score = cibil.score !== null ? parseInt(cibil.score) : null;
-            let scoreClass = 'score-none';
-            let ratingLabel = 'No Score';
-            if (score !== null) {
-                if (score >= 750) { scoreClass = 'score-excellent'; ratingLabel = 'Excellent'; }
-                else if (score >= 700) { scoreClass = 'score-good'; ratingLabel = 'Good'; }
-                else if (score >= 600) { scoreClass = 'score-fair'; ratingLabel = 'Fair'; }
-                else { scoreClass = 'score-poor'; ratingLabel = 'Poor'; }
-            }
-
-            cibilHtml = `
-                <div class="info-card" style="border-left-color: #16a34a;">
-                    <h3 class="card-title" style="margin-bottom:12px;"><i class="fa-solid fa-gauge-high"></i> Credit Score Integration</h3>
-                    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
-                        <div class="cibil-gauge-wrapper" style="border-color: ${
-                            scoreClass === 'score-excellent' ? 'rgba(22, 163, 74, 0.2)' :
-                            scoreClass === 'score-good' ? 'rgba(37, 99, 235, 0.2)' :
-                            scoreClass === 'score-fair' ? 'rgba(202, 138, 4, 0.2)' : 'rgba(220, 38, 38, 0.2)'
-                        };">
-                            <div class="cibil-score-value ${scoreClass}">${score || 'N/A'}</div>
-                            <div class="cibil-score-label">${ratingLabel}</div>
-                        </div>
-                        <div style="flex:1; min-width:200px;">
-                            <div class="grid-fields">
-                                <div class="field-item">
-                                    <div class="field-label">Bureau Status</div>
-                                    <div class="field-value">${cibil.analysis_status || 'Verified'}</div>
-                                </div>
-                                <div class="field-item">
-                                    <div class="field-label">Ref ID</div>
-                                    <div class="field-value" style="font-family:monospace; font-size:12px;">${cibil.ref_id || 'N/A'}</div>
-                                </div>
-                            </div>
-                        </div>
+        // ---------- General: auto-underwriting decision ----------
+        if (isGeneral && (breStatus || !isBlank(details.bre_approved_limit))) {
+            const isApproved = breStatus === 'APPROVED';
+            const isDeclined = breStatus === 'DECLINED' || breStatus === 'REJECTED';
+            const reasons = Array.isArray(d('bre_decline_reasons')) ? details.bre_decline_reasons : [];
+            const limit = d('bre_approved_limit');
+            const tenure = parseInt(d('bre_tenure_days') || 0, 10);
+            const eod = d('bre_eod_balance');
+            const upi = d('bre_upi_credits');
+            const crif = d('bre_crif_check');
+            const figures = [
+                !isBlank(limit) && Number(limit) > 0 ? `<div>Approved limit<strong>${fmtInr(limit)}</strong></div>` : '',
+                tenure > 0 ? `<div>Tenure<strong>${Math.round(tenure / 30)} months (${tenure} days)</strong></div>` : '',
+                !isBlank(eod) ? `<div>EOD balance<strong>${fmtInr(eod)}</strong></div>` : '',
+                !isBlank(upi) ? `<div>UPI credits<strong>${escapeHtml(upi)}</strong></div>` : '',
+            ].join('');
+            body += `
+                <div class="decision ${isApproved ? 'approved' : (isDeclined ? 'declined' : 'other')}" id="sec-decision">
+                    <div class="decision-icon"><i class="fa-solid ${isApproved ? 'fa-circle-check' : (isDeclined ? 'fa-circle-xmark' : 'fa-circle-exclamation')}"></i></div>
+                    <div style="flex:1; min-width:0;">
+                        <div class="decision-title">Auto-underwriting: ${escapeHtml(breStatus ? breStatus.charAt(0) + breStatus.slice(1).toLowerCase() : 'Pending')}</div>
+                        <div class="decision-sub">${isApproved ? 'The rules engine pre-approved this application.' : (isDeclined ? `Declined by the rules engine${reasons.length ? ' for ' + reasons.length + ' reason' + (reasons.length === 1 ? '' : 's') : ''}. Review before contacting the customer.` : 'Decision needs manual review.')}</div>
+                        ${reasons.length ? `<ul class="decision-reasons">${reasons.map(r => `<li><i class="fa-solid fa-circle-xmark"></i><span>${escapeHtml(r)}</span></li>`).join('')}</ul>` : ''}
+                        ${figures ? `<div class="decision-figures">${figures}</div>` : ''}
+                        ${!isBlank(crif) ? `<details style="margin-top:10px;"><summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text-secondary);">CRIF check details</summary><div style="margin-top:8px;">${renderAny(crif)}</div></details>` : ''}
                     </div>
                 </div>
             `;
+            nav.push({ id: 'sec-decision', label: 'Decision' });
         }
 
-        let mainInfoHtml = '';
-        if (type === 'general') {
-            let parsedDetails = '';
-            let aaCardHtml = '';
-            let breCardHtml = '';
-            try {
-                const details = JSON.parse(lead.loan_details || '{}');
-                const aaTxnId = details.account_aggregator_txn_id || details.aa_txn_id || '';
-                const isAa = details.account_aggregator_verified || aaTxnId;
-
-                if (details.bre_status || details.bre_approved_limit) {
-                    const isApproved = details.bre_status === 'APPROVED';
-                    const limit = parseFloat(details.bre_approved_limit || 0);
-                    const tenure = parseInt(details.bre_tenure_days || 0);
-                    const reasons = Array.isArray(details.bre_decline_reasons) ? details.bre_decline_reasons : [];
-                    
-                    breCardHtml = `
-                        <div class="info-card" style="border-left: 4px solid ${isApproved ? '#16a34a' : '#dc2626'}; background: ${isApproved ? '#f0fdf4' : '#fef2f2'}; margin-bottom: 15px;">
-                            <h3 class="card-title" style="color: ${isApproved ? '#166534' : '#991b1b'}; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                <span><i class="fa-solid ${isApproved ? 'fa-certificate' : 'fa-triangle-exclamation'}"></i> Auto-Underwriting Decision: ${details.bre_status || 'N/A'}</span>
-                                ${isApproved ? `<span style="font-size:13.5px; font-weight:800; color:#15803d;">Pre-Approved Limit: ₹${limit.toLocaleString('en-IN')} | Tenure: ${Math.round(tenure/30)} Months (${tenure} Days)</span>` : ''}
-                            </h3>
-                            ${!isApproved && reasons.length > 0 ? `
-                                <div style="font-size:11.5px; color:#991b1b; margin-top:8px;">
-                                    <strong>Underwriting Referral Reasons:</strong>
-                                    <ul style="margin:4px 0 0 16px; padding:0;">
-                                        ${reasons.map(r => `<li>${r}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                }
-
-                if (isAa) {
-                    const bName = details.bank_name || 'Bank Account';
-                    const aNum = details.account_number || '';
-                    const ifsc = details.ifsc_code || '';
-                    const inflow = parseFloat(details.monthly_inflow || 0);
-                    const amb = parseFloat(details.average_monthly_balance || 0);
-
-                    aaCardHtml = `
-                        <div class="info-card" style="border-left: 4px solid #16a34a; background: #f0fdf4;">
-                            <h3 class="card-title" style="color: #166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                <span><i class="fa-solid fa-building-columns"></i> Verified Bank Statement (RBI NBFC-AA)</span>
-                                <span class="badge" style="background:#16a34a; color:#fff; font-size:11px; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> Aggregated</span>
-                            </h3>
-                            <div class="grid-fields">
-                                <div class="field-item"><div class="field-label">Bank Name</div><div class="field-value" style="font-weight:700;">${bName}</div></div>
-                                <div class="field-item"><div class="field-label">Account Number</div><div class="field-value" style="font-family:monospace; font-weight:700;">${aNum}</div></div>
-                                <div class="field-item"><div class="field-label">IFSC Code</div><div class="field-value" style="font-family:monospace; color:var(--primary); font-weight:700;">${ifsc}</div></div>
-                                <div class="field-item"><div class="field-label">Monthly Inflow</div><div class="field-value" style="color:#16a34a; font-weight:800;">₹${inflow.toLocaleString('en-IN')}</div></div>
-                                <div class="field-item"><div class="field-label">Avg Balance (AMB)</div><div class="field-value" style="font-weight:700;">₹${amb.toLocaleString('en-IN')}</div></div>
-                                <div class="field-item"><div class="field-label">Aggregator Txn ID</div><div class="field-value" style="font-family:monospace; font-size:12px;">${aaTxnId || 'Verified (Auto-Resolved)'}</div></div>
-                            </div>
-                            <div style="display:flex; gap:12px; margin-top:14px; padding-top:12px; border-top:1px dashed #86efac; flex-wrap:wrap;">
-                                <button type="button" class="btn-statement-view" onclick="openMasterStatementModal('${aaTxnId}', '${encodeURIComponent(lead.mobile_number || '')}', '${encodeURIComponent(aNum || '')}', '${encodeURIComponent(lead.id || lead.application_id || '')}')">
-                                    <i class="fa-solid fa-file-invoice"></i> View Full Statement
-                                </button>
-                                <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}&mobile=${encodeURIComponent(lead.mobile_number || '')}&account=${encodeURIComponent(aNum || '')}&lead_id=${encodeURIComponent(lead.id || lead.application_id || '')}" class="btn-statement-csv" target="_blank">
-                                    <i class="fa-solid fa-download"></i> Download Statement (CSV)
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                parsedDetails = Object.entries(details).map(([k, v]) => {
-                    const label = k.replace(/_/g, ' ').toUpperCase();
-                    if ((k === 'shop_photo_url' || k === 'shop_photo') && v && typeof v === 'string') {
-                        const fullUrl = (v.startsWith('http') || v.startsWith('data:')) ? v : '../' + v;
-                        return `<div class="field-item" style="grid-column: span 2;">
-                            <div class="field-label"><i class="fa-solid fa-store text-primary"></i> ${label}</div>
-                            <div class="field-value">
-                                <a href="${fullUrl}" target="_blank" title="View Full Photo">
-                                    <img src="${fullUrl}" style="max-width:180px; max-height:120px; border-radius:8px; border:1.5px solid #cbd5e1; object-fit:cover; display:block; margin-top:4px; box-shadow:0 2px 6px rgba(0,0,0,0.08);" alt="Shop Photo">
-                                </a>
-                            </div>
-                        </div>`;
-                    }
-                    if (k === 'shop_photos' && Array.isArray(v) && v.length > 0) {
-                        const imgs = v.map(p => {
-                            const fullUrl = (p.startsWith('http') || p.startsWith('data:')) ? p : '../' + p;
-                            return `<a href="${fullUrl}" target="_blank" style="display:inline-block;" title="View Photo">
-                                <img src="${fullUrl}" style="width:75px; height:75px; border-radius:8px; border:1.5px solid #cbd5e1; object-fit:cover; box-shadow:0 1px 4px rgba(0,0,0,0.06);" alt="Shop Photo">
-                            </a>`;
-                        }).join('');
-                        return `<div class="field-item" style="grid-column: span 2;">
-                            <div class="field-label"><i class="fa-solid fa-images text-primary"></i> ${label}</div>
-                            <div class="field-value" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">${imgs}</div>
-                        </div>`;
-                    }
-                    return `<div class="field-item"><div class="field-label">${label}</div><div class="field-value">${v}</div></div>`;
-                }).join('');
-            } catch(e) {
-                parsedDetails = `<div style="grid-column: span 2; font-style:italic; color:var(--text-muted);">JSON parse failed.</div>`;
-            }
-
-            mainInfoHtml = `
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-user"></i> Client Identity Info</h3>
-                    <div class="grid-fields">
-                        <div class="field-item"><div class="field-label">Applicant Name</div><div class="field-value">${lead.applicant_name}</div></div>
-                        <div class="field-item"><div class="field-label">Mobile Number</div><div class="field-value">${lead.mobile_number}</div></div>
-                        <div class="field-item"><div class="field-label">PAN Card Number</div><div class="field-value" style="font-family:monospace; font-weight:700; text-transform:uppercase;">${lead.pancard_number}</div></div>
-                        <div class="field-item"><div class="field-label">City Location</div><div class="field-value">${lead.city || 'N/A'}</div></div>
-                        <div class="field-item"><div class="field-label">Category Type</div><div class="field-value" style="text-transform:uppercase; font-weight:700;">${lead.loan_type}</div></div>
-                        <div class="field-item"><div class="field-label">Ingestion Date</div><div class="field-value">${new Date(lead.created_at).toLocaleString('en-IN')}</div></div>
+        // ---------- Credit score ----------
+        if (cibil || (isGeneral && (!isBlank(details.cibil_score) || !isBlank(details.cibil_status)))) {
+            const label = scoreTone === 'good' ? 'Excellent' : (scoreTone === 'warn' ? 'Fair' : (scoreTone === 'bad' ? 'Poor' : 'Not checked'));
+            const pdfUrl = isGeneral ? safeAssetUrl(d('cibil_pdf_url')) : '';
+            d('cibil_score'); d('cibil_status');
+            body += section('sec-credit', 'fa-gauge-high', 'Credit score', `
+                <div style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
+                    <div class="cibil-gauge-wrapper" style="border-color:${scoreTone === 'good' ? '#bbf7d0' : (scoreTone === 'warn' ? '#fde68a' : (scoreTone === 'bad' ? '#fecaca' : '#f1f5f9'))};">
+                        <div class="cibil-score-value ${scoreTone === 'good' ? 'score-excellent' : (scoreTone === 'warn' ? 'score-fair' : (scoreTone === 'bad' ? 'score-poor' : 'score-none'))}">${cibilScore === null || isNaN(cibilScore) ? 'N/A' : cibilScore}</div>
+                        <div class="cibil-score-label">${label}</div>
+                    </div>
+                    <div class="grid-fields" style="flex:1; min-width:220px;">
+                        ${textField('Bureau status', cibil ? (cibil.analysis_status || 'Verified') : details.cibil_status)}
+                        ${textField('Reference ID', cibil ? cibil.ref_id : '', { mono: true, copy: true })}
+                        ${pdfUrl ? field('Report', `<a class="doc-preview-link" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> Open CIBIL PDF</a>`, { span: true }) : ''}
                     </div>
                 </div>
+            `);
+            nav.push({ id: 'sec-credit', label: 'Credit' });
+        }
 
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-indian-rupee-sign"></i> Loan Requirements</h3>
-                    <div class="grid-fields">
-                        <div class="field-item" style="grid-column: span 2;"><div class="field-label">Requested Loan Amount</div><div class="field-value" style="font-weight:800; color:var(--accent); font-size: 15px;">₹${parseFloat(lead.loan_amount).toLocaleString('en-IN')}</div></div>
-                    </div>
+        // ---------- Applicant / KYC ----------
+        if (isGeneral) {
+            body += section('sec-kyc', 'fa-id-card', 'Applicant & KYC', `
+                <div class="grid-fields">
+                    ${textField('Full name', name)}
+                    ${field('Mobile', isBlank(mobile) ? '' : escapeHtml(mobile), { mono: true, after: copyBtn(mobile, 'mobile') + verifiedPill(d('mobile_verified')) })}
+                    ${textField('Email', d('email'), { copy: true })}
+                    ${field('PAN', isBlank(lead.pancard_number || details.pan_number) ? '' : escapeHtml(String(lead.pancard_number || details.pan_number).toUpperCase()), { mono: true, after: copyBtn(lead.pancard_number || details.pan_number, 'PAN') + verifiedPill(d('pan_verified')) })}
+                    ${d('pan_number') === undefined ? '' : ''}
+                    ${field('Aadhaar', isBlank(d('aadhaar_masked')) ? '' : escapeHtml(details.aadhaar_masked), { mono: true, after: verifiedPill(d('aadhaar_verified')) })}
+                    ${textField('Employment', d('employment_status'))}
+                    ${field('Monthly income', isBlank(d('monthly_income')) ? '' : fmtInr(details.monthly_income))}
+                    ${field('Applied on', fmtDateTime(lead.created_at || d('created_at')))}
+                    ${!isBlank(details.pan_verification_details) ? field('PAN verification', renderAny(d('pan_verification_details')), { span: true }) : ''}
                 </div>
-
-                ${breCardHtml}
-
-                ${aaCardHtml}
-
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-list"></i> Form Parameters</h3>
-                    <div class="grid-fields">
-                        ${parsedDetails}
-                    </div>
-                </div>
-            `;
+            `);
         } else {
-            mainInfoHtml = `
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-indian-rupee-sign"></i> Loan Details</h3>
-                    <div class="grid-fields">
-                        <div class="field-item"><div class="field-label">Loan Amount Required</div><div class="field-value" style="color: var(--primary); font-size: 15px; font-weight: 750;">â‚¹${parseFloat(lead.loan_amount).toLocaleString('en-IN')}</div></div>
-                        <div class="field-item"><div class="field-label">Loan Purpose</div><div class="field-value">${lead.loan_purpose}</div></div>
-                        <div class="field-item"><div class="field-label">Monthly Gross Income</div><div class="field-value" style="color: var(--success); font-weight: 700;">â‚¹${parseFloat(lead.monthly_income).toLocaleString('en-IN')}</div></div>
-                    </div>
+            // Only real Aadhaar numbers get masking + reveal; placeholders like "N/A" show as empty.
+            const aad = String(lead.aadhaar_number || '').replace(/\D/g, '').length >= 4 ? lead.aadhaar_number : '';
+            body += section('sec-kyc', 'fa-id-card', 'Applicant & KYC', `
+                <div class="grid-fields">
+                    ${textField('Full name', lead.applicant_name)}
+                    ${textField('Mobile', lead.mobile_number, { mono: true, copy: true })}
+                    ${textField('Email', lead.email, { copy: true })}
+                    ${field('PAN', isBlank(lead.pan_number) ? '' : escapeHtml(String(lead.pan_number).toUpperCase()), { mono: true, after: copyBtn(lead.pan_number, 'PAN') })}
+                    ${field('Aadhaar', isBlank(aad) ? '' : `<span data-masked="${escapeHtml(maskAadhaar(aad))}" data-full="${escapeHtml(aad)}">${maskAadhaar(aad)}</span>`, { mono: true, after: isBlank(aad) ? '' : '<button type="button" class="reveal-btn" data-reveal>Show</button>' })}
+                    ${field('Applied on', fmtDateTime(lead.created_at))}
+                    ${textField('City', lead.city)}
+                    ${textField('Pincode', lead.pincode, { mono: true })}
+                    ${textField('Address', lead.current_address, { span: true })}
                 </div>
+            `);
+        }
+        nav.push({ id: 'sec-kyc', label: 'KYC' });
 
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-user"></i> Applicant Identity Info</h3>
-                    <div class="grid-fields">
-                        <div class="field-item"><div class="field-label">Full Name</div><div class="field-value">${lead.applicant_name}</div></div>
-                        <div class="field-item"><div class="field-label">Mobile Number</div><div class="field-value">${lead.mobile_number}</div></div>
-                        <div class="field-item"><div class="field-label">Email Address</div><div class="field-value">${lead.email}</div></div>
-                        <div class="field-item"><div class="field-label">PAN Number</div><div class="field-value" style="font-family:monospace; font-weight: 700; text-transform: uppercase;">${lead.pan_number}</div></div>
-                        <div class="field-item"><div class="field-label">Aadhaar Number</div><div class="field-value" style="font-family:monospace;">${lead.aadhaar_number}</div></div>
-                        <div class="field-item"><div class="field-label">Pincode</div><div class="field-value">${lead.pincode}</div></div>
-                        <div class="field-item"><div class="field-label">City</div><div class="field-value">${lead.city}</div></div>
-                        <div class="field-item" style="grid-column: span 2;"><div class="field-label">Full Address</div><div class="field-value">${lead.current_address}</div></div>
-                    </div>
-                </div>
+        // ---------- Loan & business ----------
+        if (isGeneral) {
+            const photos = [];
+            const single = safeAssetUrl(d('shop_photo_url')) || safeAssetUrl(d('shop_photo'));
+            if (single) photos.push(single);
+            (Array.isArray(d('shop_photos')) ? details.shop_photos : []).forEach(p => { const u = safeAssetUrl(p); if (u && !photos.includes(u)) photos.push(u); });
+            d('loan_type'); d('loan_amount'); d('application_ref');
+            const hasBusiness = ['company_name', 'business_name', 'business_type', 'gst_number', 'udyam_number', 'annual_turnover'].some(k => !isBlank(details[k])) || photos.length;
 
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-store"></i> Business & Shop Parameters</h3>
-                    <div class="grid-fields">
-                        <div class="field-item"><div class="field-label">Business Name</div><div class="field-value">${lead.shop_business_name}</div></div>
-                        <div class="field-item"><div class="field-label">Registration Type</div><div class="field-value">${lead.registration_type}</div></div>
-                        <div class="field-item"><div class="field-label">Business Age</div><div class="field-value">${lead.business_age}</div></div>
-                        <div class="field-item"><div class="field-label">Business Type</div><div class="field-value">${lead.business_type}</div></div>
-                        <div class="field-item"><div class="field-label">Daily Sales</div><div class="field-value" style="color: var(--success); font-weight:700;">â‚¹${parseFloat(lead.daily_sales).toLocaleString('en-IN')}</div></div>
-                    </div>
+            body += section('sec-loan', 'fa-indian-rupee-sign', 'Loan request', `
+                <div class="grid-fields">
+                    ${field('Requested amount', fmtInr(amount))}
+                    ${field('Approved limit', isBlank(d('approved_limit')) || Number(details.approved_limit) === 0 ? '' : fmtInr(details.approved_limit))}
+                    ${textField('Tenure', d('loan_tenure'))}
+                    ${textField('Purpose', d('loan_purpose'))}
                 </div>
+            `);
+            nav.push({ id: 'sec-loan', label: 'Loan' });
 
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-users"></i> Reference Details</h3>
-                    <div class="grid-fields" style="grid-template-columns: 1fr; gap: 10px;">
-                        <div class="field-item">
-                            <div class="field-label">Primary Reference</div>
-                            <div class="field-value"><span style="font-weight:700;">${lead.primary_ref_name}</span> (${lead.primary_ref_relation}) - <a href="tel:${lead.primary_ref_mobile}" style="color: var(--primary); text-decoration:none;">${lead.primary_ref_mobile}</a></div>
-                        </div>
-                        <div class="field-item">
-                            <div class="field-label">Secondary Reference</div>
-                            <div class="field-value"><span style="font-weight:700;">${lead.secondary_ref_name}</span> (${lead.secondary_ref_relation}) - <a href="tel:${lead.secondary_ref_mobile}" style="color: var(--primary); text-decoration:none;">${lead.secondary_ref_mobile}</a></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-building-columns"></i> Bank Details</h3>
+            if (hasBusiness) {
+                body += section('sec-business', 'fa-store', 'Business', `
                     <div class="grid-fields">
-                        <div class="field-item"><div class="field-label">Account Holder</div><div class="field-value">${lead.account_holder}</div></div>
-                        <div class="field-item"><div class="field-label">Bank Name</div><div class="field-value">${lead.bank_name}</div></div>
-                        <div class="field-item"><div class="field-label">Account Number</div><div class="field-value" style="font-family:monospace;">${lead.account_number}</div></div>
-                        <div class="field-item"><div class="field-label">IFSC Code</div><div class="field-value" style="font-family:monospace; font-weight:700; text-transform:uppercase; color:var(--primary);">${lead.ifsc_code}</div></div>
+                        ${textField('Business name', d('business_name') || d('company_name'))}
+                        ${textField('Business type', d('business_type'))}
+                        ${field('GST number', isBlank(d('gst_number')) ? '' : escapeHtml(details.gst_number), { mono: true, after: copyBtn(details.gst_number, 'GST') + verifiedPill(d('gst_verified')) })}
+                        ${field('Udyam number', isBlank(d('udyam_number')) ? '' : escapeHtml(details.udyam_number), { mono: true, after: verifiedPill(d('udyam_verified')) })}
+                        ${textField('Annual turnover', d('annual_turnover'))}
+                        ${photos.length ? field('Shop photos', `<div class="photo-row">${photos.map(u => `<a href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open photo"><img src="${escapeHtml(u)}" alt="Shop photo" loading="lazy" onerror="this.closest('a').style.display='none'"></a>`).join('')}</div>`, { span: true }) : ''}
+                        ${!isBlank(details.gst_verification_details) ? field('GST verification', renderAny(d('gst_verification_details')), { span: true }) : ''}
+                        ${!isBlank(details.udyam_verification_details) ? field('Udyam verification', renderAny(d('udyam_verification_details')), { span: true }) : ''}
                     </div>
+                `);
+                nav.push({ id: 'sec-business', label: 'Business' });
+            }
+        } else {
+            body += section('sec-loan', 'fa-indian-rupee-sign', 'Loan & business', `
+                <div class="grid-fields">
+                    ${field('Loan amount', fmtInr(lead.loan_amount))}
+                    ${textField('Purpose', lead.loan_purpose)}
+                    ${field('Monthly income', isBlank(lead.monthly_income) ? '' : fmtInr(lead.monthly_income))}
+                    ${field('Daily sales', isBlank(lead.daily_sales) ? '' : fmtInr(lead.daily_sales))}
+                    ${textField('Business name', lead.shop_business_name)}
+                    ${textField('Business type', lead.business_type)}
+                    ${textField('Registration', lead.registration_type)}
+                    ${textField('Business age', lead.business_age)}
                 </div>
-            `;
+            `);
+            nav.push({ id: 'sec-loan', label: 'Business' });
+
+            const ref = (n, rel, mob) => isBlank(n) && isBlank(mob) ? EMPTY : `${escapeHtml(n || '')}${isBlank(rel) ? '' : ` <span class="lead-chip">${escapeHtml(rel)}</span>`}${isBlank(mob) ? '' : ` · <a href="tel:${escapeHtml(mob)}" style="color:var(--primary); text-decoration:none;">${escapeHtml(mob)}</a>`}`;
+            body += section('sec-refs', 'fa-users', 'References', `
+                <div class="grid-fields">
+                    ${field('Primary reference', ref(lead.primary_ref_name, lead.primary_ref_relation, lead.primary_ref_mobile), { span: true })}
+                    ${field('Secondary reference', ref(lead.secondary_ref_name, lead.secondary_ref_relation, lead.secondary_ref_mobile), { span: true })}
+                </div>
+            `);
         }
 
-        let checklistHtml = '';
-        if (type === 'edi') {
-            const verificationItems = [
-                { key: 'pan_card_doc', label: 'PAN Card Proof', path: lead.pan_card_doc },
-                { key: 'aadhaar_card_doc', label: 'Aadhaar Card Proof', path: lead.aadhaar_card_doc },
-                { key: 'bank_statement_doc', label: 'Bank Statement', path: lead.bank_statement_doc },
-                { key: 'business_registration_doc', label: 'Business Reg Certificate', path: lead.business_registration_doc },
-                { key: 'passport_photo_doc', label: 'Passport Photo', path: lead.passport_photo_doc },
-                { key: 'selfie_doc', label: 'Selfie Photo', path: lead.selfie_doc },
-                { key: 'shop_front_photo', label: 'Shop Front Photo', path: lead.shop_front_photo },
-                { key: 'stock_photo', label: 'Stock Photo 1', path: lead.stock_photo },
-                { key: 'stock_photo_two', label: 'Stock Photo 2', path: lead.stock_photo_two }
-            ];
+        // ---------- Bank ----------
+        if (isGeneral) {
+            const aaTxnId = d('account_aggregator_txn_id') || d('aa_txn_id') || '';
+            const isAa = d('account_aggregator_verified') || aaTxnId;
+            const hasBank = isAa || ['bank_name', 'account_number', 'ifsc_code'].some(k => !isBlank(details[k]));
+            if (hasBank) {
+                const aNum = d('account_number') || '';
+                d('monthly_inflow'); d('average_monthly_balance'); d('bank_name'); d('ifsc_code'); d('account_type');
+                body += section('sec-bank', 'fa-building-columns', 'Bank account', `
+                    <div class="grid-fields">
+                        ${textField('Bank', details.bank_name)}
+                        ${textField('Account number', aNum, { mono: true })}
+                        ${textField('IFSC', details.ifsc_code ? String(details.ifsc_code).toUpperCase() : '', { mono: true, copy: true })}
+                        ${textField('Account type', details.account_type)}
+                        ${field('Monthly inflow', isBlank(details.monthly_inflow) ? '' : fmtInr(details.monthly_inflow))}
+                        ${field('Average balance', isBlank(details.average_monthly_balance) ? '' : fmtInr(details.average_monthly_balance))}
+                        ${isAa ? textField('AA transaction ID', aaTxnId || 'Verified (auto-resolved)', { mono: true, copy: !!aaTxnId, span: true }) : ''}
+                    </div>
+                    ${isAa ? `
+                        <div class="aa-actions">
+                            <button type="button" class="btn-statement-view" onclick="openMasterStatementModal(${jsArg(aaTxnId)}, ${jsArg(encodeURIComponent(lead.mobile_number || ''))}, ${jsArg(encodeURIComponent(aNum || ''))}, ${jsArg(encodeURIComponent(lead.id || lead.application_id || ''))})">
+                                <i class="fa-solid fa-file-invoice"></i> View full statement
+                            </button>
+                            <a href="../api/bank-data/export-statement.php?txn_id=${encodeURIComponent(aaTxnId)}&mobile=${encodeURIComponent(lead.mobile_number || '')}&account=${encodeURIComponent(aNum || '')}&lead_id=${encodeURIComponent(lead.id || lead.application_id || '')}" class="btn-statement-csv" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-download"></i> Download CSV
+                            </a>
+                        </div>` : ''}
+                `, { right: isAa ? '<span class="vpill ok"><i class="fa-solid fa-circle-check"></i> Account Aggregator verified</span>' : '' });
+                nav.push({ id: 'sec-bank', label: 'Bank' });
+            }
+        } else {
+            body += section('sec-bank', 'fa-building-columns', 'Bank account', `
+                <div class="grid-fields">
+                    ${textField('Account holder', lead.account_holder)}
+                    ${textField('Bank', lead.bank_name)}
+                    ${textField('Account number', lead.account_number, { mono: true, copy: true })}
+                    ${textField('IFSC', lead.ifsc_code ? String(lead.ifsc_code).toUpperCase() : '', { mono: true, copy: true })}
+                </div>
+            `);
+            nav.push({ id: 'sec-bank', label: 'Bank' });
+        }
 
-            const tableRows = verificationItems.map(item => {
+        // ---------- EDI: document checklist ----------
+        let docsPending = 0;
+        if (!isGeneral) {
+            const verificationItems = [
+                { key: 'pan_card_doc', label: 'PAN card', path: lead.pan_card_doc },
+                { key: 'aadhaar_card_doc', label: 'Aadhaar card', path: lead.aadhaar_card_doc },
+                { key: 'bank_statement_doc', label: 'Bank statement', path: lead.bank_statement_doc },
+                { key: 'business_registration_doc', label: 'Business registration', path: lead.business_registration_doc },
+                { key: 'passport_photo_doc', label: 'Passport photo', path: lead.passport_photo_doc },
+                { key: 'selfie_doc', label: 'Selfie', path: lead.selfie_doc },
+                { key: 'shop_front_photo', label: 'Shop front photo', path: lead.shop_front_photo },
+                { key: 'stock_photo', label: 'Stock photo 1', path: lead.stock_photo },
+                { key: 'stock_photo_two', label: 'Stock photo 2', path: lead.stock_photo_two }
+            ];
+            const uploaded = verificationItems.filter(i => !isBlank(i.path));
+            const verifiedCount = uploaded.filter(i => (docChecks[i.key] || {}).status === 'verified').length;
+            docsPending = uploaded.filter(i => !['verified', 'rejected'].includes((docChecks[i.key] || {}).status)).length;
+            const pct = uploaded.length ? Math.round((verifiedCount / uploaded.length) * 100) : 0;
+
+            const rows = verificationItems.map(item => {
                 const check = docChecks[item.key] || {};
                 const currentStatus = check.status || 'pending';
-                const currentRemark = check.remark || '';
-                const verifiedBy = check.verified_by || '';
-                const verifiedAt = check.verified_at ? new Date(check.verified_at).toLocaleString('en-IN') : '';
-
+                const meta = check.verified_by ? `${escapeHtml(currentStatus === 'rejected' ? 'Rejected' : 'Verified')} by ${escapeHtml(check.verified_by)}${check.verified_at ? ' · ' + fmtDateTime(check.verified_at) : ''}` : '';
                 return `
-                    <tr id="doc-row-${item.key}">
-                        <td style="font-weight: 700; font-size:12px; color: var(--text-main);">
-                            ${item.label}
-                            ${verifiedBy !== '' ? `<div style="font-size:9px; color:var(--text-muted); margin-top:2px;">Verified by: ${verifiedBy} @ ${verifiedAt}</div>` : ''}
-                        </td>
-                        <td>${getDocLink(item.path, item.label)}</td>
-                        <td>
-                            <span class="checklist-status-badge checklist-status-${currentStatus}" id="badge-doc-${item.key}">
-                                ${currentStatus}
-                            </span>
-                        </td>
-                        <td>
-                            ${item.path ? `
-                                <div style="display:flex; flex-direction:column; gap:5px; max-width:200px;">
-                                    <input type="text" id="remark-doc-${item.key}" class="form-input-simple" style="height:26px; font-size:11px; padding:0 6px; border:1px solid var(--border-color); border-radius:4px;" placeholder="Add remarks..." value="${currentRemark}">
-                                    <div style="display:flex; gap:5px;">
-                                        <button type="button" class="checklist-action-btn checklist-btn-verify" onclick="updateDrawerDocStatus('${lead.id}', '${appDisplayId}', '${item.key}', '${item.label}', 'verified', '${type}')">
-                                            <i class="fa-solid fa-circle-check"></i> Approve
-                                        </button>
-                                        <button type="button" class="checklist-action-btn checklist-btn-reject" onclick="updateDrawerDocStatus('${lead.id}', '${appDisplayId}', '${item.key}', '${item.label}', 'rejected', '${type}')">
-                                            <i class="fa-solid fa-circle-xmark"></i> Reject
-                                        </button>
-                                    </div>
-                                </div>
-                            ` : `<span style="color:var(--text-muted); font-size:11px; font-style:italic;">No Upload</span>`}
-                        </td>
-                    </tr>
+                    <div class="doc-item" id="doc-row-${escapeHtml(item.key)}">
+                        <div class="doc-item-top">
+                            <div>
+                                <div class="doc-name">${escapeHtml(item.label)}</div>
+                                ${meta ? `<div class="doc-meta">${meta}</div>` : ''}
+                            </div>
+                            <div class="doc-item-right">
+                                ${item.path ? getDocLink(item.path, item.label) : '<span class="doc-missing">Not uploaded</span>'}
+                                ${item.path ? `<span class="checklist-status-badge checklist-status-${escapeHtml(currentStatus)}" id="badge-doc-${escapeHtml(item.key)}">${escapeHtml(currentStatus)}</span>` : ''}
+                            </div>
+                        </div>
+                        ${item.path ? `
+                            <div class="doc-review">
+                                <input type="text" id="remark-doc-${escapeHtml(item.key)}" placeholder="Remark (optional)" value="${escapeHtml(check.remark || '')}" aria-label="Remark for ${escapeHtml(item.label)}">
+                                <button type="button" class="checklist-action-btn checklist-btn-verify" onclick="updateDrawerDocStatus(${jsArg(lead.id)}, ${jsArg(appDisplayId)}, ${jsArg(item.key)}, ${jsArg(item.label)}, 'verified', '${type}')"><i class="fa-solid fa-check"></i> Approve</button>
+                                <button type="button" class="checklist-action-btn checklist-btn-reject" onclick="updateDrawerDocStatus(${jsArg(lead.id)}, ${jsArg(appDisplayId)}, ${jsArg(item.key)}, ${jsArg(item.label)}, 'rejected', '${type}')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                            </div>` : ''}
+                    </div>
                 `;
             }).join('');
 
-            checklistHtml = `
-                <div class="info-card" style="border-left-color: var(--warning);">
-                    <h3 class="card-title"><i class="fa-solid fa-folder-open"></i> Underwriter Document Verification Checklist</h3>
-                    <div class="table-responsive" style="margin-top:10px;">
-                        <table class="checklist-table">
-                            <thead>
-                                <tr>
-                                    <th>Document Description</th>
-                                    <th>Link / Preview</th>
-                                    <th>Verification Status</th>
-                                    <th>Remarks / Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRows}
-                            </tbody>
-                        </table>
-                    </div>
+            body += section('sec-docs', 'fa-folder-open', 'Documents', `
+                <div class="doc-progress">
+                    <span>${verifiedCount} of ${uploaded.length} uploaded verified</span>
+                    <div class="track"><div class="fill" style="width:${pct}%;"></div></div>
+                    <span>${verificationItems.length - uploaded.length} missing</span>
                 </div>
-            `;
+                <div class="doc-list">${rows}</div>
+            `);
+            nav.push({ id: 'sec-docs', label: 'Documents', count: docsPending });
         }
 
+        // ---------- General: location, technical, CRM, remaining fields ----------
+        if (isGeneral) {
+            const lat = d('latitude'), lng = d('longitude');
+            const mapLink = !isBlank(lat) && !isBlank(lng) && isFinite(parseFloat(lat)) && isFinite(parseFloat(lng))
+                ? `<a class="doc-preview-link" href="https://www.google.com/maps?q=${encodeURIComponent(parseFloat(lat) + ',' + parseFloat(lng))}" target="_blank" rel="noopener"><i class="fa-solid fa-location-dot"></i> Open in Maps</a>` : '';
+            body += section('sec-address', 'fa-location-dot', 'Address & location', `
+                <div class="grid-fields">
+                    ${textField('Address', d('address'), { span: true })}
+                    ${textField('City', lead.city || d('city'))}
+                    ${textField('State', d('state'))}
+                    ${textField('Pincode', d('pincode'), { mono: true })}
+                    ${field('GPS', mapLink)}
+                    ${textField('GPS address', d('gps_address'), { span: true })}
+                </div>
+            `);
+            nav.push({ id: 'sec-address', label: 'Address' });
+
+            const sync = d('crm_sync');
+            if (sync) {
+                const syncOk = sync.status === 'success' || sync.status === 'duplicate';
+                const syncLabel = sync.status === 'success' ? 'Sent to CRM' : (sync.status === 'duplicate' ? 'Already in CRM (added to existing lead timeline)' : 'Not sent to CRM');
+                body += `<div class="decision ${syncOk ? 'approved' : 'declined'}" style="padding:12px 16px;">
+                    <div class="decision-icon" style="width:30px;height:30px;font-size:13px;"><i class="fa-solid fa-arrows-rotate"></i></div>
+                    <div><div class="decision-title" style="font-size:13.5px;">${escapeHtml(syncLabel)}</div>
+                    <div class="decision-sub">${[sync.lead_number, !syncOk ? sync.message : '', sync.at].filter(x => !isBlank(x)).map(escapeHtml).join(' · ')}</div></div>
+                </div>`;
+            }
+
+            const tech = ['ip_address', 'created_ip', 'device_fingerprint'].filter(k => !isBlank(details[k]));
+            // Never shown: encrypted Aadhaar and the raw statement payload.
+            ['aadhaar_encrypted', 'aa_data', 'pan_number', 'created_at', 'account_aggregator_verified'].forEach(k => used.add(k));
+            tech.forEach(k => used.add(k));
+            const rest = Object.entries(details).filter(([k]) => !used.has(k) && k !== '_parse_error');
+
+            const extraInner = `
+                <div class="grid-fields">
+                    ${rest.map(([k, v]) => field(humanizeKey(k), renderAny(v), { span: typeof v === 'object' && v !== null })).join('')}
+                    ${tech.map(k => textField(humanizeKey(k), details[k], { mono: true, span: k === 'device_fingerprint' })).join('')}
+                    ${details._parse_error ? '<div class="span-2" style="color:var(--text-muted); font-style:italic;">Form data could not be read.</div>' : ''}
+                </div>
+            `;
+            if (rest.length || tech.length || details._parse_error) {
+                body += section('sec-more', 'fa-list', `More submitted data (${rest.length + tech.length})`, extraInner, { collapsible: true });
+            }
+        }
+
+        // ---------- Activity ----------
         const activitiesHtml = activities.map(act => {
             let dotClass = 'dot-comment';
             if (act.type === 'document') dotClass = 'dot-document';
@@ -2238,58 +2885,91 @@ if ($totalPages < 1) $totalPages = 1;
                 <div class="timeline-item">
                     <div class="timeline-item-dot ${dotClass}"></div>
                     <div class="timeline-item-header">
-                        <span class="timeline-item-actor"><i class="fa-solid fa-user-tie" style="font-size:9px; color:var(--text-muted);"></i> ${act.actor || 'System'}</span>
-                        <span>${new Date(act.created_at).toLocaleString('en-IN')}</span>
+                        <span class="timeline-item-actor">${escapeHtml(act.actor || 'System')}</span>
+                        <span title="${escapeHtml(act.created_at || '')}">${fmtDateTime(act.created_at)}</span>
                     </div>
-                    <div class="timeline-item-desc">${act.description}</div>
+                    <div class="timeline-item-desc">${escapeHtml(act.description)}</div>
                 </div>
             `;
         }).join('');
 
-        const timelineLoggerHtml = `
-            <div class="info-card" style="border-left-color: var(--info);">
-                <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> CRM Timeline & Underwriting Logs</h3>
-                
-                <form id="drawerCommentForm" style="display:flex; gap:8px; margin-bottom:15px;" onsubmit="submitDrawerComment(event, '${lead.id}', '${appDisplayId}', '${type}')">
-                    <input type="text" name="description" class="form-input-simple" style="flex:1; height:34px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; font-size:12.5px;" placeholder="Add verification note or call log callback..." required>
-                    <button type="submit" class="btn-primary-adm" style="height:34px; box-shadow:none; padding:0 12px; font-size:12px;"><i class="fa-solid fa-paper-plane"></i> Save</button>
-                </form>
+        body += section('sec-activity', 'fa-clock-rotate-left', 'Notes & activity', `
+            <form id="drawerCommentForm" class="note-form" onsubmit="submitDrawerComment(event, ${jsArg(lead.id)}, ${jsArg(appDisplayId)}, '${type}')">
+                <input type="text" name="description" placeholder="Add a call log or verification note…" required maxlength="1000" aria-label="New note">
+                <button type="submit" class="btn-primary-adm"><i class="fa-solid fa-paper-plane"></i> Add note</button>
+            </form>
+            ${activitiesHtml === ''
+                ? '<div style="font-size:12.5px; color:var(--text-muted); text-align:center; padding:12px 0;">No notes or activity yet.</div>'
+                : `<div class="timeline-container">${activitiesHtml}</div>`}
+        `, { right: activities.length ? `<span class="lead-chip">${activities.length}</span>` : '' });
+        nav.push({ id: 'sec-activity', label: 'Activity', plain: activities.length });
 
-                <div class="timeline-container">
-                    ${activitiesHtml === '' ? '<div style="font-style:italic; font-size:12px; color:var(--text-muted); text-align:center; padding:10px 0;">No activities logged for this case.</div>' : activitiesHtml}
-                </div>
-            </div>
-        `;
+        const navHtml = `<nav class="drawer-nav" aria-label="Jump to section">${nav.map((n, i) => `<button type="button" data-jump="${n.id}"${i === 0 ? ' class="current"' : ''}>${escapeHtml(n.label)}${n.count ? `<span class="nav-count">${n.count}</span>` : ''}</button>`).join('')}</nav>`;
 
-        const statusHtml = type === 'edi' ? `
-            <div class="info-card" style="border-left-color: var(--primary);">
-                <h3 class="card-title" style="border: none; margin-bottom: 5px;"><i class="fa-solid fa-clipboard-check"></i> Status Management</h3>
-                <div style="margin-bottom:10px;">
-                    <div class="field-label">Current Application Status</div>
-                    <div class="status-select-wrap">
-                        <select id="updateStatusSelect" class="select-filter" style="flex: 1; padding: 10px 14px; height: 42px;">
-                            <option value="pending" ${lead.status === 'pending' ? 'selected' : ''}>Pending</option>
-                            <option value="submitted" ${lead.status === 'submitted' ? 'selected' : ''}>Submitted</option>
-                            <option value="approved" ${lead.status === 'approved' ? 'selected' : ''}>Approved</option>
-                            <option value="rejected" ${lead.status === 'rejected' ? 'selected' : ''}>Rejected</option>
-                        </select>
-                        <button type="button" class="btn-primary-adm" id="saveStatusBtn" onclick="updateLeadStatus('${lead.id}', '${type}')" style="box-shadow:none; height: 42px;">Update</button>
-                    </div>
-                    <small id="statusMsg" style="display:block; margin-top:8px; font-weight:600;"></small>
-                </div>
-            </div>
-        ` : '';
-
-        drawerBody.innerHTML = `
-            ${headerHtml}
-            ${timelineHtml}
-            ${cibilHtml}
-            ${mainInfoHtml}
-            ${checklistHtml}
-            ${timelineLoggerHtml}
-            ${statusHtml}
-        `;
+        drawerBody.innerHTML = heroHtml + navHtml + body;
+        drawerTitle.innerText = isGeneral ? 'General lead' : 'EDI application';
+        setupDrawerScrollSpy();
     }
+
+    // Highlight the section currently in view in the sticky nav.
+    let drawerSpyObserver = null;
+    function setupDrawerScrollSpy() {
+        if (drawerSpyObserver) drawerSpyObserver.disconnect();
+        const scroller = drawer.querySelector('.drawer-content');
+        const buttons = Array.from(drawerBody.querySelectorAll('.drawer-nav [data-jump]'));
+        if (!('IntersectionObserver' in window) || !buttons.length) return;
+        drawerSpyObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                buttons.forEach(b => b.classList.toggle('current', b.getAttribute('data-jump') === entry.target.id));
+            });
+        }, { root: scroller, rootMargin: '-120px 0px -60% 0px', threshold: 0 });
+        buttons.forEach(b => {
+            const target = document.getElementById(b.getAttribute('data-jump'));
+            if (target) drawerSpyObserver.observe(target);
+        });
+    }
+
+    // Drawer-level click helpers: jump nav, copy, reveal Aadhaar.
+    drawerBody.addEventListener('click', (event) => {
+        const jump = event.target.closest('[data-jump]');
+        if (jump) {
+            const target = document.getElementById(jump.getAttribute('data-jump'));
+            if (target) {
+                if (target.tagName === 'DETAILS') target.open = true;
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            return;
+        }
+        const copy = event.target.closest('[data-copy]');
+        if (copy) {
+            const text = copy.getAttribute('data-copy') || '';
+            const done = () => {
+                const icon = copy.querySelector('i');
+                copy.classList.add('copied');
+                if (icon) icon.className = 'fa-solid fa-check';
+                setTimeout(() => { copy.classList.remove('copied'); if (icon) icon.className = 'fa-regular fa-copy'; }, 1200);
+            };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done).catch(() => {});
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); done(); } catch (e) {}
+                ta.remove();
+            }
+            return;
+        }
+        const reveal = event.target.closest('[data-reveal]');
+        if (reveal) {
+            const span = reveal.parentElement.querySelector('[data-full]');
+            if (!span) return;
+            const showing = reveal.textContent === 'Hide';
+            span.textContent = showing ? span.getAttribute('data-masked') : span.getAttribute('data-full');
+            reveal.textContent = showing ? 'Show' : 'Hide';
+        }
+    });
 
     // Update Drawer Doc Status via AJAX
     function updateDrawerDocStatus(leadId, appId, docKey, label, status, type) {
@@ -2434,170 +3114,154 @@ if ($totalPages < 1) $totalPages = 1;
     }
 
     // Render Edit Form in drawer
+    // ---------- Edit form ----------
+    function editField(label, name, value, opts = {}) {
+        const id = 'edit-' + name;
+        const v = value === null || value === undefined ? '' : String(value);
+        const attrs = [
+            opts.required ? 'required' : '',
+            opts.inputmode ? `inputmode="${opts.inputmode}"` : '',
+            opts.maxlength ? `maxlength="${opts.maxlength}"` : '',
+            opts.upper ? 'data-upper style="text-transform:uppercase;"' : '',
+            opts.type === 'number' ? 'min="0" step="any"' : '',
+            `autocomplete="${opts.autocomplete || 'off'}"`,
+        ].filter(Boolean).join(' ');
+        const input = `<input id="${id}" type="${opts.type || 'text'}" name="${name}" value="${escapeHtml(v)}" data-original="${escapeHtml(v)}" ${attrs}>`;
+        return `
+            <div class="edit-field${opts.span ? ' span-2' : ''}">
+                <label for="${id}">${escapeHtml(label)}${opts.required ? ' <span class="req" aria-hidden="true">*</span>' : ''}</label>
+                ${opts.prefix ? `<div class="edit-prefix"><span>${opts.prefix}</span>${input}</div>` : input}
+                ${opts.hint ? `<div class="hint">${escapeHtml(opts.hint)}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function editSection(icon, title, inner) {
+        return `<section class="info-card"><h3 class="card-title"><i class="fa-solid ${icon}"></i> ${escapeHtml(title)}</h3><div class="edit-grid">${inner}</div></section>`;
+    }
+
     function renderLeadDrawerEditForm(data, type) {
-        const lead = data.application;
+        const lead = data.application || {};
         const appDisplayId = lead.application_id || 'N/A';
-        
-        if (type === 'general') {
-            drawerBody.innerHTML = `
-                <form id="drawerEditForm" onsubmit="submitDrawerEdit(event, '${lead.id}', '${type}')">
-                    <div style="background: rgba(24,82,156,0.05); padding:16px; border-radius:12px; border:1px dashed var(--primary); margin-bottom: 20px;">
-                        <div class="field-label">General Application ID</div>
-                        <div class="field-value" style="color:var(--primary); font-size:15px; font-weight:800;">${appDisplayId}</div>
-                    </div>
+        const isGeneral = type === 'general';
 
-                    <div class="info-card">
-                        <h3 class="card-title"><i class="fa-solid fa-user-pen"></i> Edit Identity & Requirements</h3>
-                        <div style="display:flex; flex-direction:column; gap:12px;">
-                            <div>
-                                <label class="field-label">Applicant Name</label>
-                                <input type="text" name="applicant_name" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.applicant_name}" required>
-                            </div>
-                            <div>
-                                <label class="field-label">Mobile Number</label>
-                                <input type="text" name="mobile_number" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.mobile_number}" required>
-                            </div>
-                            <div>
-                                <label class="field-label">PAN Card Number</label>
-                                <input type="text" name="pancard_number" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; text-transform:uppercase;" value="${lead.pancard_number}" required>
-                            </div>
-                            <div>
-                                <label class="field-label">City Location</label>
-                                <input type="text" name="city" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.city || ''}">
-                            </div>
-                            <div>
-                                <label class="field-label">Requested Loan Amount (â‚¹)</label>
-                                <input type="number" name="loan_amount" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.loan_amount}" required>
-                            </div>
-                            <div>
-                                <label class="field-label">Category Type</label>
-                                <select name="loan_type" class="select-filter" style="width:100%; height:38px; padding: 0 10px;">
-                                    <option value="personal" ${lead.loan_type === 'personal' ? 'selected' : ''}>Personal</option>
-                                    <option value="business" ${lead.loan_type === 'business' ? 'selected' : ''}>Business</option>
-                                    <option value="vehicle" ${lead.loan_type === 'vehicle' ? 'selected' : ''}>Vehicle</option>
-                                    <option value="lap" ${lead.loan_type === 'lap' ? 'selected' : ''}>LAP (Property)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+        let sections = '';
+        if (isGeneral) {
+            // Keep whatever is stored: an empty or unknown category must not silently become "Personal" on save.
+            const knownTypes = [['personal', 'Personal'], ['business', 'Business'], ['vehicle', 'Vehicle'], ['lap', 'LAP (Property)']];
+            const currentType = String(lead.loan_type || '');
+            const typeOptions = [
+                `<option value="" ${currentType === '' ? 'selected' : ''}>Not set</option>`,
+                ...knownTypes.map(([v, l]) => `<option value="${v}" ${currentType === v ? 'selected' : ''}>${l}</option>`),
+                currentType !== '' && !knownTypes.some(([v]) => v === currentType) ? `<option value="${escapeHtml(currentType)}" selected>${escapeHtml(currentType)}</option>` : '',
+            ].join('');
 
-                    <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button type="submit" class="btn-primary-adm" style="flex:1; height:42px; box-shadow:none;"><i class="fa-solid fa-save"></i> Save Changes</button>
-                        <button type="button" class="btn-action" style="flex:1; height:42px; border:1px solid var(--border-color); color:var(--text-muted); text-align:center; display:flex; align-items:center; justify-content:center;" onclick="loadLeadDetails('${lead.id}', '${type}', 'view')">Cancel</button>
-                    </div>
-                </form>
-            `;
-            return;
+            sections += editSection('fa-user', 'Applicant', `
+                ${editField('Full name', 'applicant_name', lead.applicant_name, { required: true, span: true, autocomplete: 'name' })}
+                ${editField('Mobile number', 'mobile_number', lead.mobile_number, { required: true, inputmode: 'tel', maxlength: 15 })}
+                ${editField('PAN', 'pancard_number', lead.pancard_number, { required: true, upper: true, maxlength: 10, hint: 'Format: ABCDE1234F' })}
+                ${editField('City', 'city', lead.city)}
+            `);
+            sections += editSection('fa-indian-rupee-sign', 'Loan', `
+                ${editField('Requested amount', 'loan_amount', lead.loan_amount, { required: true, type: 'number', prefix: '₹', inputmode: 'numeric' })}
+                <div class="edit-field">
+                    <label for="edit-loan_type">Category</label>
+                    <select id="edit-loan_type" name="loan_type" data-original="${escapeHtml(currentType)}">${typeOptions}</select>
+                </div>
+            `);
+        } else {
+            sections += editSection('fa-user', 'Applicant & contact', `
+                ${editField('Full name', 'applicant_name', lead.applicant_name, { required: true, span: true, autocomplete: 'name' })}
+                ${editField('Mobile number', 'mobile_number', lead.mobile_number, { required: true, inputmode: 'tel', maxlength: 15 })}
+                ${editField('Email', 'email', lead.email, { required: true, type: 'email' })}
+                ${editField('PAN', 'pan_number', lead.pan_number, { required: true, upper: true, maxlength: 10, hint: 'Format: ABCDE1234F' })}
+                ${editField('Aadhaar number', 'aadhaar_number', lead.aadhaar_number, { required: true, inputmode: 'numeric', maxlength: 14 })}
+                ${editField('City', 'city', lead.city, { required: true })}
+                ${editField('Pincode', 'pincode', lead.pincode, { required: true, inputmode: 'numeric', maxlength: 6 })}
+                ${editField('Full address', 'current_address', lead.current_address, { required: true, span: true })}
+            `);
+            sections += editSection('fa-store', 'Business & loan', `
+                ${editField('Business / shop name', 'shop_business_name', lead.shop_business_name, { required: true, span: true })}
+                ${editField('Registration type', 'registration_type', lead.registration_type)}
+                ${editField('Business age', 'business_age', lead.business_age)}
+                ${editField('Daily sales', 'daily_sales', lead.daily_sales, { required: true, type: 'number', prefix: '₹', inputmode: 'numeric' })}
+                ${editField('Monthly income', 'monthly_income', lead.monthly_income, { required: true, type: 'number', prefix: '₹', inputmode: 'numeric' })}
+                ${editField('Loan amount required', 'loan_amount', lead.loan_amount, { required: true, type: 'number', prefix: '₹', inputmode: 'numeric' })}
+                ${editField('Loan purpose', 'loan_purpose', lead.loan_purpose)}
+            `);
+            sections += editSection('fa-building-columns', 'Bank account', `
+                ${editField('Account holder', 'account_holder', lead.account_holder, { required: true, span: true })}
+                ${editField('Bank name', 'bank_name', lead.bank_name, { required: true })}
+                ${editField('Account number', 'account_number', lead.account_number, { required: true, inputmode: 'numeric' })}
+                ${editField('IFSC', 'ifsc_code', lead.ifsc_code, { required: true, upper: true, maxlength: 11, hint: 'Format: ABCD0123456' })}
+            `);
         }
 
-        // EDI edit form
+        drawerTitle.innerText = isGeneral ? 'Edit general lead' : 'Edit EDI application';
         drawerBody.innerHTML = `
-            <form id="drawerEditForm" onsubmit="submitDrawerEdit(event, '${lead.id}', '${type}')">
-                <div style="background: rgba(24,82,156,0.05); padding:16px; border-radius:12px; border:1px dashed var(--primary); margin-bottom: 20px;">
-                    <div class="field-label">EDI Application ID</div>
-                    <div class="field-value" style="color:var(--primary); font-size:15px; font-weight:800;">${appDisplayId}</div>
-                </div>
-
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-user-pen"></i> Edit Personal & Contact Info</h3>
-                    <div style="display:flex; flex-direction:column; gap:12px;">
-                        <div>
-                            <label class="field-label">Full Name</label>
-                            <input type="text" name="applicant_name" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.applicant_name}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Mobile Number</label>
-                            <input type="text" name="mobile_number" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.mobile_number}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Email Address</label>
-                            <input type="email" name="email" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.email || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">PAN Number</label>
-                            <input type="text" name="pan_number" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; text-transform:uppercase;" value="${lead.pan_number}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Aadhaar Number</label>
-                            <input type="text" name="aadhaar_number" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.aadhaar_number}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">City</label>
-                            <input type="text" name="city" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.city || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Pincode</label>
-                            <input type="text" name="pincode" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.pincode || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Full Address</label>
-                            <input type="text" name="current_address" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.current_address || ''}" required>
-                        </div>
+            <form id="drawerEditForm" onsubmit="submitDrawerEdit(event, ${jsArg(lead.id)}, '${type}')">
+                <div class="edit-banner">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <div style="min-width:0;">
+                        <div class="t">Editing ${escapeHtml(lead.applicant_name || 'application')}</div>
+                        <div class="s">${escapeHtml(appDisplayId)} · fields marked <span style="color:#dc2626;">*</span> are required</div>
                     </div>
                 </div>
-
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-store"></i> Edit Business & Loan Info</h3>
-                    <div style="display:flex; flex-direction:column; gap:12px;">
-                        <div>
-                            <label class="field-label">Business/Shop Name</label>
-                            <input type="text" name="shop_business_name" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.shop_business_name || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Registration Type</label>
-                            <input type="text" name="registration_type" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.registration_type || ''}">
-                        </div>
-                        <div>
-                            <label class="field-label">Business Age</label>
-                            <input type="text" name="business_age" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.business_age || ''}">
-                        </div>
-                        <div>
-                            <label class="field-label">Daily Sales (â‚¹)</label>
-                            <input type="number" name="daily_sales" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.daily_sales}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Monthly Income (â‚¹)</label>
-                            <input type="number" name="monthly_income" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.monthly_income}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Loan Amount Required (â‚¹)</label>
-                            <input type="number" name="loan_amount" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.loan_amount}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Loan Purpose</label>
-                            <input type="text" name="loan_purpose" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.loan_purpose || ''}">
-                        </div>
+                ${sections}
+                <div class="edit-actions">
+                    <span class="state" id="editState">No changes yet</span>
+                    <div class="btns">
+                        <button type="button" class="lead-action" id="editCancelBtn">Cancel</button>
+                        <button type="submit" class="btn-primary-adm" id="editSaveBtn" disabled><i class="fa-solid fa-check"></i> Save changes</button>
                     </div>
-                </div>
-
-                <div class="info-card">
-                    <h3 class="card-title"><i class="fa-solid fa-building-columns"></i> Edit Bank Account Info</h3>
-                    <div style="display:flex; flex-direction:column; gap:12px;">
-                        <div>
-                            <label class="field-label">Account Holder Name</label>
-                            <input type="text" name="account_holder" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.account_holder || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Bank Name</label>
-                            <input type="text" name="bank_name" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.bank_name || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">Account Number</label>
-                            <input type="text" name="account_number" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px;" value="${lead.account_number || ''}" required>
-                        </div>
-                        <div>
-                            <label class="field-label">IFSC Code</label>
-                            <input type="text" name="ifsc_code" class="form-input-simple" style="width:100%; height:38px; border:1px solid var(--border-color); border-radius:6px; padding:0 10px; text-transform:uppercase;" value="${lead.ifsc_code || ''}" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button type="submit" class="btn-primary-adm" style="flex:1; height:42px; box-shadow:none;"><i class="fa-solid fa-save"></i> Save Changes</button>
-                    <button type="button" class="btn-action" style="flex:1; height:42px; border:1px solid var(--border-color); color:var(--text-muted); text-align:center; display:flex; align-items:center; justify-content:center;" onclick="loadLeadDetails('${lead.id}', '${type}', 'view')">Cancel</button>
                 </div>
             </form>
         `;
+
+        const form = document.getElementById('drawerEditForm');
+        const state = document.getElementById('editState');
+        const saveBtn = document.getElementById('editSaveBtn');
+
+        // Track changes so Save is only enabled when something changed, and changed fields are marked.
+        const syncDirty = () => {
+            let changed = 0;
+            form.querySelectorAll('[data-original]').forEach(el => {
+                const isChanged = String(el.value) !== el.getAttribute('data-original');
+                el.classList.toggle('changed', isChanged);
+                if (isChanged) changed++;
+            });
+            form.dataset.dirty = changed ? '1' : '0';
+            saveBtn.disabled = changed === 0;
+            state.textContent = changed ? `${changed} unsaved change${changed === 1 ? '' : 's'}` : 'No changes yet';
+            state.classList.toggle('dirty', changed > 0);
+        };
+        form.addEventListener('input', (e) => {
+            if (e.target.hasAttribute('data-upper')) {
+                const pos = e.target.selectionStart;
+                e.target.value = e.target.value.toUpperCase();
+                try { e.target.setSelectionRange(pos, pos); } catch (err) {}
+            }
+            syncDirty();
+        });
+        form.addEventListener('change', syncDirty);
+
+        document.getElementById('editCancelBtn').addEventListener('click', () => {
+            const back = () => loadLeadDetails(lead.id, type, 'view');
+            if (form.dataset.dirty !== '1') { back(); return; }
+            Swal.fire({
+                title: 'Discard changes?',
+                text: 'Your edits to this application will be lost.',
+                icon: 'warning',
+                showCancelButton: true,
+                focusCancel: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Discard',
+                cancelButtonText: 'Keep editing'
+            }).then(r => { if (r.isConfirmed) back(); });
+        });
+
+        setTimeout(() => form.querySelector('input')?.focus(), 60);
     }
 
     // Submit Drawer Edit via AJAX
@@ -2608,7 +3272,7 @@ if ($totalPages < 1) $totalPages = 1;
         formData.append('action', 'save_lead_details');
         formData.append('id', id);
         formData.append('type', type);
-        formData.append('csrf_token', '<?php echo $_SESSION['csrf_token'] ?? ''; ?>');
+        formData.append('csrf_token', csrfToken);
 
         Swal.fire({
             title: 'Saving lead details...',
@@ -2623,6 +3287,7 @@ if ($totalPages < 1) $totalPages = 1;
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                form.dataset.dirty = '0';
                 Swal.fire({
                     icon: 'success',
                     title: 'Saved Successfully!',
@@ -2684,7 +3349,7 @@ if ($totalPages < 1) $totalPages = 1;
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            drawer.classList.remove('active');
+                            closeLeadDrawer();
                             refreshMasterLeads({ silent: true, updateUrl: false });
                         });
                     } else {
@@ -2770,6 +3435,62 @@ if ($totalPages < 1) $totalPages = 1;
         refreshMasterLeads({ page: 1 });
     });
 
+    // ---- Compact filter toolbar helpers ----
+    const moreFiltersBtn = document.getElementById('masterMoreFiltersBtn');
+    const advancedPanel = document.getElementById('masterAdvancedFilters');
+    const moreCount = document.getElementById('masterMoreCount');
+    const ADVANCED_FIELDS = ['date_from', 'date_to', 'amount_min', 'amount_max'];
+
+    // Highlights filters that are set and shows how many date/amount filters are hidden behind the toggle.
+    function updateFilterUi() {
+        if (!masterFilterForm) return;
+        masterFilterForm.querySelectorAll('select, input[type="search"], input[type="date"], input[type="number"]').forEach(el => {
+            el.classList.toggle('has-value', String(el.value || '').trim() !== '');
+        });
+        if (moreCount) {
+            const dateSet = ['date_from', 'date_to'].some(n => masterFilterForm.querySelector(`[name="${n}"]`)?.value);
+            const amountSet = ['amount_min', 'amount_max'].some(n => masterFilterForm.querySelector(`[name="${n}"]`)?.value);
+            const count = (dateSet ? 1 : 0) + (amountSet ? 1 : 0);
+            moreCount.textContent = String(count);
+            moreCount.hidden = count === 0;
+        }
+    }
+
+    function setAdvancedOpen(open) {
+        if (!advancedPanel || !moreFiltersBtn) return;
+        advancedPanel.hidden = !open;
+        moreFiltersBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) advancedPanel.querySelector('input')?.focus();
+    }
+
+    moreFiltersBtn?.addEventListener('click', () => {
+        setAdvancedOpen(advancedPanel ? advancedPanel.hidden : false);
+    });
+
+    // Quick date ranges: fill both dates and refresh once.
+    advancedPanel?.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-range]');
+        if (!btn || !masterFilterForm) return;
+        const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const today = new Date();
+        let from = new Date(today);
+        const range = btn.getAttribute('data-range');
+        if (range === 'month') {
+            from = new Date(today.getFullYear(), today.getMonth(), 1);
+        } else if (range !== 'today') {
+            from.setDate(today.getDate() - (parseInt(range, 10) - 1));
+        }
+        masterFilterForm.querySelector('[name="date_from"]').value = fmt(from);
+        masterFilterForm.querySelector('[name="date_to"]').value = fmt(today);
+        updateFilterUi();
+        masterState.page = 1;
+        refreshMasterLeads({ page: 1 });
+    });
+
+    masterFilterForm?.addEventListener('input', updateFilterUi);
+    masterFilterForm?.addEventListener('change', updateFilterUi);
+    updateFilterUi();
+
     masterFilterForm?.addEventListener('input', (event) => {
         if (event.target.matches('[name="search"], [name="amount_min"], [name="amount_max"]')) {
             scheduleMasterRefresh();
@@ -2829,7 +3550,14 @@ if ($totalPages < 1) $totalPages = 1;
         }
 
         const actionButton = event.target.closest('.js-master-action, .view-gen-btn, .edit-gen-btn, .delete-gen-btn, .view-edi-btn, .edit-edi-btn, .delete-edi-btn');
-        if (!actionButton || !masterResultsArea.contains(actionButton)) return;
+        if (!actionButton || !masterResultsArea.contains(actionButton)) {
+            // Clicking anywhere else on a row opens it (other buttons such as CRM sync handle themselves).
+            if (event.target.closest('a, button, input, select')) return;
+            if (window.getSelection && String(window.getSelection()).length > 0) return;
+            const row = event.target.closest('tr[data-row-id]');
+            if (row) loadLeadDetails(row.getAttribute('data-row-id'), row.getAttribute('data-row-type'), 'view');
+            return;
+        }
         event.preventDefault();
 
         const action = getMasterAction(actionButton);
@@ -2842,6 +3570,17 @@ if ($totalPages < 1) $totalPages = 1;
 
         loadLeadDetails(action.id, action.type, action.action === 'edit' ? 'edit' : 'view');
     });
+
+    // First paint uses the same template as AJAX refreshes.
+    (function renderInitialMasterResults() {
+        const el = document.getElementById('masterInitialData');
+        if (!el || !masterResultsArea) return;
+        try {
+            renderMasterResults(JSON.parse(el.textContent || '{}'));
+        } catch (e) {
+            refreshMasterLeads({ page: masterState.page || 1, updateUrl: false });
+        }
+    })();
 </script>
 
 <!-- Lightbox Image Modal -->
@@ -2881,9 +3620,15 @@ if ($totalPages < 1) $totalPages = 1;
     }
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
+        if (e.key !== 'Escape') return;
+        // Close the top-most layer only: SweetAlert handles itself, then the image lightbox, then the drawer.
+        if (document.querySelector('.swal2-container')) return;
+        const lightbox = document.getElementById('imageLightboxModal');
+        if (lightbox && lightbox.style.display && lightbox.style.display !== 'none') {
             closeImageLightbox();
+            return;
         }
+        closeLeadDrawer();
     });
 
     document.addEventListener('click', function(event) {
@@ -2903,7 +3648,11 @@ if ($totalPages < 1) $totalPages = 1;
             cancelButtonText: 'Cancel',
             showLoaderOnConfirm: true,
             preConfirm: () => {
-                return fetch('api-sync-edi-docs.php?app_id=' + encodeURIComponent(appId))
+                return fetch('api-sync-edi-docs.php', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': csrfToken },
+                    body: new URLSearchParams({ app_id: appId, csrf_token: csrfToken })
+                })
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(response.statusText);
@@ -3015,14 +3764,14 @@ if ($totalPages < 1) $totalPages = 1;
                         creditDays.forEach((row, i) => {
                             const net = row.cr - row.dr;
                             const netColor = net >= 0 ? '#15803d' : '#b91c1c';
-                            const senders = row.txns.map(t => `<div style="font-size:11px; color:#475569; margin-bottom:2px;"><strong style="color:#15803d;">+₹${parseFloat(t.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong> &bull; ${t.narration || 'Credit'}</div>`).join('');
+                            const senders = row.txns.map(t => `<div style="font-size:11px; color:#475569; margin-bottom:2px;"><strong style="color:#15803d;">+₹${parseFloat(t.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong> &bull; ${escapeHtml(t.narration || 'Credit')}</div>`).join('');
 
                             dailyRows += `
                                 <tr style="border-bottom:1px solid #e2e8f0; font-size:12px; background:#f0fdf4;">
                                     <td style="padding:7px 8px; color:#64748b;">${i+1}</td>
-                                    <td style="padding:7px 8px; font-weight:700; color:#0f172a; white-space:nowrap;"><i class="fa-regular fa-calendar text-primary" style="margin-right:4px;"></i>${row.date}</td>
+                                    <td style="padding:7px 8px; font-weight:700; color:#0f172a; white-space:nowrap;"><i class="fa-regular fa-calendar text-primary" style="margin-right:4px;"></i>${escapeHtml(row.date)}</td>
                                     <td style="padding:7px 8px; text-align:right;"><span style="font-weight:800; color:#15803d; background:#dcfce7; padding:3px 7px; border-radius:4px; font-size:13px; border:1px solid #86efac;">+₹${row.cr.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></td>
-                                    <td style="padding:7px 8px; text-align:center;"><span style="background:#bbf7d0; color:#166534; font-weight:700; font-size:11px; padding:2px 6px; border-radius:4px;">${row.count} Credits</span></td>
+                                    <td style="padding:7px 8px; text-align:center;"><span style="background:#bbf7d0; color:#166534; font-weight:700; font-size:11px; padding:2px 6px; border-radius:4px;">${escapeHtml(row.count)} Credits</span></td>
                                     <td style="padding:7px 8px; text-align:right; color:#b91c1c; font-weight:600;">-₹${row.dr.toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                                     <td style="padding:7px 8px; text-align:right; color:${netColor}; font-weight:700;">${net >= 0 ? '+' : '-'}₹${Math.abs(net).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
                                     <td style="padding:7px 8px; max-width:280px;">${senders}</td>
@@ -3044,9 +3793,9 @@ if ($totalPages < 1) $totalPages = 1;
                             txnRows += `
                                 <tr style="border-bottom:1px solid #e2e8f0; font-size:11.5px;">
                                     <td style="padding:6px 8px; color:#64748b;">${i+1}</td>
-                                    <td style="padding:6px 8px; white-space:nowrap; font-weight:600;">${t.date || '-'}</td>
-                                    <td style="padding:6px 8px; max-width:260px; word-break:break-word; text-align:left;">${t.narration || '-'}</td>
-                                    <td style="padding:6px 8px; font-family:monospace; font-size:10.5px; color:#475569;">${t.reference || t.transaction_id || '-'}</td>
+                                    <td style="padding:6px 8px; white-space:nowrap; font-weight:600;">${escapeHtml(t.date || '-')}</td>
+                                    <td style="padding:6px 8px; max-width:260px; word-break:break-word; text-align:left;">${escapeHtml(t.narration || '-')}</td>
+                                    <td style="padding:6px 8px; font-family:monospace; font-size:10.5px; color:#475569;">${escapeHtml(t.reference || t.transaction_id || '-')}</td>
                                     <td style="padding:6px 8px;">${badge}</td>
                                     <td style="padding:6px 8px; text-align:right; font-weight:700; color:${amtColor}; white-space:nowrap;">${amtStr}</td>
                                     <td style="padding:6px 8px; text-align:right; font-family:monospace;">${balStr}</td>
@@ -3055,14 +3804,14 @@ if ($totalPages < 1) $totalPages = 1;
                         });
 
                         Swal.fire({
-                            title: `${bank.bank || 'Bank'} - Verified Bank Statement`,
+                            title: `${escapeHtml(bank.bank || 'Bank')} - Verified Bank Statement`,
                             width: '1000px',
                             html: `
                                 <div style="text-align:left; font-size:13px;">
                                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                                         <div>
-                                            <div style="font-weight:700; color:#0f172a; font-size:14px;">${holderName}</div>
-                                            <div style="font-size:11.5px; color:#64748b;">A/C: <span style="font-family:monospace; font-weight:700;">${acc.account_number || 'N/A'}</span> | IFSC: <span style="font-family:monospace; font-weight:700;">${acc.ifsc_code || 'N/A'}</span></div>
+                                            <div style="font-weight:700; color:#0f172a; font-size:14px;">${escapeHtml(holderName)}</div>
+                                            <div style="font-size:11.5px; color:#64748b;">A/C: <span style="font-family:monospace; font-weight:700;">${escapeHtml(acc.account_number || 'N/A')}</span> | IFSC: <span style="font-family:monospace; font-weight:700;">${escapeHtml(acc.ifsc_code || 'N/A')}</span></div>
                                         </div>
                                         <div style="text-align:right;">
                                             <div style="font-size:10.5px; color:#64748b; font-weight:700; text-transform:uppercase;">Current Balance</div>

@@ -232,6 +232,16 @@ include 'includes/main-header.php';
             text-align: center;
         }
     }
+
+/* Policy tabs: keep every tab reachable (safe centering) and use a scrolling row on small screens */
+.wf-policy-nav-tabs { justify-content: flex-start !important; flex-direction: row !important; width: auto !important; padding-left: 2px !important; padding-right: 2px !important; }
+.wf-policy-nav-tabs > :first-child { margin-left: auto; }
+.wf-policy-nav-tabs > :last-child { margin-right: auto; }
+.wf-policy-tab-btn { flex-shrink: 0; }
+@media (min-width: 1200px) {
+    .wf-policy-nav-tabs { gap: 6px !important; }
+    .wf-policy-tab-btn { padding: 8px 13px !important; }
+}
 </style>
 
 <main>
@@ -240,7 +250,8 @@ include 'includes/main-header.php';
             <div class="wf-policy-hero-content">
                 <span class="wf-policy-badge"><i class="fa-solid fa-clock"></i> Fast complaint handling</span>
                 <h1>Grievance Redressal Policy</h1>
-                <p>We are committed to addressing your concerns promptly and fairly. Our grievance redressal system ensures that complaints are acknowledged, investigated, and resolved efficiently, maintaining transparency and building trust.</p>
+                <p>Raise a complaint by phone, email or our app. We acknowledge it within 2 working days and resolve it within 30 days. If you are not satisfied, you can go to the Reserve Bank of India.</p>
+                <div class="pd-hero-meta"><span><i class="far fa-calendar" aria-hidden="true"></i> Last updated: 19 November 2026</span><span data-pd-reading hidden></span><button type="button" class="pd-print" data-pd-print><i class="fas fa-print" aria-hidden="true"></i> Print or save PDF</button></div>
             </div>
         </div>
     </section>
@@ -255,9 +266,28 @@ include 'includes/main-header.php';
                 <a href="privacy-policy" class="wf-policy-tab-btn">Privacy Policy</a>
                 <a href="terms-condition" class="wf-policy-tab-btn">Terms & Conditions</a>
                 <a href="refund-cancellation" class="wf-policy-tab-btn">Refund Policy</a>
+                <a href="digital-lending" class="wf-policy-tab-btn">Digital Lending</a>
             </div>
         </div>
     </div>
+
+<!-- Plain-language summary -->
+<section class="pd-glance-section" aria-labelledby="pd-glance-title">
+    <div class="container">
+        <div class="pd-glance">
+            <div class="pd-glance-head">
+                <div><span class="pd-eyebrow">At a glance</span><h2 id="pd-glance-title">The key points</h2></div>
+                <p>A plain-language summary. The full policy below is the binding text.</p>
+            </div>
+            <ul class="pd-glance-list">
+                <li><span class="pd-glance-icon"><i class="fas fa-headset" aria-hidden="true"></i></span><div><strong>Level 1: Customer care</strong><span>Call 95602 60240, email <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a> or use the app. Resolved within 14 days.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-user-tie" aria-hidden="true"></i></span><div><strong>Level 2: Grievance Redressal Officer</strong><span>Not resolved, or not satisfied? Escalate to our Grievance Redressal Officer. Resolved within 30 days of your complaint.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-building-columns" aria-hidden="true"></i></span><div><strong>Level 3: Reserve Bank of India</strong><span>Still unresolved after 30 days? Complain at <a href="https://cms.rbi.org.in" target="_blank" rel="noopener noreferrer">cms.rbi.org.in</a> or call 14448.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-receipt" aria-hidden="true"></i></span><div><strong>A reference for every complaint</strong><span>You receive an acknowledgement with a complaint reference number, so you can follow up at any time.</span></div></li>
+            </ul>
+        </div>
+    </div>
+</section>
 
     <section class="wf-policy-document-section">
         <div class="container">
@@ -284,12 +314,11 @@ include 'includes/main-header.php';
 
                 <h4>3.2 Resolution Process</h4>
                 <ul>
-                    <li>On receipt of complaint, the dedicated CGRM team shall, within reasonable time, send an acknowledgement of the same to the complainant. All the complaints received shall be recorded.</li>
-                    <li>The Customer Service Officer shall ensure that all complaints are resolved in a timely and effective manners, and status of resolution / closure of complaints in records is updated.</li>
-                    <li>The Customer Service Officer shall monitor the complaints status to ensure that the complaints are resolved within 3 working days of receipt of complaint.</li>
-                    <li>If in any case, the CGRM team needs additional time, the CGRM team will inform the customer the reasons of delay in resolution within the timelines specified above and provide expected timelines for resolution of the complaint.</li>
-                    <li>Complaints registered through the above means are addressed within 5 (five) business days.</li>
-                    <li>Grievances should be sent through the email registered with WAQT FINANCE.</li>
+                    <li>On receipt of a complaint, the dedicated CGRM team shall send an acknowledgement with a complaint reference number to the complainant within 2 working days. All complaints received shall be recorded.</li>
+                    <li>The Customer Service Officer shall ensure that all complaints are resolved in a timely and effective manner, and that the status of resolution / closure of complaints is updated in the records.</li>
+                    <li>The CGRM team shall endeavour to resolve complaints within 5 (five) working days of receipt, and in any case within 14 days.</li>
+                    <li>If in any case the CGRM team needs additional time, it will inform the customer of the reasons for the delay and the expected timeline for resolution.</li>
+                    <li>For faster verification, customers are requested to write from the email address or mobile number registered with WAQT FINANCE. Complaints from other channels will still be accepted after verifying the customer's identity.</li>
                 </ul>
 
                 <h3>4. TAT (Turn Around Time for Resolution of Complaints)</h3>
@@ -302,16 +331,16 @@ include 'includes/main-header.php';
                     </thead>
                     <tbody>
                         <tr>
-                            <td>CGRM team</td>
-                            <td>1-14 Days</td>
+                            <td>Level 1: CGRM team</td>
+                            <td>Within 14 days</td>
                         </tr>
                         <tr>
-                            <td>GRO &amp; PNO</td>
-                            <td>15-21 Days</td>
+                            <td>Level 2: Grievance Redressal Officer / Principal Nodal Officer</td>
+                            <td>Within 30 days of the original complaint</td>
                         </tr>
                         <tr>
-                            <td>Internal Ombudsman</td>
-                            <td>22-30 Days</td>
+                            <td>Level 3: Reserve Bank of India (RB-IOS)</td>
+                            <td>If not resolved within 30 days, or if the customer is not satisfied</td>
                         </tr>
                     </tbody>
                 </table>
@@ -330,6 +359,10 @@ include 'includes/main-header.php';
                                 <td>9560260240</td>
                             </tr>
                             <tr>
+                                <td><strong>Mobile app:</strong></td>
+                                <td><strong>Profile &rarr; Help and grievances</strong> in the WAQT Finance app</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Address:</strong></td>
                                 <td>15K-5 Jyoti Nagar Housing Board Colony Sahakar Marg Jaipur Rajasthan 302005</td>
                             </tr>
@@ -340,8 +373,8 @@ include 'includes/main-header.php';
 
                 <fieldset>
                     <legend>Level 2 Escalation</legend>
-                    <p>If a complaint is not resolved within 15 days, or the customer is not satisfied, they may escalate the issue to the Grievance Redressal Officer / Principal Nodal Officer.</p>
-                    <p><strong>Grievance Redressal Officer</strong></p>
+                    <p>If a complaint is not resolved within 14 days, or the customer is not satisfied with the resolution, they may escalate the issue to the Grievance Redressal Officer / Principal Nodal Officer. The Grievance Redressal Officer is also the Nodal Grievance Redressal Officer for complaints relating to digital lending, including complaints about our mobile app and website, as required by the RBI (Digital Lending) Directions, 2025.</p>
+                    <p><strong>Grievance Redressal Officer / Principal Nodal Officer</strong></p>
                     <table>
                         <tbody>
                             <tr>
@@ -353,6 +386,10 @@ include 'includes/main-header.php';
                                 <td>customercare@waqtfinance.com</td>
                             </tr>
                             <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>9560260240</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Address:</strong></td>
                                 <td>15K-5 Jyoti Nagar Housing Board Colony Sahakar Marg Jaipur Rajasthan 302005</td>
                             </tr>
@@ -361,30 +398,29 @@ include 'includes/main-header.php';
                 </fieldset>
 
                 <fieldset>
-                    <legend>Level 3 Escalation</legend>
-                    <p>If the complaint addressed to the Grievance Redressal is not taken up or resolved within 21 days, or if the customer is not satisfied with the response received from the Grievance Redressal, they may approach the Internal Ombudsman.</p>
-                    <p><strong>Internal Ombudsman</strong></p>
+                    <legend>Level 3 Escalation: Reserve Bank of India</legend>
+                    <p>If the complaint is not resolved within 30 days of the date it was lodged with the Company, or if it is fully or partly rejected and the customer is not satisfied with the reply, the customer may file a complaint under the Reserve Bank - Integrated Ombudsman Scheme, 2021 (RB-IOS). The complaint must be filed within one year of receiving the Company's reply, or, where no reply is received, within one year and 30 days of the date of the complaint.</p>
                     <table>
                         <tbody>
                             <tr>
-                                <td><strong>Name:</strong></td>
-                                <td>Sanjay Kumar</td>
+                                <td><strong>Online:</strong></td>
+                                <td><a href="https://cms.rbi.org.in" target="_blank" rel="noopener noreferrer">https://cms.rbi.org.in</a></td>
                             </tr>
                             <tr>
                                 <td><strong>Email:</strong></td>
-                                <td>customercare@waqtfinance.com </td>
+                                <td>crpc@rbi.org.in</td>
                             </tr>
                             <tr>
-                                <td><strong>Address:</strong></td>
-                                <td>15K-5 Jyoti Nagar Housing Board Colony Sahakar Marg Jaipur Rajasthan 302005</td>
+                                <td><strong>Contact Centre:</strong></td>
+                                <td>14448 (toll free)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Post:</strong></td>
+                                <td>Centralised Receipt and Processing Centre, Reserve Bank of India, 4th Floor, Sector 17, Chandigarh - 160017</td>
                             </tr>
                         </tbody>
                     </table>
-                </fieldset>
-
-                <fieldset>
-                    <legend>Level 4 Escalation</legend>
-                    <p>If unresolved within one month, the customer may approach the Ombudsman of the RBI (within one year from the reply received from the Company).</p>
+                    <p>Complaints that the Company rejects fully or partly are first reviewed internally, including by the Internal Ombudsman where applicable, before the final reply is sent to the customer. The Internal Ombudsman does not accept complaints directly from customers.</p>
                 </fieldset>
 
                 <h3>5. ROLE AND RESPONSIBILITIES OF INTERNAL OMBUDSMAN</h3>
@@ -514,4 +550,5 @@ include 'includes/main-header.php';
     </section>
 </main>
 
+<?php include 'includes/policy-help.php'; ?>
 <?php include 'includes/footer.php'; ?>

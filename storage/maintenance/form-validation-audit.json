@@ -1,0 +1,27 @@
+[
+  {
+    "endpoint": "form-actions/submit-contact.php",
+    "invalid_input_rejected": true,
+    "status": 200
+  },
+  {
+    "endpoint": "form-actions/submit-loan.php",
+    "invalid_input_rejected": true,
+    "status": 200
+  },
+  {
+    "endpoint": "form-actions/submit-partner.php",
+    "invalid_input_rejected": true,
+    "status": 200
+  },
+  {
+    "endpoint": "api/apply/step1_identity.php",
+    "invalid_input_rejected": true,
+    "status": 200
+  },
+  {
+    "endpoint": "api/apply/upload_shop_photo.php",
+    "invalid_input_rejected": true,
+    "status": 400
+  }
+]

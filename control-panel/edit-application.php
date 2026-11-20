@@ -6,11 +6,17 @@ require_once __DIR__ . '/../config/db.php';
 start_secure_session();
 
 // Auth check
+if (admin_session_idle_expired()) {
+    header("Location: login.php?reason=timeout");
+    exit;
+}
 if (empty($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     header("Location: login.php");
     exit;
 }
 
+admin_require_capability('lead.read');
+header('Cache-Control: no-store, private, max-age=0');
 $conn = db();
 
 function admin_edit_existing_payday_aadhaar(mysqli $conn, int $id): string
@@ -33,8 +39,9 @@ function admin_edit_existing_payday_aadhaar(mysqli $conn, int $id): string
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF Check
+    // CSRF and permission checks (same rule as api.php save_application)
     require_valid_csrf();
+    admin_require_capability('lead.edit');
     
     $id = (int)($_POST['id'] ?? 0);
     $type = trim((string)($_POST['type'] ?? 'payday'));
@@ -1465,6 +1472,21 @@ include 'header.php';
     }
 
     // AJAX Form Submit
+    // Warn before leaving the page with unsaved edits.
+    (function () {
+        const form = document.getElementById('editAppForm');
+        if (!form) return;
+        const snapshot = () => new URLSearchParams(new FormData(form)).toString();
+        let initial = snapshot();
+        window.__editFormSaved = false;
+        window.addEventListener('beforeunload', function (event) {
+            if (window.__editFormSaved || snapshot() === initial) return;
+            event.preventDefault();
+            event.returnValue = '';
+        });
+        form.addEventListener('submit', function () { initial = snapshot(); });
+    })();
+
     document.getElementById('editAppForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -1503,6 +1525,7 @@ include 'header.php';
                     timer: 1500,
                     showConfirmButton: false
                 }).then(() => {
+                    window.__editFormSaved = true;
                     window.location.href = data.redirect;
                 });
             } else {

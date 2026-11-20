@@ -53,6 +53,7 @@ if ($status === 'Success') {
 
         $reportPath = $storageDir . '/reports/report_' . $txnId . '.json';
         @file_put_contents($reportPath, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        waqt_mirror_file_to_gcs($reportPath, 'private/bank_reports/' . basename($reportPath)); // copy to Cloud Storage when enabled
 
         // Attempt to update database if application exists
         if (!empty($clientRef)) {

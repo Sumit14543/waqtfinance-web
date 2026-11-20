@@ -10,7 +10,7 @@ require_valid_csrf();
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh and try again.']);
-    http_response_code(419);
+    http_response_code(403);
     exit;
 }
 

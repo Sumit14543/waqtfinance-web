@@ -1,0 +1,18 @@
+{
+  "public_routes_checked": 47,
+  "public_routes_expected_200": 46,
+  "invalid_route_expected_404": 1,
+  "php_files_syntax_passed": 205,
+  "public_inline_js_syntax_passed": 433,
+  "admin_inline_js_syntax_passed": 14,
+  "admin_page_render_fixtures_passed": 11,
+  "cms_integration_cases_passed": 9,
+  "public_csrf_endpoint_gates_passed": 9,
+  "invalid_form_input_cases_passed": 5,
+  "limitations": [
+    "No interactive browser visual verification",
+    "No live OTP/KYC/payment/email/CRM provider calls",
+    "No real browser file-upload round trip"
+  ],
+  "data_isolation": "CMS write tests used connection-local temporary tables; sitemap and audit-log side effects were stubbed."
+}

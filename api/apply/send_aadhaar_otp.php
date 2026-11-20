@@ -10,7 +10,7 @@ require_valid_csrf();
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh and try again.']);
-    http_response_code(419);
+    http_response_code(403);
     exit;
 }
 
@@ -149,7 +149,7 @@ if (!empty($mobile) && preg_match('/^[6-9]\d{9}$/', $mobile)) {
 }
 
 $host = $_SERVER['HTTP_HOST'] ?? '';
-$isLocal = in_array($host, ['localhost', '127.0.0.1'], true) || str_contains($host, 'localhost');
+$isLocal = waqt_is_local_request();
 
 $res = [
     'status' => 'success',

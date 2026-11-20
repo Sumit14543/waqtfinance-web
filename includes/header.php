@@ -76,7 +76,7 @@ $final_robots = isset($meta_robots)
     ? (string) $meta_robots
     : (in_array($current_page_name, $utility_noindex_pages, true) ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
 
-$default_meta_image = waqt_seo_url("assets/images/logo1.webp");
+$default_meta_image = waqt_seo_url("assets/images/og-default.jpg"); // 1200x630 share image
 $final_meta_image = isset($meta_image) ? waqt_seo_url((string) $meta_image) : $default_meta_image;
 $final_meta_image_alt = isset($meta_image_alt) ? (string) $meta_image_alt : "Waqt Finance loan services in India";
 
@@ -181,6 +181,7 @@ $load_intl_tel = false;
 $load_apply = false;
 $load_calc = false;
 $load_guide = false;
+$load_policy_doc = in_array($current_page_name, ['privacy-policy.php', 'terms-condition.php', 'grievance-redressal-policy.php', 'fair-practice-code.php', 'interest-rate-policy.php', 'anti-money-laundering.php', 'digital-lending.php', 'delete-account.php'], true);
 $load_odometer = false;
 $load_lucide = false;
 $load_aos = false;
@@ -271,6 +272,7 @@ if (in_array($current_page_name, $sweet_pages, true)) {
 <?php if ($load_loans): ?>
 <link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/loans.css?v=<?php echo get_asset_version('assets/css/loans.css'); ?>">
 <link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/loan.css?v=<?php echo get_asset_version('assets/css/loan.css'); ?>">
+<link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/loan-pages.css?v=<?php echo get_asset_version('assets/css/loan-pages.css'); ?>">
 <?php endif; ?>
 
 <?php if ($current_page_name === 'about-us.php'): ?>
@@ -294,6 +296,10 @@ if (in_array($current_page_name, $sweet_pages, true)) {
 
 <?php if ($load_guide): ?>
 <link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/guide-to-home-loan.css?v=<?php echo get_asset_version('assets/css/guide-to-home-loan.css'); ?>">
+<?php endif; ?>
+
+<?php if ($load_policy_doc): ?>
+<link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/policy-doc.css?v=<?php echo get_asset_version('assets/css/policy-doc.css'); ?>">
 <?php endif; ?>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'">

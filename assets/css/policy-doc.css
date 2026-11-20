@@ -1,0 +1,280 @@
+/*
+ * Shared reading experience for policy documents (privacy, terms, FPC, grievance,
+ * interest rate, AML, digital lending, account deletion).
+ * Page <style> blocks load after this file, so overrides are prefixed with `body`
+ * to win on specificity instead of on order.
+ */
+:root {
+    --pd-navy: #062b5d;
+    --pd-blue: #18529c;
+    --pd-blue-soft: #eff6ff;
+    --pd-ink: #0f172a;
+    --pd-text: #334155;
+    --pd-muted: #64748b;
+    --pd-line: #e2e8f0;
+    --pd-bg: #f8fafc;
+    --pd-sticky-top: 170px; /* site header (90px) + policy tabs */
+}
+
+/* ---------- Hero ---------- */
+body .wf-policy-hero { padding: 72px 0 64px; }
+body .wf-policy-hero-content p { max-width: 720px; margin-left: auto; margin-right: auto; }
+.pd-hero-meta {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 10px 18px; margin-top: 22px; color: rgba(255, 255, 255, .72); font-size: 14px;
+}
+.pd-hero-meta span { display: inline-flex; align-items: center; gap: 7px; }
+.pd-hero-meta .pd-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, .4); }
+.pd-print {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px;
+    border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px; background: transparent;
+    color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease;
+}
+.pd-print:hover { background: rgba(255, 255, 255, .1); border-color: #fff; }
+.pd-print:focus-visible, .pd-toc a:focus-visible, .pd-anchor:focus-visible, .pd-help a:focus-visible {
+    outline: 3px solid #93c5fd; outline-offset: 2px;
+}
+
+/* ---------- Policy tabs: reading progress + edge fades ---------- */
+body .wf-policy-nav-wrap { position: sticky; }
+.pd-progress {
+    position: absolute; left: 0; bottom: -1px; height: 3px; width: 100%;
+    background: var(--pd-blue); transform-origin: 0 50%; transform: scaleX(0);
+    pointer-events: none;
+}
+body .wf-policy-nav-tabs.has-more-right { -webkit-mask-image: linear-gradient(to right, #000 88%, transparent); mask-image: linear-gradient(to right, #000 88%, transparent); }
+body .wf-policy-nav-tabs.has-more-left { -webkit-mask-image: linear-gradient(to left, #000 88%, transparent); mask-image: linear-gradient(to left, #000 88%, transparent); }
+body .wf-policy-nav-tabs.has-more-left.has-more-right { -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); }
+
+/* ---------- At a glance ---------- */
+.pd-glance-section { background: var(--pd-bg); padding: 48px 0 0; }
+body .pd-glance-section + .wf-policy-document-section { padding-top: 28px; }
+body .pd-glance-section + .wf-legal-page { padding-top: 28px; }
+.pd-glance {
+    max-width: 1180px; margin: 0 auto; background: #fff; border: 1px solid var(--pd-line);
+    border-radius: 20px; padding: 32px 36px; box-shadow: 0 10px 30px rgba(15, 23, 42, .04);
+}
+.pd-glance-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; margin-bottom: 24px; }
+.pd-eyebrow { display: block; font-size: 13px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--pd-blue); margin-bottom: 6px; }
+.pd-glance-head h2 { font-size: 24px; font-weight: 800; color: var(--pd-ink); margin: 0; line-height: 1.3; }
+.pd-glance-head p { font-size: 14px; color: var(--pd-muted); margin: 0; }
+.pd-glance-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.pd-glance-list li {
+    display: flex; gap: 14px; align-items: flex-start; padding: 18px;
+    border: 1px solid var(--pd-line); border-radius: 14px; background: var(--pd-bg);
+}
+.pd-glance-list li::before { content: none !important; }
+.pd-glance-icon {
+    width: 42px; height: 42px; flex-shrink: 0; border-radius: 11px;
+    background: var(--pd-blue-soft); color: var(--pd-blue);
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.pd-glance-list strong { display: block; font-size: 16px; font-weight: 800 !important; color: var(--pd-ink); margin-bottom: 4px; line-height: 1.35; }
+.pd-glance-list div > span { display: block; font-size: 14.5px; color: var(--pd-text); line-height: 1.6; }
+.pd-glance-list a { color: var(--pd-blue); font-weight: 700; overflow-wrap: anywhere; }
+
+/* ---------- Document layout with table of contents ---------- */
+.pd-layout {
+    max-width: 1180px; margin: 0 auto;
+    display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 28px; align-items: start;
+}
+.pd-layout > .wf-policy-paper { max-width: none !important; width: 100%; margin: 0 !important; }
+.pd-toc {
+    position: sticky; top: calc(var(--pd-sticky-top) + 16px);
+    max-height: calc(100vh - var(--pd-sticky-top) - 40px); overflow-y: auto;
+    background: #fff; border: 1px solid var(--pd-line); border-radius: 16px; padding: 18px 12px;
+    scrollbar-width: thin;
+}
+.pd-toc-title { font-size: 12px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--pd-muted); margin: 0 10px 10px; }
+.pd-toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.pd-toc li::before { content: none !important; }
+.pd-toc li { margin: 0 !important; padding: 0 !important; }
+.pd-toc a {
+    display: block; padding: 8px 10px; border-radius: 8px; border-left: 3px solid transparent;
+    font-size: 13.5px; font-weight: 600; line-height: 1.4; color: var(--pd-text) !important; text-decoration: none !important;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.pd-toc a:hover { background: var(--pd-bg); color: var(--pd-blue) !important; }
+.pd-toc a.is-active { background: var(--pd-blue-soft); color: var(--pd-blue) !important; border-left-color: var(--pd-blue); font-weight: 800; }
+
+.pd-toc-mobile { display: none; margin: 0 0 28px; border: 1px solid var(--pd-line); border-radius: 14px; background: var(--pd-bg); }
+.pd-toc-mobile summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    min-height: 52px; padding: 0 18px; font-weight: 800; color: var(--pd-ink); font-size: 15px;
+}
+.pd-toc-mobile summary::-webkit-details-marker { display: none; }
+.pd-toc-mobile summary i { transition: transform .2s ease; color: var(--pd-blue); }
+.pd-toc-mobile[open] summary i { transform: rotate(180deg); }
+.pd-toc-mobile ol { list-style: none; margin: 0; padding: 0 10px 12px; display: grid; gap: 2px; }
+.pd-toc-mobile li::before { content: none !important; }
+.pd-toc-mobile li { margin: 0 !important; padding: 0 !important; }
+.pd-toc-mobile a { display: block; padding: 10px; border-radius: 8px; font-size: 14.5px; font-weight: 600; color: var(--pd-text) !important; text-decoration: none !important; }
+.pd-toc-mobile a:hover { background: #fff; color: var(--pd-blue) !important; }
+
+/* ---------- Document typography ---------- */
+body .wf-policy-paper { padding: 48px 56px; border-radius: 20px; }
+body .wf-policy-paper > h2:first-child { font-size: 26px; padding-bottom: 18px; margin-bottom: 24px; }
+body .wf-policy-paper h3,
+body .wf-policy-paper h5.pd-section {
+    font-size: 20px; font-weight: 800; color: var(--pd-ink); line-height: 1.35;
+    margin: 40px 0 14px; padding-top: 32px; border-top: 1px solid var(--pd-line);
+    scroll-margin-top: calc(var(--pd-sticky-top) + 16px);
+}
+body .wf-policy-paper > h2:first-child + h3,
+body .wf-policy-paper > h2:first-child + p + h3,
+body .wf-policy-paper > .pd-toc-mobile + h3,
+body .wf-policy-paper > .pd-toc-mobile + p + h3 { border-top: 0; padding-top: 0; margin-top: 24px; }
+body .wf-policy-paper .interest { margin-top: 0 !important; }
+body .wf-policy-paper h4 { font-size: 17px; font-weight: 800; color: var(--pd-ink); margin: 24px 0 10px; scroll-margin-top: calc(var(--pd-sticky-top) + 16px); }
+body .wf-policy-paper p,
+body .wf-policy-paper li { font-size: 15.5px !important; line-height: 1.75 !important; color: var(--pd-text) !important; }
+body .wf-policy-paper a { color: var(--pd-blue); font-weight: 600; overflow-wrap: anywhere; }
+
+/* One clean bullet style (fixes the double "• ✓" bullets) */
+body .wf-policy-paper ul { list-style: none !important; padding-left: 0 !important; margin: 0 0 22px !important; }
+body .wf-policy-paper ul li { position: relative; padding-left: 22px !important; margin-bottom: 10px; list-style: none !important; }
+body .wf-policy-paper ul li::before {
+    content: "" !important; position: absolute; left: 4px; top: .72em; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--pd-blue); font-family: inherit !important;
+}
+body .wf-policy-paper ul ul { margin: 10px 0 0 !important; }
+body .wf-policy-paper ul ul li::before { background: transparent; border: 1.5px solid var(--pd-blue); }
+body .wf-policy-paper ol { padding-left: 22px; margin: 0 0 22px; }
+
+/* Section links that appear on hover/focus */
+.pd-anchor {
+    margin-left: 8px; color: #94a3b8 !important; font-weight: 700; text-decoration: none !important;
+    opacity: 0; transition: opacity .2s ease;
+}
+h3:hover > .pd-anchor, h5:hover > .pd-anchor, .pd-anchor:focus { opacity: 1; }
+@media (hover: none) { .pd-anchor { display: none; } }
+
+/* Tables and escalation boxes */
+.pd-table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 18px 0 22px; border-radius: 12px; border: 1px solid var(--pd-line); }
+body .pd-table-scroll table { margin: 0 !important; min-width: 460px; border: 0; }
+body .pd-table-scroll th:first-child, body .pd-table-scroll td:first-child { border-left: 0; }
+body .pd-table-scroll th:last-child, body .pd-table-scroll td:last-child { border-right: 0; }
+body .pd-table-scroll tr:first-child th, body .pd-table-scroll tbody tr:first-child td { border-top: 0; }
+body .pd-table-scroll tr:last-child td { border-bottom: 0; }
+body .wf-policy-paper fieldset {
+    border: 1px solid var(--pd-line); border-left: 4px solid var(--pd-blue); border-radius: 14px;
+    padding: 20px 24px; margin: 0 0 18px; background: #fff;
+}
+body .wf-policy-paper legend {
+    float: none; width: auto; padding: 4px 12px; margin: 0 0 8px; border-radius: 999px;
+    background: var(--pd-blue-soft); color: var(--pd-blue); font-size: 13px; font-weight: 800;
+}
+
+/* ---------- Help band ---------- */
+.pd-help { background: var(--pd-bg); padding: 8px 0 72px; }
+.pd-help-card {
+    max-width: 1180px; margin: 0 auto; border-radius: 20px; padding: 32px 36px;
+    background: linear-gradient(135deg, #062b5d 0%, #18529c 100%); color: #fff;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px;
+}
+.pd-help-card h2 { color: #fff; font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+.pd-help-card p { color: rgba(255, 255, 255, .88); font-size: 15px; line-height: 1.6; margin: 0; max-width: 600px; }
+.pd-help-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.pd-help-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px;
+    border-radius: 10px; font-size: 15px; font-weight: 700; text-decoration: none !important;
+    transition: background-color .2s ease, border-color .2s ease;
+}
+.pd-help-btn-light { background: #fff; color: var(--pd-navy) !important; }
+.pd-help-btn-light:hover { background: #e0ecff; }
+.pd-help-btn-ghost { border: 1px solid rgba(255, 255, 255, .45); color: #fff !important; }
+.pd-help-btn-ghost:hover { background: rgba(255, 255, 255, .1); border-color: #fff; }
+
+/* ---------- Terms page (has its own sidebar index) ---------- */
+body .wf-legal-card { scroll-margin-top: calc(var(--pd-sticky-top) + 16px); }
+body .wf-legal-card h2 { font-size: 22px !important; letter-spacing: 0 !important; line-height: 1.35 !important; }
+body .wf-legal-sidebar { top: calc(var(--pd-sticky-top) + 16px) !important; }
+body .wf-legal-sidebar h2.pd-toc-title { font-size: 12px !important; font-weight: 800 !important; letter-spacing: .6px !important; text-transform: uppercase; color: var(--pd-muted) !important; margin: 0 10px 12px !important; line-height: 1.4 !important; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1099px) {
+    .pd-layout { grid-template-columns: minmax(0, 1fr); }
+    .pd-toc { display: none; }
+    .pd-toc-mobile { display: block; }
+}
+@media (max-width: 991px) {
+    :root { --pd-sticky-top: 140px; }
+    .pd-glance-list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+    body .wf-policy-hero { padding: 52px 0 44px; }
+    .pd-glance-section { padding-top: 28px; }
+    .pd-glance { padding: 22px 18px; border-radius: 16px; }
+    .pd-glance-head h2 { font-size: 20px; }
+    .pd-glance-list li { padding: 14px; }
+    body .wf-policy-paper { padding: 26px 20px; border-radius: 16px; }
+    body .wf-policy-paper > h2:first-child { font-size: 22px; }
+    body .wf-policy-paper h3, body .wf-policy-paper h5.pd-section { font-size: 18px; margin-top: 32px; padding-top: 26px; }
+    body .wf-policy-paper fieldset { padding: 16px; }
+    .pd-help { padding-bottom: 48px; }
+    .pd-help-card { padding: 26px 20px; }
+    .pd-help-actions, .pd-help-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pd-toc a, .pd-print, .pd-help-btn, .pd-anchor, .pd-toc-mobile summary i { transition: none !important; }
+}
+
+/* ---------- Print / Save as PDF ---------- */
+/* Site header/footer styles load later with !important rules, so print rules use `html body` to win. */
+@page { size: A4; margin: 14mm 14mm 16mm; }
+@media print {
+    html body header, html body footer, html body nav, html body .loan-topbar, html body .loan-category-bar,
+    html body .loan-navbar, html body marquee, html body .wf-policy-nav-wrap, html body .pd-toc,
+    html body .pd-toc-mobile, html body .pd-help, html body .pd-print, html body .pd-anchor,
+    html body .wf-legal-sidebar, html body .scroll-top, html body .pd-progress,
+    html body [class*="whatsapp"], html body [class*="Whatsapp"], html body [id*="whatsapp"],
+    html body [class*="authkey"], html body [id*="authkey"], html body iframe { display: none !important; }
+
+    html, html body { background: #fff !important; }
+    html body * { box-shadow: none !important; text-shadow: none !important; }
+    html body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Company identity at the top of the printed copy (the site header is hidden). */
+    html body .wf-policy-hero::before {
+        content: "WAQT FINANCE PRIVATE LIMITED  |  RBI-registered NBFC, Reg. No. B.10.00143  |  CIN U65923DL2022PTC396001  |  waqtfinance.com";
+        display: block; font-size: 9.5pt; color: #334155; border-bottom: 1px solid #cbd5e1;
+        padding-bottom: 8px; margin-bottom: 14px; text-align: left; letter-spacing: 0;
+    }
+    html body .wf-policy-hero { background: none !important; color: #000 !important; padding: 0 0 10px !important; text-align: left; }
+    html body .wf-policy-hero .container { max-width: none !important; padding: 0 !important; }
+    html body .wf-policy-hero-content { align-items: flex-start !important; text-align: left !important; max-width: none !important; }
+    html body .wf-policy-badge { display: none !important; }
+    html body .wf-policy-hero h1 { color: #000 !important; font-size: 22pt !important; margin: 0 0 6px !important; }
+    html body .wf-policy-hero-content p { color: #1e293b !important; font-size: 11pt !important; margin: 0 !important; max-width: none !important; }
+    html body .pd-hero-meta { justify-content: flex-start; margin-top: 8px; color: #475569 !important; font-size: 9.5pt; }
+    html body .pd-hero-meta span { color: #475569 !important; }
+
+    html body .pd-glance-section, html body .wf-policy-document-section, html body .wf-legal-page { background: none !important; padding: 0 !important; }
+    html body .container { max-width: none !important; width: 100% !important; padding-left: 0 !important; padding-right: 0 !important; }
+    html body .pd-glance { border: 1px solid #cbd5e1 !important; border-radius: 10px; padding: 14px 16px !important; margin: 12px 0 18px; }
+    html body .pd-glance-head { margin-bottom: 10px; }
+    html body .pd-glance-head h2 { font-size: 13pt !important; }
+    html body .pd-glance-head p { font-size: 9pt; }
+    html body .pd-glance-list { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+    html body .pd-glance-list li { padding: 8px 10px !important; break-inside: avoid; page-break-inside: avoid; background: #fff !important; }
+    html body .pd-glance-icon { width: 26px; height: 26px; font-size: 11px; border-radius: 6px; }
+    html body .pd-glance-list strong { font-size: 10pt !important; }
+    html body .pd-glance-list div > span { font-size: 9pt !important; line-height: 1.45 !important; }
+
+    html body .pd-layout { display: block !important; max-width: none !important; }
+    html body .wf-policy-paper, html body .wf-legal-card, html body .wf-legal-intro { border: 0 !important; padding: 0 !important; margin: 0 !important; border-radius: 0 !important; }
+    html body .wf-legal-container { display: block !important; padding: 0 !important; max-width: none !important; }
+    html body .wf-policy-paper > h2:first-child { font-size: 15pt !important; padding-bottom: 6px !important; margin: 18px 0 10px !important; }
+    html body .wf-policy-paper h3, html body .wf-policy-paper h5.pd-section, html body .wf-legal-card h2 {
+        font-size: 12.5pt !important; margin: 16px 0 6px !important; padding-top: 10px !important; break-after: avoid; page-break-after: avoid;
+    }
+    html body .wf-policy-paper h4 { font-size: 11pt !important; break-after: avoid; }
+    html body .wf-policy-paper p, html body .wf-policy-paper li, html body .wf-legal-card p, html body .wf-legal-card li { font-size: 10pt !important; line-height: 1.5 !important; color: #111827 !important; orphans: 3; widows: 3; }
+    html body .wf-policy-paper fieldset, html body .wf-policy-paper tr { break-inside: avoid; page-break-inside: avoid; }
+    html body .pd-table-scroll { overflow: visible !important; border-radius: 0; }
+    html body .pd-table-scroll table { min-width: 0 !important; }
+    html body .wf-policy-paper th, html body .wf-policy-paper td { font-size: 9.5pt !important; padding: 6px 8px !important; }
+    /* Show where external links go; skip in-page and phone/email links. */
+    html body .wf-policy-paper a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 8.5pt; color: #475569; }
+}

@@ -58,6 +58,7 @@ if ($status === 'Success' && $code === 'ReportGenerated') {
             $filePath = $storageDir . '/reports/bank_aa_' . $txnId . '.json';
             @file_put_contents($filePath, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
+        waqt_mirror_file_to_gcs($filePath, 'private/bank_reports/' . basename($filePath)); // copy to Cloud Storage when enabled
 
         // Update database if loan application exists with this main_txn_id
         if (!empty($mainTxnId)) {

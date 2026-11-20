@@ -51,6 +51,7 @@ if (!empty($res) && !empty($res['banks'])) {
         @mkdir($storageDir, 0755, true);
     }
     @file_put_contents($localReportFile, json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    waqt_mirror_file_to_gcs($localReportFile, 'private/bank_reports/' . basename($localReportFile)); // copy to Cloud Storage when enabled
 }
 
 if (!empty($res['format']) && $res['format'] === 'xlsx') {

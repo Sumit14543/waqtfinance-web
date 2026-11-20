@@ -338,14 +338,25 @@ include 'includes/main-header.php';
           text-align: center;
       }
   }
+
+/* Policy tabs: keep every tab reachable (safe centering) and use a scrolling row on small screens */
+.wf-policy-nav-tabs { justify-content: flex-start !important; flex-direction: row !important; width: auto !important; padding-left: 2px !important; padding-right: 2px !important; }
+.wf-policy-nav-tabs > :first-child { margin-left: auto; }
+.wf-policy-nav-tabs > :last-child { margin-right: auto; }
+.wf-policy-tab-btn { flex-shrink: 0; }
+@media (min-width: 1200px) {
+    .wf-policy-nav-tabs { gap: 6px !important; }
+    .wf-policy-tab-btn { padding: 8px 13px !important; }
+}
 </style>
 
 <section class="wf-policy-hero">
     <div class="container">
         <div class="wf-policy-hero-content">
             <span class="wf-policy-badge"><i class="fa-solid fa-gavel"></i> Know the Rules</span>
-            <h1>Terms & Condition</h1>
-            <p>As modified by the Information Technology Act of 2000, this document is an electronic record according to applicable regulations, the amended requirements for electronic records in several legislation, and the Act itself.</p>
+            <h1>Terms &amp; Conditions</h1>
+            <p>The rules for using the WAQT Finance website and app and for applying for a loan. Please read them before you apply.</p>
+            <div class="pd-hero-meta"><span><i class="far fa-calendar" aria-hidden="true"></i> Last updated: 19 November 2026</span><span data-pd-reading hidden></span><button type="button" class="pd-print" data-pd-print><i class="fas fa-print" aria-hidden="true"></i> Print or save PDF</button></div>
         </div>
     </div>
 </section>
@@ -361,16 +372,35 @@ include 'includes/main-header.php';
             <a href="privacy-policy" class="wf-policy-tab-btn">Privacy Policy</a>
             <a href="terms-condition" class="wf-policy-tab-btn active">Terms & Conditions</a>
             <a href="refund-cancellation" class="wf-policy-tab-btn">Refund Policy</a>
+            <a href="digital-lending" class="wf-policy-tab-btn">Digital Lending</a>
         </div>
     </div>
 </div>
+
+<!-- Plain-language summary -->
+<section class="pd-glance-section" aria-labelledby="pd-glance-title">
+    <div class="container">
+        <div class="pd-glance">
+            <div class="pd-glance-head">
+                <div><span class="pd-eyebrow">At a glance</span><h2 id="pd-glance-title">The key points</h2></div>
+                <p>A plain-language summary. The full policy below is the binding text.</p>
+            </div>
+            <ul class="pd-glance-list">
+                <li><span class="pd-glance-icon"><i class="fas fa-user-check" aria-hidden="true"></i></span><div><strong>Who can apply</strong><span>You must be at least 18 years old and legally able to enter into a contract.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-mobile-screen-button" aria-hidden="true"></i></span><div><strong>Your account</strong><span>You sign in with your mobile number and an OTP. Keep your OTP private; you are responsible for activity on your account.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-file-contract" aria-hidden="true"></i></span><div><strong>Your loan agreement applies</strong><span>Your loan amount, interest, charges and repayment dates are set out in your loan agreement and Key Fact Statement.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-gavel" aria-hidden="true"></i></span><div><strong>Resolving disputes</strong><span>Disputes go first to mediation, then to arbitration in Gurugram. Courts in New Delhi have jurisdiction.</span></div></li>
+            </ul>
+        </div>
+    </div>
+</section>
 
 <div class="wf-legal-page" id="Condition">
     <div class="wf-legal-container">
         
         <!-- Left Sidebar Index -->
         <aside class="wf-legal-sidebar">
-            <h2>Index</h2>
+            <h2 class="pd-toc-title">On this page</h2>
             <nav>
                 <a href="#sec-1" class="wf-sidebar-link active"><i class="fa-solid fa-book-bookmark"></i> 1. Definitions</a>
                 <a href="#sec-2" class="wf-sidebar-link"><i class="fa-solid fa-hand-holding-dollar"></i> 2. Services</a>
@@ -422,12 +452,12 @@ include 'includes/main-header.php';
 
             <div id="sec-2" class="wf-legal-card">
                 <h2>2. SERVICES</h2>
-                <p>If you meet the requirements listed on the website for eligibility, you can apply for a loan through the services offered by WAQT FINANCE PVT. LTD.. You acknowledge that for the LENDER to approve the loan, the Company must gather, authenticate, track your location, verify, and confirm the User Data, papers, and details. You must register with the Company by logging in with your Third-Party Platforms ("User Account") to use the Services. You have to share and upload the User Data on the Application Form during the application procedure.</p>
+                <p>If you meet the requirements listed on the website for eligibility, you can apply for a loan through the services offered by WAQT FINANCE PVT. LTD.. You acknowledge that for the LENDER to approve the loan, the Company must gather, authenticate, verify, and confirm the User Data, papers, and details. You must register with the Company using your mobile number and a one-time password (OTP) ("User Account") to use the Services. You have to share and upload the User Data on the Application Form during the application procedure.</p>
                 <p>Personal information that can be found in User Data includes your name, email address, gender, date of birth, mobile number, passwords, photograph, and information about your phone. It also includes information from Third-Party Platforms, financial information from Credit Information Companies, bank documents, salary slips, bank statements, PAN cards, bank account numbers, and other pertinent details ("Personal Information"). </p>
                 <p>You pledge to always submit accurate, complete, and correct personal information. You grant us permission to import your information and Personal Information that is scattered across Third-Party Platforms to authenticate or verify as part of the Services. You recognize and agree that we may periodically ask Third-Party Platforms for changes to such Personal Information and that we may get such updated information from them. The Company will only act on your express instructions or agreement and will not exercise its discretion in any transactions carried out on your behalf. Additionally, you give the Company permission to periodically choose which Credit Information Companies to get your credit information report from.</p>
                 <p>The Company will process the User Data and other documents and details after you check and upload them in the Application Form. If you satisfy the eligibility requirements and other terms specified by the LENDER for loan sanctioning, the LENDER may approve the loan after the Company has finished verifying the documents. The ECS/NACH mandate form, check, or any other document that the lender may demand must then be filled out and uploaded. The actual paperwork, including signatures on documents needed for loan processing and sanctioning, may be gathered by the Company. The LENDER will disburse the loan by the terms and conditions of the Loan Agreement after the Company has collected the necessary documentation. Within the allotted 48 hours, the approved loan will be promptly deposited into your bank account by electronic transfer.</p>
-                <p>The Outstanding Amount(s) must be repaid to the LENDER within the deadline(s) specified on the Application Form. You understand and agree that until you fulfil your obligations to pay the LENDER the Outstanding Amount(s), the Company reserves the right to track your location ("Track") while the Services are being provided. If you stop using our services, you will still be liable for the Outstanding Amount(s) and will not be released from this obligation. You recognize and agree that, while using the Services, you will be fully accountable for any activity that takes place under your User Account. You agree that the Company will not be held accountable or liable for any disputes, claims, or losses resulting from the use or abuse of the Services. You alone are in charge of protecting the privacy of your User Account and any other connected activity under your User Account while using the Services. Without having to provide a reason, the Company retains the right to approve or refuse your registration for the Services.</p>
-                <p>You recognize and agree that the functionality of the electronic devices and internet connection you use to access the Platform is entirely your responsibility. The availability of hardware, software requirements, an internet connection, and other characteristics and specifications that may occasionally be needed are all prerequisites for the Platform's or the Services' functionality on your electronic device.The Company keeps a record of the User Data you provide during registration for your convenience. To use or access the Platform, you do not need to log into your User Account each time. By agreeing to these Terms, you understand and agree that we may track, retrieve, and utilize User Data—including, but not limited to, your Personal Information—for authentication and any updates about your login information.</p>
+                <p>The Outstanding Amount(s) must be repaid to the LENDER within the deadline(s) specified on the Application Form. The Company does not track your location. The mobile app does not access your device location, and the website asks for your approximate location only once, with your permission, to confirm that we serve your area. If you stop using our services, you will still be liable for the Outstanding Amount(s) and will not be released from this obligation. You recognize and agree that, while using the Services, you will be fully accountable for any activity that takes place under your User Account. You agree that the Company will not be held accountable or liable for any disputes, claims, or losses resulting from the use or abuse of the Services. You alone are in charge of protecting the privacy of your User Account and any other connected activity under your User Account while using the Services. Without having to provide a reason, the Company retains the right to approve or refuse your registration for the Services.</p>
+                <p>You recognize and agree that the functionality of the electronic devices and internet connection you use to access the Platform is entirely your responsibility. The availability of hardware, software requirements, an internet connection, and other characteristics and specifications that may occasionally be needed are all prerequisites for the Platform's or the Services' functionality on your electronic device.The Company keeps a record of the User Data you provide during registration for your convenience. To use or access the Platform, you do not need to log into your User Account each time. By agreeing to these Terms, you understand and agree that we may retrieve and use User Data, including your Personal Information, for authentication and to update your login information, as described in our <a href="privacy-policy">Privacy Policy</a>.</p>
             </div>
 
             <div id="sec-3" class="wf-legal-card">
@@ -452,7 +482,7 @@ include 'includes/main-header.php';
 
             <div id="sec-4" class="wf-legal-card">
                 <h2>4. ELIGIBILITY</h2>
-                <p>Users who are incapable of entering into contracts, such as children and insolvent individuals who have not been discharged, are not permitted to access the <b>WAQT FINANCE PVT. LTD.</b> website. On the other hand, under the supervision of a parent or legal guardian who accepts to be bound by these Terms of Use, you may use the Site if the client is 13 to 18 age. If Finance Private Limited determines or is informed that you are a minor, we retain the right to cancel or reject your registration, as well as to prevent you from accessing the Site.</p>
+                <p>Users who are incapable of entering into contracts, such as children and insolvent individuals who have not been discharged, are not permitted to access the <b>WAQT FINANCE PVT. LTD.</b> website. You must be at least 18 years old to register or apply for a loan. If WAQT Finance Private Limited determines or is informed that you are a minor, we retain the right to cancel or reject your registration, as well as to prevent you from accessing the Site.</p>
             </div>
 
             <div id="sec-5" class="wf-legal-card">
@@ -482,7 +512,7 @@ include 'includes/main-header.php';
 
             <div id="sec-7" class="wf-legal-card">
                 <h2>7. COMMUNICATIONS</h2>
-                <p>You agree to receive emails and promotional materials from the company and its affiliates. The Company may send SMS messages and make calls via third-party platforms. You consent to receive SMS communications from us at any time you think fit by using our website. This permission to be contacted may be used for marketing and promotional calls as well as calls for clarification.</p>
+                <p>You agree to receive service communications about your application, loan, repayments and account security by SMS, email, push notification and calls, including through third-party service providers. We will send you promotional messages or make marketing calls only if you have agreed to receive them, and you may opt out at any time by writing to <a href="mailto:customercare@waqtfinance.com">customercare@waqtfinance.com</a>. Calls about your dues are made only between 9:00 AM and 6:00 PM, as stated in our <a href="fair-practice-code">Fair Practices Code</a>.</p>
                 <p>You have the option to unsubscribe from these communications and/or newsletters by contacting our customer support team or sending an email to customercare@waqtfinance.com with your request. In addition, Service Providers with whom we have contracted may get in touch with you to further our rights, responsibilities, and duties under this agreement and all other policies that we abide by. No other calls will be made; this contact will only be made to achieve these goals.</p>
             </div>
 
@@ -645,4 +675,5 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<?php include 'includes/policy-help.php'; ?>
 <?php include 'includes/footer.php' ?>

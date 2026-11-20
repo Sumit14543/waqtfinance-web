@@ -1,0 +1,85 @@
+/* Policies hub - policies.php */
+.wf-pol { --pl-navy: #062b5d; --pl-blue: #18529c; --pl-ink: #0b213a; --pl-text: #475569; --pl-line: #e2e8f0; --pl-soft: #f8fafc; font-family: 'Inter', sans-serif; color: var(--pl-ink); }
+.wf-pol *, .wf-pol *::before, .wf-pol *::after { box-sizing: border-box; }
+.wf-pol h1, .wf-pol h2, .wf-pol h3 { font-family: inherit; letter-spacing: 0; }
+.wf-pol-wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+.wf-pol a:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; border-radius: 8px; }
+.wf-pol-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Hero */
+.wf-pol-hero { background: radial-gradient(circle at 20% 20%, #0d3f7b 0%, var(--pl-navy) 50%, #031530 100%); color: #fff; padding: 44px 0 48px; }
+.wf-pol-crumb { display: flex; gap: 8px; font-size: 13px; color: #c9d9ea; margin-bottom: 16px; }
+.wf-pol-crumb a { color: #fff; text-decoration: none; }
+.wf-pol-crumb a:hover { text-decoration: underline; }
+.wf-pol-hero h1 { color: #fff; font-size: clamp(30px, 4vw, 44px); font-weight: 800; line-height: 1.15; margin: 0 0 12px; }
+.wf-pol-hero > .wf-pol-wrap > p { color: rgba(255,255,255,.9); font-size: 17px; line-height: 1.7; max-width: 720px; margin: 0 0 22px; }
+.wf-pol-jump { display: flex; flex-wrap: wrap; gap: 10px; }
+.wf-pol-jump a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+.wf-pol-jump a:hover { background: rgba(255,255,255,.16); }
+.wf-pol-jump i { color: #93c5fd; }
+
+/* Sections */
+.wf-pol-section { padding: 52px 0; background: #fff; scroll-margin-top: 90px; }
+.wf-pol-section.is-band { background: var(--pl-soft); border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+.wf-pol-head { margin-bottom: 22px; }
+.wf-pol-head h2 { font-size: clamp(24px, 2.6vw, 30px); font-weight: 800; color: var(--pl-navy); margin: 0 0 6px; }
+.wf-pol-head p { margin: 0; color: var(--pl-text); font-size: 15.5px; }
+
+/* PDF list */
+.wf-pol-docs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.wf-pol-doc { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 18px 20px; border: 1px solid var(--pl-line); border-radius: 14px; background: #fff; transition: border-color .2s ease, box-shadow .2s ease; }
+.wf-pol-doc:hover { border-color: #bfdbfe; box-shadow: 0 8px 20px rgba(15, 23, 42, .05); }
+.wf-pol-doc-icon { width: 48px; height: 48px; border-radius: 12px; background: #e0ecfb; color: var(--pl-blue); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+.wf-pol-doc h3 { font-size: 17px; font-weight: 800; margin: 0 0 4px; color: var(--pl-ink); }
+.wf-pol-doc h3 a { color: inherit; text-decoration: none; }
+.wf-pol-doc h3 a:hover { color: var(--pl-blue); text-decoration: underline; }
+.wf-pol-doc p { margin: 0 0 6px; color: var(--pl-text); font-size: 14.5px; line-height: 1.55; }
+.wf-pol-meta { display: inline-block; font-size: 12.5px; font-weight: 700; color: #64748b; background: #f1f5f9; border-radius: 6px; padding: 3px 8px; }
+.wf-pol-doc.is-missing { background: var(--pl-soft); }
+.wf-pol-doc.is-missing .wf-pol-doc-icon { background: #f1f5f9; color: #94a3b8; }
+.wf-pol-doc.is-missing .wf-pol-meta { background: #fff7ed; color: #9a3412; font-weight: 600; }
+.wf-pol-doc-actions { display: flex; gap: 8px; }
+
+.wf-pol-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--pl-blue); background: var(--pl-blue); color: #fff !important; font-size: 14px; font-weight: 700; text-decoration: none !important; white-space: nowrap; transition: background .2s ease; }
+.wf-pol-btn:hover { background: #0d3f7b; }
+.wf-pol-btn.is-ghost { background: #fff; color: var(--pl-blue) !important; border-color: #bfdbfe; }
+.wf-pol-btn.is-ghost:hover { background: #f0f7ff; }
+
+/* Web policy pages */
+.wf-pol-pages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.wf-pol-page { display: grid; grid-template-columns: 44px minmax(0, 1fr) 16px; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--pl-line); border-radius: 14px; background: #fff; text-decoration: none !important; transition: border-color .2s ease, box-shadow .2s ease; }
+.wf-pol-page:hover { border-color: #93c5fd; box-shadow: 0 8px 20px rgba(15, 23, 42, .05); }
+.wf-pol-page > span { width: 44px; height: 44px; border-radius: 12px; background: #e0ecfb; color: var(--pl-blue); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.wf-pol-page h3 { font-size: 16px; font-weight: 800; color: var(--pl-ink); margin: 0 0 3px; }
+.wf-pol-page p { margin: 0; color: var(--pl-text); font-size: 14px; line-height: 1.5; }
+.wf-pol-arrow { color: #94a3b8; transition: transform .2s ease, color .2s ease; }
+.wf-pol-page:hover .wf-pol-arrow { color: var(--pl-blue); transform: translateX(3px); }
+
+/* Help */
+.wf-pol-help { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: center; padding: 28px; border-radius: 18px; background: #f0f7ff; border: 1px solid #dbeafe; }
+.wf-pol-help h2 { font-size: 24px; font-weight: 800; color: var(--pl-navy); margin: 0 0 8px; }
+.wf-pol-help p { margin: 0; color: var(--pl-text); font-size: 15px; line-height: 1.6; }
+.wf-pol-help-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 860px) {
+  .wf-pol-pages, .wf-pol-help { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .wf-pol-wrap { padding: 0 16px; }
+  .wf-pol-hero { padding: 30px 0 34px; }
+  .wf-pol-hero > .wf-pol-wrap > p { font-size: 15.5px; }
+  .wf-pol-section { padding: 38px 0; }
+  .wf-pol-doc { grid-template-columns: 44px minmax(0, 1fr); padding: 16px; }
+  .wf-pol-doc-icon { width: 44px; height: 44px; }
+  .wf-pol-doc-actions { grid-column: 1 / -1; }
+  .wf-pol-doc-actions .wf-pol-btn { flex: 1; }
+  .wf-pol-help { padding: 20px; }
+  .wf-pol-help-actions .wf-pol-btn { flex: 1 1 100%; white-space: normal; text-align: center; }
+}
+@media print {
+  .wf-pol-hero { background: #fff; color: #000; }
+  .wf-pol-hero h1, .wf-pol-hero p { color: #000; }
+  .wf-pol-jump, .wf-pol-doc-actions, .wf-pol-help-actions { display: none; }
+}
+
+.wf-pol-btn { min-width: 0; overflow-wrap: anywhere; }

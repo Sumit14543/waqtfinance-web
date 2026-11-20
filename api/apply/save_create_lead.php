@@ -12,7 +12,7 @@ require_valid_csrf();
 $csrf = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
 if (!$csrf || $csrf !== ($_SESSION['csrf_token'] ?? '')) {
     echo json_encode(['status' => 'error', 'message' => 'Security token expired. Please refresh and try again.']);
-    http_response_code(419);
+    http_response_code(403);
     exit;
 }
 
@@ -61,6 +61,16 @@ $pincode = preg_replace('/\D/', '', lead_clean($data['pincode'] ?? ''));
 $city = lead_clean($data['city'] ?? '');
 $state = lead_clean($data['state'] ?? '');
 $address = lead_clean($data['address'] ?? '');
+$dob = lead_clean($data['dob'] ?? '');
+if ($dob !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dob)) {
+    $dob = '';
+}
+$gender = lead_clean($data['gender'] ?? '');
+if (!in_array($gender, ['Male', 'Female', 'Other'], true)) {
+    $gender = '';
+}
+$panName = mb_substr(lead_clean($data['pan_name'] ?? ''), 0, 120);
+$gstBusinessName = mb_substr(lead_clean($data['gst_name'] ?? ''), 0, 191);
 
 // Bank & Account Aggregator Data
 $bankName = lead_clean($data['bank_name'] ?? '');
@@ -88,7 +98,8 @@ $breUpiCredits = (float)($data['bre_upi_credits'] ?? 0);
 $breDeclineReasons = is_array($data['bre_decline_reasons'] ?? null) ? $data['bre_decline_reasons'] : [];
 $breCrifData = is_array($data['bre_crif_data'] ?? null) ? $data['bre_crif_data'] : [];
 
-$mobileVerified = !empty($data['mobile_verified']) && (string)$data['mobile_verified'] === '1';
+// OTP status comes from the server session set by verify_lead_otp.php, never from the browser.
+$mobileVerified = $mobile !== '' && !empty($_SESSION['lead_mobile_verified_' . $mobile]);
 $panVerified = !empty($data['pan_verified']) && (string)$data['pan_verified'] === '1';
 $aadhaarVerified = !empty($data['aadhaar_verified']) && (string)$data['aadhaar_verified'] === '1';
 $gstVerified = !empty($data['gst_verified']) && (string)$data['gst_verified'] === '1';
@@ -118,12 +129,15 @@ if (is_array($incomingShopPhotos)) {
         }
         if (preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i', $photoItem, $matches)) {
             $ext = strtolower($matches[1]) === 'png' ? 'png' : (strtolower($matches[1]) === 'webp' ? 'webp' : 'jpg');
-            $decoded = base64_decode($matches[2]);
-            if ($decoded !== false && strlen($decoded) > 0) {
+            $decoded = base64_decode($matches[2], true);
+            $imageInfo = ($decoded !== false && strlen($decoded) > 0 && strlen($decoded) <= 12 * 1024 * 1024) ? @getimagesizefromstring($decoded) : false;
+            if ($imageInfo !== false && in_array($imageInfo['mime'] ?? '', ['image/jpeg', 'image/png', 'image/webp'], true)) {
                 $filename = 'shop_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
                 $targetPath = $shopDir . '/' . $filename;
                 if (@file_put_contents($targetPath, $decoded)) {
                     $shopPhotos[] = 'uploads/shop_photos/' . $filename;
+                    // Copy to Cloud Storage as well when FILE_STORAGE_PROVIDER=GCS.
+                    waqt_mirror_file_to_gcs($targetPath, 'uploads/shop_photos/' . $filename, (string) $imageInfo['mime']);
                 }
             }
         }
@@ -139,6 +153,11 @@ if (empty($fullName)) {
 
 if (!preg_match('/^[6-9]\d{9}$/', $mobile)) {
     echo json_encode(['status' => 'error', 'message' => 'Please enter a valid 10-digit mobile number.']);
+    exit;
+}
+
+if (!$mobileVerified) {
+    echo json_encode(['status' => 'error', 'message' => 'Please verify your mobile number with the OTP before submitting. If you verified it a while ago, go back to step 1 and verify again.']);
     exit;
 }
 
@@ -202,10 +221,15 @@ $leadDetailsArray = [
     'mobile_number' => $mobile,
     'mobile_verified' => $mobileVerified,
     'email' => $email,
+    'dob' => $dob,
+    'gender' => $gender,
     'pan_number' => $pan,
+    'pan_name' => $panName,
     'pan_verified' => $panVerified,
     'pan_verification_details' => $panDetails,
     'aadhaar_masked' => $maskedAadhaar,
+    // Encrypted at rest; used only to send the full number to the CRM. Never shown in the admin panel.
+    'aadhaar_encrypted' => $encryptedAadhaar,
     'aadhaar_verified' => $aadhaarVerified,
     'gst_number' => $gst,
     'gst_verified' => $gstVerified,
@@ -213,7 +237,8 @@ $leadDetailsArray = [
     'udyam_number' => $udyam,
     'udyam_verified' => $udyamVerified,
     'udyam_verification_details' => $udyamDetails,
-    'company_name' => $companyName,
+    'company_name' => $companyName !== '' ? $companyName : $gstBusinessName,
+    'gst_business_name' => $gstBusinessName,
     'business_type' => $businessType,
     'monthly_income' => $monthlyIncome,
     'shop_photo_url' => $shopPhotoPrimary,
@@ -254,20 +279,8 @@ $leadDetailsArray = [
 
 $leadDetailsJson = json_encode($leadDetailsArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-// 5. Insert into loan_leads (for landing quick leads panel)
-try {
-    $leadStmt = $conn->prepare("
-        INSERT INTO loan_leads (loan_type, full_name, mobile, pincode)
-        VALUES (?, ?, ?, ?)
-    ");
-    if ($leadStmt) {
-        $leadStmt->bind_param("ssss", $loanType, $fullName, $mobile, $pincode);
-        $leadStmt->execute();
-        $leadStmt->close();
-    }
-} catch (Throwable $e) {
-    error_log('Lead quick record insert error: ' . $e->getMessage());
-}
+// 5. The application is stored once, in loan_applied_master. (It used to be copied into loan_leads too,
+//    which counted every create-lead application twice on the admin dashboard.)
 
 // 6. Insert into loan_applied_master (for full loan application master panel)
 $savedMaster = false;
@@ -304,20 +317,40 @@ try {
     error_log('Loan master insert error: ' . $e->getMessage());
 }
 
-// 7. Optional CRM Intake Push
+if (!$savedMaster) {
+    echo json_encode(['status' => 'error', 'message' => 'We could not save your application. Please try again in a moment.']);
+    exit;
+}
+
+// 7. Send the lead to the CRM and record the outcome on the application, so the admin panel shows it.
+$crmSync = ['status' => 'error', 'message' => 'CRM push not attempted'];
 try {
-    if (function_exists('push_common_lead_to_crm')) {
-        // Will safely run if configured
-        push_common_lead_to_crm($conn, strtolower(str_replace(' ', '_', $loanType)), $applicationId);
+    if (function_exists('push_create_lead_to_crm')) {
+        $crmSync = push_create_lead_to_crm($conn, $applicationId);
     }
 } catch (Throwable $e) {
     error_log('CRM push error: ' . $e->getMessage());
+    $crmSync = ['status' => 'error', 'message' => 'CRM is not configured or unreachable'];
+}
+$crmSync['at'] = date('Y-m-d H:i:s');
+try {
+    $leadDetailsArray['crm_sync'] = $crmSync;
+    $updatedJson = json_encode($leadDetailsArray, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $syncStmt = $conn->prepare("UPDATE loan_applied_master SET loan_details = ? WHERE application_id = ?");
+    if ($syncStmt) {
+        $syncStmt->bind_param("ss", $updatedJson, $applicationId);
+        $syncStmt->execute();
+        $syncStmt->close();
+    }
+} catch (Throwable $e) {
+    error_log('CRM sync status save error: ' . $e->getMessage());
 }
 
 echo json_encode([
     'status' => 'success',
-    'message' => 'Lead created and verified successfully!',
+    'message' => 'Application submitted successfully.',
     'reference_id' => $applicationId,
+    'reference_code' => $applicationId,
     'applicant_name' => $fullName,
     'mobile_verified' => $mobileVerified,
     'pan_verified' => $panVerified,

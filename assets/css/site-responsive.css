@@ -1,0 +1,44 @@
+/* Site-wide responsive fixes (loaded on every page from includes/main-header.php).
+   Found by the responsive audit across 79 pages at 320-1440px. */
+
+/* Content images never wider than their column (blog / guide pages overflowed by up to 1850px) */
+.cs-main-post img, .cs-blog-detail img, .blog-content img, article img, figure img { max-width: 100%; height: auto; }
+figure { max-width: 100%; }
+
+/* Readable text in the top strip */
+.loan-topbar, .loan-topbar marquee { font-size: 12px; }
+
+@media (max-width: 991px) {
+  /* Product strip under the header: bigger touch targets (was 27px tall, 11px text) */
+  .loan-left-menu > a { display: inline-flex; align-items: center; min-height: 40px; }
+  .loan-menu-item { font-size: 12.5px !important; min-height: 36px; display: inline-flex !important; align-items: center; gap: 6px; padding: 6px 10px !important; }
+  /* Mobile Apply button: at least 36px tall */
+  .btn-mobile-apply { min-height: 36px; padding-top: 8px !important; padding-bottom: 8px !important; }
+}
+
+@media (max-width: 568px) {
+  /* Footer links: comfortable 40px rows instead of 18px text links */
+  .wf-footer-col-content nav { gap: 0 !important; }
+  .wf-footer-col-content nav a { display: flex !important; min-height: 40px; font-size: 14px !important; }
+  .wf-footer-col-content nav span { font-size: 12px !important; }
+  /* Collapsed footer sections must not be reachable by keyboard / screen readers */
+  .wf-footer-col.accordion-col:not(.active) .wf-footer-col-content { visibility: hidden; }
+  .wf-footer-col-title[role="button"]:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+  /* Social icons wrap instead of overflowing at 320px; 40px touch targets */
+  .wf-connect-section { flex-wrap: wrap; gap: 10px !important; }
+  .wf-social-icons-new { flex-wrap: wrap; }
+  .wf-social-icon-new { width: 40px !important; height: 40px !important; }
+  .wf-copyright-links a { display: inline-flex; align-items: center; min-height: 36px; }
+}
+
+/* About-us team slider: arrows sat outside the screen between 769px and 1150px */
+@media (max-width: 1150px) {
+  .slick-prev-custom { left: 4px !important; }
+  .slick-next-custom { right: 4px !important; }
+  .slick-arrow-custom { z-index: 2; }
+}
+
+/* Long words (emails, URLs) never push the page wider than the screen */
+@media (max-width: 480px) {
+  main a[href^="mailto:"], main a[href^="http"] { overflow-wrap: anywhere; }
+}

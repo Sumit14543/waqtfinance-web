@@ -159,7 +159,7 @@ font-size:18px;
         </div>
 
         <div class="wf-login-body">
-            <h2 class="fw-bold mb-2">Welcome Back</h2>
+            <h1 class="fw-bold mb-2" style="font-size: calc(1.325rem + .9vw); line-height: 1.2; border: 0; padding: 0;">Welcome Back</h1>
             <p class="text-muted mb-4">Please enter your registered mobile number to access your dashboard.</p>
 
             <form id="loginForm">

@@ -32,8 +32,8 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Create Lead &bull; Waqt Finance Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Apply for a Loan &bull; Waqt Finance</title>
     <meta name="robots" content="noindex, nofollow">
     <meta name="csrf-token" content="<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="icon" type="image/webp" href="assets/images/logo1.webp">
@@ -2336,6 +2336,40 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
         .btn-camera-snap:hover .snap-inner {
             background: #0284c7;
         }
+
+        /* ---------- UI/UX refinements (Nov 2026) ---------- */
+        .wizard-card::before { display: none; }
+        .pane-title { font-size: 20px; }
+        .pane-subtitle { font-size: 14px; line-height: 1.5; color: var(--slate-600, #475569); margin: 6px 0 0; }
+        /* Keep the required star next to its label, and push only "Optional"-style tags to the right. */
+        .f-label { justify-content: flex-start; gap: 4px; font-size: 13.5px; }
+        .f-label .opt-tag { margin-left: auto; font-size: 11.5px; }
+        .f-label .req { margin-left: 0; }
+        .f-error-alert { font-size: 13px; line-height: 1.45; }
+        #panInput::placeholder, #gstInput::placeholder, #udyamInput::placeholder { text-transform: none; letter-spacing: 0; }
+        .seg-item[aria-disabled="true"] { cursor: default; }
+        .seg-item[aria-disabled="true"]:hover { filter: none; transform: none; }
+        .seg-item:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+        .f-input:focus-visible, .f-select:focus-visible, .btn-card:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+        .consent-note {
+            position: relative; display: block; margin: 18px 0 0; padding: 12px 14px 12px 36px;
+            background: var(--slate-50, #f8fafc); border: 1px solid var(--slate-200, #e2e8f0); border-radius: 12px;
+            font-size: 12.5px; line-height: 1.55; color: var(--slate-600, #475569);
+        }
+        .consent-note i { position: absolute; left: 14px; top: 15px; color: var(--brand-primary); }
+        .consent-note a { color: var(--brand-primary); font-weight: 700; text-decoration: underline; }
+        .consent-note + .card-actions-row { margin-top: 14px; }
+        @media (max-width: 600px) {
+            /* 16px stops iOS from zooming into a field when it is focused. */
+            .f-input, .f-select { font-size: 16px; }
+            #pane2 .f-input-wrap[style*="display:flex"] { flex-direction: column; align-items: stretch; gap: 10px !important; }
+            #pane2 .f-input-wrap[style*="display:flex"] > * { flex: none !important; }
+            #aadhaarInput { height: 48px; width: 100%; }
+            #btnVerifyAadhaarDigilocker { width: 100% !important; height: 46px !important; font-size: 14px !important; justify-content: center; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
     </style>
 </head>
 <body>
@@ -2359,16 +2393,16 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
     <div class="stepper-card">
         <div class="stepper-header-row">
             <div class="step-label-title" id="stepperTitle">
-                <i class="fa-solid fa-phone"></i> Contact Details
+                <i class="fa-solid fa-phone" aria-hidden="true"></i> Contact details
             </div>
-            <span class="step-badge-counter" id="stepperCountText">Step 1 of 5</span>
+            <span class="step-badge-counter" id="stepperCountText" aria-live="polite">Step 1 of 5</span>
         </div>
         <div class="stepper-segments-bar">
-            <div class="seg-item active" id="seg1" onclick="goToStep(1)" title="Step 1: Contact Details"></div>
-            <div class="seg-item" id="seg2" onclick="goToStep(2)" title="Step 2: KYC Verification"></div>
-            <div class="seg-item" id="seg3" onclick="goToStep(3)" title="Step 3: Business Proofs"></div>
-            <div class="seg-item" id="seg4" onclick="goToStep(4)" title="Step 4: Bank &amp; Aggregator"></div>
-            <div class="seg-item" id="seg5" onclick="goToStep(5)" title="Step 5: Loan &amp; Address"></div>
+            <div class="seg-item active" id="seg1" onclick="segmentClick(1)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();segmentClick(1);}" role="button" tabindex="0" title="Step 1: Contact details" aria-label="Step 1: Contact details"></div>
+            <div class="seg-item" id="seg2" onclick="segmentClick(2)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();segmentClick(2);}" role="button" tabindex="0" title="Step 2: KYC verification" aria-label="Step 2: KYC verification"></div>
+            <div class="seg-item" id="seg3" onclick="segmentClick(3)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();segmentClick(3);}" role="button" tabindex="0" title="Step 3: Business details" aria-label="Step 3: Business details"></div>
+            <div class="seg-item" id="seg4" onclick="segmentClick(4)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();segmentClick(4);}" role="button" tabindex="0" title="Step 4: Bank statement" aria-label="Step 4: Bank statement"></div>
+            <div class="seg-item" id="seg5" onclick="segmentClick(5)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();segmentClick(5);}" role="button" tabindex="0" title="Step 5: Loan &amp; address" aria-label="Step 5: Loan &amp; address"></div>
         </div>
     </div>
 
@@ -2382,19 +2416,20 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             <div class="pane active" id="pane1">
                 <div class="pane-head">
                     <h2 class="pane-title">
-                        <i class="fa-solid fa-mobile-screen-button" style="color:var(--brand-primary);"></i> Mobile &amp; Profile
+                        <i class="fa-solid fa-mobile-screen-button" style="color:var(--brand-primary);" aria-hidden="true"></i> Contact details
                     </h2>
+                    <p class="pane-subtitle">We will send a one-time password (OTP) to verify this mobile number.</p>
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">
+                    <label class="f-label" for="mobileInput">
                         <span>Mobile Number <span class="req">*</span></span>
                     </label>
                     <div class="f-input-wrap">
                         <span class="input-prefix">+91</span>
-                        <input type="tel" id="mobileInput" class="f-input has-prefix" placeholder="9876543210" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="tel">
+                        <input type="tel" id="mobileInput" class="f-input has-prefix" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" pattern="[0-9]*" autocomplete="tel-national" aria-describedby="mobileErrorAlert">
                     </div>
-                    <div id="mobileErrorAlert" class="f-error-alert"></div>
+                    <div id="mobileErrorAlert" class="f-error-alert" role="alert"></div>
                     <div id="mobileVerifiedPill" class="verified-badge-row">
                         <span><i class="fa-solid fa-circle-check"></i> Phone Verified (+91 <span id="verifiedMobileText"></span>)</span>
                         <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
@@ -2402,19 +2437,21 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">Applicant Full Name <span class="req">*</span></label>
-                    <input type="text" id="fullName" class="f-input" placeholder="e.g. Rajesh Kumar" required autocomplete="name">
+                    <label class="f-label" for="fullName">Applicant Full Name <span class="req">*</span></label>
+                    <input type="text" id="fullName" class="f-input" placeholder="As on your PAN card" required autocomplete="name" aria-describedby="nameErrorAlert">
+                    <div id="nameErrorAlert" class="f-error-alert" role="alert"></div>
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">
+                    <label class="f-label" for="email">
                         <span>Email Address</span>
                         <span class="opt-tag">Optional</span>
                     </label>
-                    <input type="email" id="email" class="f-input" placeholder="applicant@example.com" inputmode="email" autocomplete="email">
+                    <input type="email" id="email" class="f-input" placeholder="name@example.com" inputmode="email" autocomplete="email">
                 </div>
 
                 <!-- Action Button Inside Step 1 Card -->
+                <p class="consent-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> By continuing, you agree that Waqt Finance may verify your details (including PAN, Aadhaar through DigiLocker and bank statements through an Account Aggregator, with your approval at each step) to process this loan application. See our <a href="privacy-policy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="terms-condition" target="_blank" rel="noopener">Terms</a>.</p>
                 <div class="card-actions-row">
                     <button type="button" id="step1ContinueBtn" class="btn-card btn-card-primary" onclick="handleStep1Continue()">
                         Continue <i class="fa-solid fa-arrow-right"></i>
@@ -2428,20 +2465,21 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             <div class="pane" id="pane2">
                 <div class="pane-head">
                     <h2 class="pane-title">
-                        <i class="fa-solid fa-id-card" style="color:var(--brand-primary);"></i> KYC Verification
+                        <i class="fa-solid fa-id-card" style="color:var(--brand-primary);" aria-hidden="true"></i> KYC verification
                     </h2>
+                    <p class="pane-subtitle">Verify your PAN and Aadhaar. Aadhaar is verified securely through DigiLocker.</p>
                 </div>
 
                 <!-- PAN Input -->
                 <div class="f-group">
-                    <label class="f-label">
+                    <label class="f-label" for="panInput">
                         <span>PAN Card Number <span class="req">*</span></span>
                     </label>
                     <div class="f-input-wrap">
-                        <input type="text" id="panInput" class="f-input" placeholder="ABCDE1234F" maxlength="10" autocomplete="off" style="text-transform: uppercase; letter-spacing: 1px;">
+                        <input type="text" id="panInput" class="f-input" placeholder="e.g. ABCDE1234F" maxlength="10" aria-describedby="panErrorAlert" autocomplete="off" style="text-transform: uppercase; letter-spacing: 1px;">
                         <span class="input-status-icon" id="panStatusIcon"></span>
                     </div>
-                    <div id="panErrorAlert" class="f-error-alert"></div>
+                    <div id="panErrorAlert" class="f-error-alert" role="alert"></div>
                     
                     <div id="panVerifiedPill" class="verified-badge-row">
                         <div>
@@ -2457,19 +2495,19 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
                 <!-- Aadhaar Input (Normal input field) -->
                 <div class="f-group">
-                    <label class="f-label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <label class="f-label" for="aadhaarInput" style="display:flex; justify-content:space-between; align-items:center;">
                         <span>Aadhaar Number <span class="req">*</span></span>
                         <span id="aadhaarVerifiedPill" style="display:none; font-size:10px; font-weight:800; background:#dcfce7; color:#15803d; border:1px solid #86efac; border-radius:999px; padding:2px 8px;">
                             <i class="fa-solid fa-circle-check"></i> Verified via DigiLocker
                         </span>
                     </label>
                     <div class="f-input-wrap" style="display:flex; gap:8px;">
-                        <input type="tel" id="aadhaarInput" class="f-input" placeholder="1234 5678 9012" maxlength="14" inputmode="numeric" autocomplete="off" style="letter-spacing: 1px; flex:1;">
+                        <input type="tel" id="aadhaarInput" class="f-input" placeholder="12-digit Aadhaar number" maxlength="14" aria-describedby="aadhaarErrorAlert" inputmode="numeric" autocomplete="off" style="letter-spacing: 1px; flex:1;">
                         <button type="button" id="btnVerifyAadhaarDigilocker" class="btn-card btn-card-primary" style="width:auto; padding:0 14px; font-size:12px; white-space:nowrap; border-radius:10px; height:44px; margin:0;" onclick="initiateDigiLockerKyc()">
                             <i class="fa-solid fa-fingerprint"></i> Verify with DigiLocker
                         </button>
                     </div>
-                    <div id="aadhaarErrorAlert" class="f-error-alert"></div>
+                    <div id="aadhaarErrorAlert" class="f-error-alert" role="alert"></div>
 
                     <!-- Verified Aadhaar Card with Official Photo -->
                     <div id="aadhaarKycCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:10px 12px; margin-top:8px;">
@@ -2488,12 +2526,12 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                     <div class="f-group">
-                        <label class="f-label">Date of Birth</label>
-                        <input type="date" id="dob" class="f-input">
+                        <label class="f-label" for="dob">Date of Birth</label>
+                        <input type="date" id="dob" class="f-input" autocomplete="bday">
                     </div>
                     <div class="f-group">
-                        <label class="f-label">Gender</label>
-                        <select id="gender" class="f-select">
+                        <label class="f-label" for="gender">Gender</label>
+                        <select id="gender" class="f-select" autocomplete="sex">
                             <option value="">Select</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
@@ -2519,21 +2557,22 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             <div class="pane" id="pane3">
                 <div class="pane-head">
                     <h2 class="pane-title">
-                        <i class="fa-solid fa-building-circle-check" style="color:var(--brand-primary);"></i> Business Verification
+                        <i class="fa-solid fa-building-circle-check" style="color:var(--brand-primary);" aria-hidden="true"></i> Business details
                     </h2>
+                    <p class="pane-subtitle">Add your business registration details if you have them, and a photo of your shop.</p>
                 </div>
 
                 <!-- GST API -->
                 <div class="f-group">
-                    <label class="f-label">
+                    <label class="f-label" for="gstInput">
                         <span>GSTIN (GST Number)</span>
                         <span class="opt-tag">Optional</span>
                     </label>
                     <div class="f-input-wrap">
-                        <input type="text" id="gstInput" class="f-input" placeholder="27AAPFU0939F1ZV" maxlength="15" autocomplete="off" style="text-transform: uppercase;">
+                        <input type="text" id="gstInput" class="f-input" placeholder="e.g. 27AAPFU0939F1ZV" maxlength="15" autocomplete="off" style="text-transform: uppercase;">
                         <span class="input-status-icon" id="gstStatusIcon"></span>
                     </div>
-                    <div id="gstErrorAlert" class="f-error-alert"></div>
+                    <div id="gstErrorAlert" class="f-error-alert" role="alert"></div>
                     <div id="gstVerifiedPill" class="verified-badge-row">
                         <div><i class="fa-solid fa-circle-check"></i> <strong id="gstBizName">-</strong></div>
                         <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
@@ -2542,15 +2581,15 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
                 <!-- Udyam API -->
                 <div class="f-group">
-                    <label class="f-label">
+                    <label class="f-label" for="udyamInput">
                         <span>Udyam Registration Number</span>
                         <span class="opt-tag">Optional</span>
                     </label>
                     <div class="f-input-wrap">
-                        <input type="text" id="udyamInput" class="f-input" placeholder="UDYAM-DL-01-1234567" maxlength="25" autocomplete="off" style="text-transform: uppercase;">
+                        <input type="text" id="udyamInput" class="f-input" placeholder="e.g. UDYAM-DL-01-1234567" maxlength="25" autocomplete="off" style="text-transform: uppercase;">
                         <span class="input-status-icon" id="udyamStatusIcon"></span>
                     </div>
-                    <div id="udyamErrorAlert" class="f-error-alert"></div>
+                    <div id="udyamErrorAlert" class="f-error-alert" role="alert"></div>
                     <div id="udyamVerifiedPill" class="verified-badge-row">
                         <div><i class="fa-solid fa-circle-check"></i> <strong id="udyamBizName">-</strong></div>
                         <span style="font-size:11px; color:#15803d; font-weight:800;">ACTIVE ✓</span>
@@ -2559,7 +2598,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                     <div class="f-group">
-                        <label class="f-label">Business Type</label>
+                        <label class="f-label" for="businessType">Business Type</label>
                         <select id="businessType" class="f-select">
                             <option value="Proprietorship">Proprietorship</option>
                             <option value="Partnership">Partnership</option>
@@ -2571,8 +2610,8 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                         </select>
                     </div>
                     <div class="f-group">
-                        <label class="f-label">Monthly Turnover (₹)</label>
-                        <input type="number" id="monthlyIncome" class="f-input" placeholder="75,000" inputmode="numeric">
+                        <label class="f-label" for="monthlyIncome">Monthly Turnover (₹)</label>
+                        <input type="number" id="monthlyIncome" class="f-input" placeholder="e.g. 75000" inputmode="numeric">
                     </div>
                 </div>
 
@@ -2631,8 +2670,9 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             <div class="pane" id="pane4">
                 <div class="pane-head">
                     <h2 class="pane-title">
-                        <i class="fa-solid fa-building-columns" style="color:var(--brand-primary);"></i> Bank &amp; Aggregator
+                        <i class="fa-solid fa-building-columns" style="color:var(--brand-primary);" aria-hidden="true"></i> Bank statement
                     </h2>
+                    <p class="pane-subtitle">Share your bank statement securely through an RBI-regulated Account Aggregator.</p>
                 </div>
 
                 <!-- Account Aggregator Hero Connect Card -->
@@ -2641,19 +2681,19 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                         <span class="aa-pill">
                             <i class="fa-solid fa-shield-halved text-primary"></i> RBI Regulated AA
                         </span>
-                        <span style="font-size:11px; color:#0369a1; font-weight:800;">Fastest Approval</span>
+                        <span style="font-size:11px; color:#0369a1; font-weight:800;">Required</span>
                     </div>
                     <h3 class="aa-title">
-                        <i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Connect Account Aggregator
+                        <i class="fa-solid fa-building-columns" style="color:var(--brand-primary);" aria-hidden="true"></i> Connect your bank account
                     </h3>
                     <p class="aa-desc">
-                        Auto-aggregate bank statements via RBI Account Aggregator to unlock maximum pre-approved business loan limits instantly.
+                        Share your bank statement through an RBI-regulated Account Aggregator. You choose the account and approve exactly what is shared, and it is used only to assess this loan.
                     </p>
 
                     <div style="display:flex; flex-wrap:wrap; gap:10px 18px; margin:14px 0 16px 0; font-size:12px; color:var(--slate-600); font-weight:600;">
-                        <span><i class="fa-solid fa-circle-check text-success"></i> Auto-discovers 100+ Banks</span>
-                        <span><i class="fa-solid fa-circle-check text-success"></i> 100% Encrypted &amp; Secure</span>
-                        <span><i class="fa-solid fa-circle-check text-success"></i> Instant Loan Approval</span>
+                        <span><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i> Works with most Indian banks</span>
+                        <span><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i> Encrypted, consent-based sharing</span>
+                        <span><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i> No need to upload PDFs</span>
                     </div>
 
                     <button type="button" class="btn-aa-connect" onclick="openAaConsentModal()">
@@ -2707,7 +2747,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 <input type="hidden" id="confirmAccountNumber" value="">
                 <input type="hidden" id="ifscCode" value="">
                 <input type="hidden" id="accountType" value="Current">
-                <div id="bankErrorAlert" class="f-error-alert" style="margin-top:14px; display:none;"></div>
+                <div id="bankErrorAlert" class="f-error-alert" role="alert" style="margin-top:14px; display:none;"></div>
 
                 <!-- Action Buttons Inside Step 4 Card -->
                 <div class="card-actions-row">
@@ -2726,8 +2766,9 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
             <div class="pane" id="pane5">
                 <div class="pane-head">
                     <h2 class="pane-title">
-                        <i class="fa-solid fa-indian-rupee-sign" style="color:var(--brand-primary);"></i> Loan &amp; Address
+                        <i class="fa-solid fa-indian-rupee-sign" style="color:var(--brand-primary);" aria-hidden="true"></i> Loan &amp; address
                     </h2>
+                    <p class="pane-subtitle">Tell us how much you need and where your business is located.</p>
                 </div>
 
                 <!-- BRE PRE-APPROVED SANCTION OFFER CARD (DYNAMIC STEP 6) -->
@@ -2735,7 +2776,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
 
 
                 <div class="f-group">
-                    <label class="f-label">Loan Product <span class="req">*</span></label>
+                    <label class="f-label" for="loanType">Loan Product <span class="req">*</span></label>
                     <select id="loanType" class="f-select" required>
                         <option value="Business Loan" selected>Business Loan</option>
                         <option value="EDI Loan">EDI Loan (Daily Repayment)</option>
@@ -2748,7 +2789,7 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">Amount Required (₹) <span class="req">*</span></label>
+                    <label class="f-label" for="loanAmount">Amount Required (₹) <span class="req">*</span></label>
                     <input type="number" id="loanAmount" class="f-input" placeholder="Enter loan amount required" min="20000" step="5000" inputmode="numeric" required>
                     
                     <!-- Quick Amount Chips -->
@@ -2761,27 +2802,28 @@ $aadhaarKycSession = $_SESSION['aadhaar_kyc_data'] ?? null;
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">Pincode <span class="req">*</span></label>
-                    <input type="tel" id="pincode" class="f-input" placeholder="6-digit pincode" maxlength="6" inputmode="numeric" required>
+                    <label class="f-label" for="pincode">Pincode <span class="req">*</span></label>
+                    <input type="tel" id="pincode" class="f-input" placeholder="6-digit pincode" maxlength="6" inputmode="numeric" autocomplete="postal-code" required>
                     <small id="pincodeStatusText" class="text-success font-weight-bold" style="font-size:11.5px;"></small>
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                     <div class="f-group">
-                        <label class="f-label">City</label>
-                        <input type="text" id="city" class="f-input" placeholder="City">
+                        <label class="f-label" for="city">City</label>
+                        <input type="text" id="city" class="f-input" placeholder="City" autocomplete="address-level2">
                     </div>
                     <div class="f-group">
-                        <label class="f-label">State</label>
-                        <input type="text" id="state" class="f-input" placeholder="State">
+                        <label class="f-label" for="state">State</label>
+                        <input type="text" id="state" class="f-input" placeholder="State" autocomplete="address-level1">
                     </div>
                 </div>
 
                 <div class="f-group">
-                    <label class="f-label">Address</label>
-                    <input type="text" id="address" class="f-input" placeholder="Shop / Office / Residential Address">
+                    <label class="f-label" for="address">Address</label>
+                    <input type="text" id="address" class="f-input" placeholder="Shop, office or home address" autocomplete="street-address">
                 </div>
 
+                <p class="consent-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> Submitting this application does not guarantee a loan. Your offer, interest rate and charges are shown in a Key Fact Statement before you accept. See our <a href="privacy-policy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="terms-condition" target="_blank" rel="noopener">Terms</a>.</p>
                 <!-- Action Buttons Inside Step 5 Card -->
                 <div class="card-actions-row">
                     <button type="button" class="btn-card btn-card-secondary" onclick="stepPrev()">
@@ -3299,11 +3341,11 @@ let currentStep = 1;
 const totalSteps = 5;
 
 const stepTitles = [
-    '<i class="fa-solid fa-phone"></i> Contact Details',
-    '<i class="fa-solid fa-id-card"></i> KYC Verification',
-    '<i class="fa-solid fa-building-circle-check"></i> Business Proofs',
-    '<i class="fa-solid fa-building-columns"></i> Bank &amp; Aggregator',
-    '<i class="fa-solid fa-indian-rupee-sign"></i> Loan &amp; Address'
+    '<i class="fa-solid fa-phone" aria-hidden="true"></i> Contact details',
+    '<i class="fa-solid fa-id-card" aria-hidden="true"></i> KYC verification',
+    '<i class="fa-solid fa-building-circle-check" aria-hidden="true"></i> Business details',
+    '<i class="fa-solid fa-building-columns" aria-hidden="true"></i> Bank statement',
+    '<i class="fa-solid fa-indian-rupee-sign" aria-hidden="true"></i> Loan &amp; address'
 ];
 
 const state = {
@@ -3350,6 +3392,8 @@ function updateStepUI() {
             seg.className = 'seg-item';
             if (i < currentStep) seg.classList.add('completed');
             else if (i === currentStep) seg.classList.add('active');
+            if (i === currentStep) seg.setAttribute('aria-current', 'step'); else seg.removeAttribute('aria-current');
+            seg.setAttribute('aria-disabled', String(i > currentStep));
         }
     }
 
@@ -3373,6 +3417,12 @@ function stepPrev() {
         currentStep--;
         updateStepUI();
     }
+}
+
+// Stepper segments only take the applicant back to a step already reached;
+// moving forward goes through each step's Continue checks.
+function segmentClick(step) {
+    if (step < currentStep) goToStep(step);
 }
 
 function goToStep(step) {
@@ -3524,8 +3574,10 @@ function handleStep1Continue() {
         return;
     }
 
+    const nameErrBox = document.getElementById('nameErrorAlert');
+    if (nameErrBox) nameErrBox.style.display = 'none';
     if (!name) {
-        showErr(errBox, 'Please enter Applicant Full Name.');
+        showErr(nameErrBox || errBox, 'Please enter the applicant\'s full name.');
         document.getElementById('fullName').focus();
         return;
     }
@@ -6025,7 +6077,7 @@ function submitFinalLead() {
     .catch(() => {
         state.leadSubmitting = false;
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Submit &amp; Claim Offer';
+        btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Submit Application';
         alert('Server connection error. Please try again.');
     });
 }

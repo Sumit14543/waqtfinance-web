@@ -5,6 +5,7 @@ http_response_code(404);
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <base href="<?php echo htmlspecialchars(rtrim(str_replace(chr(92), "/", dirname($_SERVER["SCRIPT_NAME"] ?? "/404.php")), "/") . "/", ENT_QUOTES, "UTF-8"); ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 - Page Not Found | Waqt Finance</title>

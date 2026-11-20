@@ -214,15 +214,26 @@ include 'includes/main-header.php';
             text-align: center;
         }
     }
+
+/* Policy tabs: keep every tab reachable (safe centering) and use a scrolling row on small screens */
+.wf-policy-nav-tabs { justify-content: flex-start !important; flex-direction: row !important; width: auto !important; padding-left: 2px !important; padding-right: 2px !important; }
+.wf-policy-nav-tabs > :first-child { margin-left: auto; }
+.wf-policy-nav-tabs > :last-child { margin-right: auto; }
+.wf-policy-tab-btn { flex-shrink: 0; }
+@media (min-width: 1200px) {
+    .wf-policy-nav-tabs { gap: 6px !important; }
+    .wf-policy-tab-btn { padding: 8px 13px !important; }
+}
 </style>
 
 <main>
     <section class="wf-policy-hero">
         <div class="container">
             <div class="wf-policy-hero-content">
-                <span class="wf-policy-badge"><i class="fa-solid fa-percent"></i> Rates for Your Needs</span>
+                <span class="wf-policy-badge"><i class="fa-solid fa-percent"></i> Transparent Pricing</span>
                 <h1>Interest Rate Policy</h1>
-                <p>We offer competitive and transparent interest rates tailored to your financial needs. Our policy ensures clarity, fairness, and consistency, helping you plan repayments confidently.</p>
+                <p>How we decide the interest rate and charges on your loan, and how we tell you about them before you sign.</p>
+                <div class="pd-hero-meta"><span data-pd-reading hidden></span><button type="button" class="pd-print" data-pd-print><i class="fas fa-print" aria-hidden="true"></i> Print or save PDF</button></div>
             </div>
         </div>
     </section>
@@ -237,9 +248,28 @@ include 'includes/main-header.php';
                 <a href="privacy-policy" class="wf-policy-tab-btn">Privacy Policy</a>
                 <a href="terms-condition" class="wf-policy-tab-btn">Terms & Conditions</a>
                 <a href="refund-cancellation" class="wf-policy-tab-btn">Refund Policy</a>
+                <a href="digital-lending" class="wf-policy-tab-btn">Digital Lending</a>
             </div>
         </div>
     </div>
+
+<!-- Plain-language summary -->
+<section class="pd-glance-section" aria-labelledby="pd-glance-title">
+    <div class="container">
+        <div class="pd-glance">
+            <div class="pd-glance-head">
+                <div><span class="pd-eyebrow">At a glance</span><h2 id="pd-glance-title">The key points</h2></div>
+                <p>A plain-language summary. The full policy below is the binding text.</p>
+            </div>
+            <ul class="pd-glance-list">
+                <li><span class="pd-glance-icon"><i class="fas fa-scale-balanced" aria-hidden="true"></i></span><div><strong>Risk-based pricing</strong><span>Your rate depends on our cost of funds, the loan tenure and your credit profile, so it can differ between customers.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-percent" aria-hidden="true"></i></span><div><strong>Annualised rate, shown upfront</strong><span>Your sanction letter and Key Fact Statement show the annualised interest rate and all charges before you sign.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-arrow-right" aria-hidden="true"></i></span><div><strong>Changes apply only going forward</strong><span>Any change in interest rates or charges is prospective, and we inform you about it.</span></div></li>
+                <li><span class="pd-glance-icon"><i class="fas fa-file-invoice" aria-hidden="true"></i></span><div><strong>All charges are disclosed</strong><span>Penal charges, processing fees and other charges are set out in your loan documents. GST applies as per law.</span></div></li>
+            </ul>
+        </div>
+    </div>
+</section>
 
     <section class="wf-policy-document-section">
         <div class="container">
@@ -335,4 +365,5 @@ include 'includes/main-header.php';
     </section>
 </main>
 
+<?php include 'includes/policy-help.php'; ?>
 <?php include 'includes/footer.php'; ?>

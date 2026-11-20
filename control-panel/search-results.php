@@ -11,8 +11,11 @@ $results = [
     'general' => [],
     'landing' => [],
     'cibil' => [],
-    'partners' => []
+    'partners' => [],
+    'master' => [],
+    'edi' => []
 ];
+$searchLimit = 50;
 
 if ($query !== '') {
     $searchTerm = "%" . $query . "%";
@@ -51,9 +54,28 @@ if ($query !== '') {
     $stmt5->execute();
     $results['partners'] = $stmt5->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt5->close();
+
+    // 6. Quick loan applications (create-lead form, business/personal/LAP/vehicle) - previously not searched
+    $stmt6 = $conn->prepare("SELECT id, application_id, applicant_name, mobile_number, pancard_number, city, loan_type, loan_amount, created_at FROM loan_applied_master WHERE applicant_name LIKE ? OR mobile_number LIKE ? OR pancard_number LIKE ? OR application_id LIKE ? ORDER BY id DESC LIMIT 50");
+    if ($stmt6) {
+        $stmt6->bind_param("ssss", $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+        $stmt6->execute();
+        $results['master'] = $stmt6->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt6->close();
+    }
+
+    // 7. EDI applications - previously not searched
+    $stmt7 = $conn->prepare("SELECT id, application_id, applicant_name, mobile_number, pan_number, city, loan_amount, status, created_at FROM edi_loan_applications WHERE applicant_name LIKE ? OR mobile_number LIKE ? OR pan_number LIKE ? OR application_id LIKE ? ORDER BY id DESC LIMIT 50");
+    if ($stmt7) {
+        $stmt7->bind_param("ssss", $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+        $stmt7->execute();
+        $results['edi'] = $stmt7->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt7->close();
+    }
 }
 
-$totalMatches = count($results['payday']) + count($results['general']) + count($results['landing']) + count($results['cibil']) + count($results['partners']);
+$totalMatches = array_sum(array_map('count', $results));
+$anyCapped = (bool) array_filter($results, static fn(array $rows): bool => count($rows) >= $searchLimit);
 
 // Helper to highlight matching keywords safely
 function highlight_match(string $text, string $query): string {
@@ -99,7 +121,7 @@ function highlight_match(string $text, string $query): string {
     <div style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin: 0;">
             Search Query: <span style="color: var(--primary);">"<?php echo htmlspecialchars((string) $query); ?>"</span>
-            <span style="font-size: 14px; font-weight: 500; color: var(--text-muted); margin-left: 10px;">(<?php echo $totalMatches; ?> matches found)</span>
+            <span style="font-size: 14px; font-weight: 500; color: var(--text-muted); margin-left: 10px;">(<?php echo $totalMatches; ?> matches<?php echo $anyCapped ? ', first ' . $searchLimit . ' per section' : ''; ?>)</span>
         </h2>
         <a href="dashboard.php" class="btn-primary-adm" style="text-decoration: none; padding: 8px 16px;">Back to Dashboard</a>
     </div>
@@ -112,9 +134,91 @@ function highlight_match(string $text, string $query): string {
         </div>
     <?php else: ?>
 
+        <?php
+        $sectionNav = [
+            'sr-payday' => ['Payday & Legacy', count($results['payday'])],
+            'sr-master' => ['Quick Loan Applications', count($results['master'])],
+            'sr-edi' => ['EDI Loans', count($results['edi'])],
+            'sr-general' => ['General Loans', count($results['general'])],
+            'sr-landing' => ['Landing Leads', count($results['landing'])],
+            'sr-cibil' => ['CIBIL', count($results['cibil'])],
+            'sr-partners' => ['Partners', count($results['partners'])],
+        ];
+        ?>
+        <nav class="sr-nav" aria-label="Jump to result type">
+            <?php foreach ($sectionNav as $anchor => [$label, $count]): if ($count === 0) continue; ?>
+                <a href="#<?php echo $anchor; ?>"><?php echo htmlspecialchars($label); ?> <span><?php echo $count; ?></span></a>
+            <?php endforeach; ?>
+        </nav>
+        <style>
+            .sr-nav { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0 14px; background: var(--bg-main, #f8fafc); }
+            .sr-nav a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border-color); background: #fff; color: var(--text-main); font-size: 13px; font-weight: 600; text-decoration: none; }
+            .sr-nav a:hover { border-color: var(--primary); color: var(--primary); }
+            .sr-nav a span { background: #eff6ff; color: var(--primary); border-radius: 999px; padding: 1px 8px; font-size: 12px; }
+            .sr-section { scroll-margin-top: 90px; }
+        </style>
+
+        <!-- Quick loan applications (loan_applied_master) -->
+        <?php if (!empty($results['master'])): ?>
+            <div class="data-card sr-section" id="sr-master" style="margin-bottom: 30px;">
+                <div class="card-header-flex">
+                    <h2 class="card-title-text"><i class="fa-solid fa-layer-group" style="color: var(--success); margin-right: 8px;"></i> Quick Loan Applications (<?php echo count($results['master']); ?>)</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead><tr><th>App ID</th><th>Applicant</th><th>Mobile / PAN</th><th>Loan Type</th><th>Amount</th><th>Date</th><th style="text-align: right;">Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($results['master'] as $row): ?>
+                                <tr>
+                                    <td><strong><?php echo highlight_match((string) ($row['application_id'] ?? ''), $query); ?></strong></td>
+                                    <td><?php echo highlight_match((string) ($row['applicant_name'] ?? ''), $query); ?><?php if (!empty($row['city'])): ?><br><small style="color: var(--text-muted);"><?php echo htmlspecialchars((string) $row['city']); ?></small><?php endif; ?></td>
+                                    <td><?php echo highlight_match((string) ($row['mobile_number'] ?? ''), $query); ?><?php if (!empty($row['pancard_number'])): ?><br><small style="color: var(--text-muted);"><?php echo highlight_match((string) $row['pancard_number'], $query); ?></small><?php endif; ?></td>
+                                    <td><?php echo htmlspecialchars((string) ($row['loan_type'] ?? '')); ?></td>
+                                    <td>&#8377;<?php echo number_format((float) ($row['loan_amount'] ?? 0)); ?></td>
+                                    <td><?php echo date('d M Y', strtotime((string) ($row['created_at'] ?? 'now'))); ?></td>
+                                    <td style="text-align: right;">
+                                        <a href="master-loans.php?tab=general&amp;search=<?php echo urlencode((string) ($row['application_id'] ?? '')); ?>" class="btn-action-premium btn-action-view" title="Open in Business &amp; Personal Loans"><i class="fa-solid fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- EDI applications -->
+        <?php if (!empty($results['edi'])): ?>
+            <div class="data-card sr-section" id="sr-edi" style="margin-bottom: 30px;">
+                <div class="card-header-flex">
+                    <h2 class="card-title-text"><i class="fa-solid fa-shop" style="color: var(--info); margin-right: 8px;"></i> EDI Loans (<?php echo count($results['edi']); ?>)</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead><tr><th>App ID</th><th>Applicant</th><th>Mobile / PAN</th><th>Amount</th><th>Status</th><th>Date</th><th style="text-align: right;">Action</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($results['edi'] as $row): ?>
+                                <tr>
+                                    <td><strong><?php echo highlight_match((string) ($row['application_id'] ?? ''), $query); ?></strong></td>
+                                    <td><?php echo highlight_match((string) ($row['applicant_name'] ?? ''), $query); ?><?php if (!empty($row['city'])): ?><br><small style="color: var(--text-muted);"><?php echo htmlspecialchars((string) $row['city']); ?></small><?php endif; ?></td>
+                                    <td><?php echo highlight_match((string) ($row['mobile_number'] ?? ''), $query); ?><?php if (!empty($row['pan_number'])): ?><br><small style="color: var(--text-muted);"><?php echo highlight_match((string) $row['pan_number'], $query); ?></small><?php endif; ?></td>
+                                    <td>&#8377;<?php echo number_format((float) ($row['loan_amount'] ?? 0)); ?></td>
+                                    <td><span class="status-badge" style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: capitalize;"><?php echo htmlspecialchars((string) ($row['status'] ?? '')); ?></span></td>
+                                    <td><?php echo date('d M Y', strtotime((string) ($row['created_at'] ?? 'now'))); ?></td>
+                                    <td style="text-align: right;">
+                                        <a href="master-loans.php?tab=edi&amp;search=<?php echo urlencode((string) ($row['application_id'] ?? '')); ?>" class="btn-action-premium btn-action-view" title="Open in EDI loans"><i class="fa-solid fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- 1. Payday Loan Matches -->
         <?php if (!empty($results['payday'])): ?>
-            <div class="data-card" style="margin-bottom: 30px;">
+            <div class="data-card sr-section" id="sr-payday" style="margin-bottom: 30px;">
                 <div class="card-header-flex">
                     <h2 class="card-title-text"><i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary); margin-right: 8px;"></i> Payday & Legacy Loans (<?php echo count($results['payday']); ?>)</h2>
                 </div>
@@ -160,7 +264,7 @@ function highlight_match(string $text, string $query): string {
 
         <!-- 2. General Wizard Matches -->
         <?php if (!empty($results['general'])): ?>
-            <div class="data-card" style="margin-bottom: 30px;">
+            <div class="data-card sr-section" id="sr-general" style="margin-bottom: 30px;">
                 <div class="card-header-flex">
                     <h2 class="card-title-text"><i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7; margin-right: 8px;"></i> General Loans (<?php echo count($results['general']); ?>)</h2>
                 </div>
@@ -206,7 +310,7 @@ function highlight_match(string $text, string $query): string {
 
         <!-- 3. Landing Leads Matches -->
         <?php if (!empty($results['landing'])): ?>
-            <div class="data-card" style="margin-bottom: 30px;">
+            <div class="data-card sr-section" id="sr-landing" style="margin-bottom: 30px;">
                 <div class="card-header-flex">
                     <h2 class="card-title-text"><i class="fa-solid fa-user-tag" style="color: #60a5fa; margin-right: 8px;"></i> Website Lead Captures (<?php echo count($results['landing']); ?>)</h2>
                 </div>
@@ -245,7 +349,7 @@ function highlight_match(string $text, string $query): string {
 
         <!-- 4. CIBIL Checks Matches -->
         <?php if (!empty($results['cibil'])): ?>
-            <div class="data-card" style="margin-bottom: 30px;">
+            <div class="data-card sr-section" id="sr-cibil" style="margin-bottom: 30px;">
                 <div class="card-header-flex">
                     <h2 class="card-title-text"><i class="fa-solid fa-gauge-high" style="color: var(--warning); margin-right: 8px;"></i> CIBIL Reports (<?php echo count($results['cibil']); ?>)</h2>
                 </div>
@@ -293,7 +397,7 @@ function highlight_match(string $text, string $query): string {
 
         <!-- 5. Partner Matches -->
         <?php if (!empty($results['partners'])): ?>
-            <div class="data-card" style="margin-bottom: 30px;">
+            <div class="data-card sr-section" id="sr-partners" style="margin-bottom: 30px;">
                 <div class="card-header-flex">
                     <h2 class="card-title-text"><i class="fa-solid fa-handshake" style="color: #10b981; margin-right: 8px;"></i> DSA Partners (<?php echo count($results['partners']); ?>)</h2>
                 </div>

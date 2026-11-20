@@ -3,12 +3,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/leads-functions.php';
+require_once __DIR__ . '/../includes/admin_audit.php';
 
 // Auth check
+if (admin_session_idle_expired()) {
+    json_response(['status' => 'error', 'message' => 'Your session expired due to inactivity. Please log in again.', 'code' => 'SESSION_EXPIRED'], 401);
+}
 if (empty($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     json_response(['status' => 'error', 'message' => 'Unauthorized access.'], 401);
 }
 
+header('Cache-Control: no-store, private, max-age=0');
 require_post();
 
 // CSRF check
@@ -20,6 +25,11 @@ if ($action === '') {
     json_response(['status' => 'error', 'message' => 'Action parameter is required.'], 400);
 }
 
+// Keep database and unexpected failures in the same JSON contract as validation errors.
+set_exception_handler(static function (Throwable $error): void {
+    error_log('Admin API failure: ' . $error->getMessage());
+    json_response(['status' => 'error', 'message' => 'The request could not be completed. Please try again.'], 500);
+});
 $conn = db();
 
 function normalize_blog_status(string $status): ?string
@@ -43,14 +53,14 @@ function blog_status_label(string $status): string
 function admin_master_format_money(float $amount): string
 {
     if ($amount >= 10000000) {
-        return 'Rs. ' . number_format($amount / 10000000, 2) . ' Cr';
+        return '₹' . number_format($amount / 10000000, 2) . ' Cr';
     }
 
     if ($amount >= 100000) {
-        return 'Rs. ' . number_format($amount / 100000, 2) . ' L';
+        return '₹' . number_format($amount / 100000, 2) . ' L';
     }
 
-    return 'Rs. ' . number_format($amount, 0);
+    return '₹' . number_format($amount, 0);
 }
 
 function admin_mask_edi_sensitive_fields(array $row): array
@@ -81,26 +91,7 @@ function admin_fetch_existing_edi_aadhaar(mysqli $conn, int $id): string
     return (string) ($row['aadhaar_number'] ?? '');
 }
 
-function admin_current_role(): string
-{
-    $role = strtolower(trim((string) ($_SESSION['admin_role'] ?? 'admin')));
-    $role = preg_replace('/[^a-z0-9]+/', '_', $role) ?? 'admin';
-    $role = trim($role, '_');
-
-    return $role !== '' ? $role : 'admin';
-}
-
-function admin_can(string $capability): bool
-{
-    return admin_current_role() === 'admin';
-}
-
-function admin_require_capability(string $capability): void
-{
-    if (!admin_can($capability)) {
-        json_response(['status' => 'error', 'message' => 'You do not have permission to perform this action.'], 403);
-    }
-}
+// admin_current_role(), admin_can() and admin_require_capability() now live in includes/security.php.
 
 function admin_master_fetch_filter_options(mysqli $conn, string $table, string $column): array
 {
@@ -206,6 +197,7 @@ function admin_master_build_filters(string $tab, array $filters): array
 
 switch ($action) {
     case 'list_website_leads':
+        admin_require_capability('lead.read');
         $tab = admin_website_sanitize_tab(trim((string) ($_POST['tab'] ?? 'landing')));
         $limit = (int) ($_POST['limit'] ?? 10);
         if ($limit < 5 || $limit > 100) {
@@ -239,6 +231,7 @@ switch ($action) {
         break;
 
     case 'list_master_leads':
+        admin_require_capability('lead.read');
         $tab = trim((string) ($_POST['tab'] ?? 'general'));
         if (!in_array($tab, ['general', 'edi'], true)) {
             $tab = 'general';
@@ -412,10 +405,9 @@ switch ($action) {
             $table = 'loan_applications';
         }
         
-        $stmt = $conn->prepare("DELETE FROM `$table` WHERE id = ?");
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute()) {
-            json_response(['status' => 'success', 'message' => 'Application deleted successfully.']);
+        // Keep a full copy for record retention and log who deleted it.
+        if (waqt_archive_and_delete($conn, $table, $id)) {
+            json_response(['status' => 'success', 'message' => 'Application deleted. A copy is kept in the deleted-records archive.']);
         } else {
             json_response(['status' => 'error', 'message' => 'Failed to delete application.'], 500);
         }
@@ -644,7 +636,9 @@ switch ($action) {
             waqt_generate_sitemap_file();
             json_response([
                 'status' => 'success',
-                'message' => 'Blog marked ' . strtolower(blog_status_label($blogStatus)) . '.',
+                'message' => $blogStatus === 'published'
+                    ? 'Article is now active (live on the website).'
+                    : 'Article is now inactive (hidden from the website).',
                 'blog_status' => $blogStatus,
                 'label' => blog_status_label($blogStatus),
             ]);
@@ -656,7 +650,7 @@ switch ($action) {
     case 'delete_blog':
         admin_require_capability('blog.delete');
         $id = (int) ($_POST['id'] ?? 0);
-        $defaultBlogImage = 'assets/images/default-blog.jpg';
+        $defaultBlogImage = 'assets/images/og-default.jpg';
         if ($id <= 0) {
             json_response(['status' => 'error', 'message' => 'Invalid blog ID.'], 400);
         }
@@ -666,18 +660,11 @@ switch ($action) {
         $stmtImg->bind_param('i', $id);
         $stmtImg->execute();
         $resImg = $stmtImg->get_result()->fetch_assoc();
-        if ($resImg && !empty($resImg['image_url']) && $resImg['image_url'] !== $defaultBlogImage) {
-            $imgPath = __DIR__ . '/../' . ltrim($resImg['image_url'], '/');
-            if (file_exists($imgPath) && is_file($imgPath)) {
-                @unlink($imgPath);
-            }
-        }
-
-        $stmt = $conn->prepare("DELETE FROM blogs WHERE id = ?");
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute()) {
+        if (waqt_archive_and_delete($conn, 'blogs', $id)) {
+            // The cover file is kept on purpose: the archived copy still points to it (so a restore shows the
+            // right image) and other posts may share the same file. Deleting it here used to break those covers.
             waqt_generate_sitemap_file();
-            json_response(['status' => 'success', 'message' => 'Blog post deleted successfully.']);
+            json_response(['status' => 'success', 'message' => 'Article deleted. A copy is kept in the deleted-records archive.']);
         } else {
             json_response(['status' => 'error', 'message' => 'Failed to delete blog post.'], 500);
         }
@@ -701,10 +688,14 @@ switch ($action) {
         $reviewedBy = trim((string) ($_POST['reviewed_by'] ?? ''));
         $ctaText = trim((string) ($_POST['cta_text'] ?? ''));
         $ctaLink = trim((string) ($_POST['cta_link'] ?? ''));
+        // Only web links or site paths; blocks javascript:/data: and other schemes.
+        if ($ctaLink !== '' && !preg_match('#^(https?://|/(?!/)|[a-z0-9-]+(\?|$))#i', $ctaLink)) {
+            json_response(['status' => 'error', 'message' => 'CTA link must be a web address (https://...) or a site page such as personal-loan-apply.'], 422);
+        }
         $faqsRaw = trim((string) ($_POST['faqs'] ?? '[]'));
         $removeImage = (string) ($_POST['remove_image'] ?? '0') === '1';
         $blogStatus = normalize_blog_status($status);
-        $defaultBlogImage = 'assets/images/default-blog.jpg';
+        $defaultBlogImage = 'assets/images/og-default.jpg';
 
         $faqsArr = json_decode($faqsRaw, true);
         if (!is_array($faqsArr)) {
@@ -731,6 +722,23 @@ switch ($action) {
         $slug = preg_replace('/-+/', '-', $slug);
         $slug = trim($slug, '-');
 
+        if ($slug === '' || strlen($slug) > 180 || mb_strlen($title) < 5 || mb_strlen($title) > 150) {
+            json_response(['status' => 'error', 'message' => 'Use a title of 5-150 characters and a valid URL slug.'], 422);
+        }
+        if (!in_array($category, ['personal', 'business', 'edi', 'vehicle', 'lap', 'payday', 'finance'], true)) json_response(['status' => 'error', 'message' => 'Invalid article category.'], 422);
+        if (trim(html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8')) === '' || ($excerpt !== '' && (mb_strlen($excerpt) < 10 || mb_strlen($excerpt) > 300))) json_response(['status' => 'error', 'message' => 'Add article content and use an excerpt of 10-300 characters or leave it empty.'], 422);
+        if ($ctaText !== '' && $ctaLink === '') json_response(['status' => 'error', 'message' => 'CTA target link is required when CTA text is provided.'], 422);
+        if (!is_array(json_decode($faqsRaw, true))) json_response(['status' => 'error', 'message' => 'Invalid FAQ data.'], 422);
+        foreach ($faqsArr as $faq) {
+            if (!is_array($faq) || !is_string($faq['q'] ?? null) || !is_string($faq['a'] ?? null) || trim($faq['q']) === '' || trim($faq['a']) === '') json_response(['status' => 'error', 'message' => 'Complete both fields in each FAQ or remove the row.'], 422);
+        }
+        if ($id > 0) {
+            $exists = $conn->prepare('SELECT id FROM blogs WHERE id = ?');
+            $exists->bind_param('i', $id); $exists->execute();
+            if (!$exists->get_result()->fetch_row()) json_response(['status' => 'error', 'message' => 'Article no longer exists.'], 404);
+        }
+        if (isset($_FILES['featured_image']) && !in_array($_FILES['featured_image']['error'], [UPLOAD_ERR_OK, UPLOAD_ERR_NO_FILE], true)) json_response(['status' => 'error', 'message' => 'Cover upload failed. Select the image again or try a smaller file.'], 422);
+        $obsoleteImagePath = null;
         // Check if slug is unique
         if ($id > 0) {
             $stmtSlug = $conn->prepare("SELECT id FROM blogs WHERE slug = ? AND id != ?");
@@ -761,11 +769,16 @@ switch ($action) {
             $stmtOld->bind_param('i', $id);
             $stmtOld->execute();
             $resOld = $stmtOld->get_result()->fetch_assoc();
-            if ($resOld && !empty($resOld['image_url']) && $resOld['image_url'] !== $defaultBlogImage) {
-                $oldImgPath = __DIR__ . '/../' . ltrim($resOld['image_url'], '/');
-                if (file_exists($oldImgPath) && is_file($oldImgPath)) {
-                    @unlink($oldImgPath);
-                }
+            $oldImage = (string) ($resOld['image_url'] ?? '');
+            // Only uploaded covers are removed, and only when no other post still uses the same file.
+            if ($oldImage !== '' && $oldImage !== $defaultBlogImage && strpos($oldImage, 'uploads/blogs/') === 0) {
+                $stmtShared = $conn->prepare("SELECT COUNT(*) FROM blogs WHERE image_url = ? AND id != ?");
+                $stmtShared->bind_param('si', $oldImage, $id);
+                $stmtShared->execute();
+                $sharedCount = (int) ($stmtShared->get_result()->fetch_row()[0] ?? 0);
+                $oldImgPath = realpath(__DIR__ . '/../' . $oldImage);
+                $coverRoot = realpath(__DIR__ . '/../uploads/blogs');
+                if ($sharedCount === 0 && $oldImgPath && $coverRoot && str_starts_with($oldImgPath, $coverRoot . DIRECTORY_SEPARATOR)) $obsoleteImagePath = $oldImgPath;
             }
         }
 
@@ -787,6 +800,7 @@ switch ($action) {
         }
 
         if ($stmt->execute()) {
+            if ($obsoleteImagePath) @unlink($obsoleteImagePath);
             waqt_generate_sitemap_file();
             json_response(['status' => 'success', 'message' => 'Blog post saved successfully.', 'slug' => $slug]);
         } else {
@@ -802,6 +816,9 @@ switch ($action) {
             json_response(['status' => 'error', 'message' => 'Invalid location status request.'], 400);
         }
 
+        $checkLocation = $conn->prepare('SELECT id FROM location_pages WHERE id = ?');
+        $checkLocation->bind_param('i', $id); $checkLocation->execute();
+        if (!$checkLocation->get_result()->fetch_row()) json_response(['status' => 'error', 'message' => 'Location no longer exists.'], 404);
         $stmt = $conn->prepare("UPDATE location_pages SET status = ?, updated_at = NOW() WHERE id = ?");
         $stmt->bind_param('si', $status, $id);
 
@@ -825,9 +842,7 @@ switch ($action) {
             json_response(['status' => 'error', 'message' => 'Invalid location ID.'], 400);
         }
 
-        $stmt = $conn->prepare("DELETE FROM location_pages WHERE id = ?");
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute()) {
+        if (waqt_archive_and_delete($conn, 'location_pages', $id)) {
             waqt_generate_sitemap_file();
             json_response(['status' => 'success', 'message' => 'Location page deleted successfully.']);
         } else {
@@ -851,12 +866,13 @@ switch ($action) {
         $types = "";
         
         if ($search !== '') {
-            $where[] = "(title LIKE ? OR slug LIKE ? OR author_name LIKE ?)";
+            $where[] = "(title LIKE ? OR slug LIKE ? OR author_name LIKE ? OR meta_keywords LIKE ?)";
             $searchWildcard = '%' . $search . '%';
             $params[] = $searchWildcard;
             $params[] = $searchWildcard;
             $params[] = $searchWildcard;
-            $types .= "sss";
+            $params[] = $searchWildcard;
+            $types .= "ssss";
         }
         
         if ($category !== '') {
@@ -888,87 +904,51 @@ switch ($action) {
         if ($page > $totalPages) $page = $totalPages;
         $offset = ($page - 1) * $limit;
         
-        $fetchQuery = "SELECT * FROM blogs $whereSql ORDER BY id DESC LIMIT ? OFFSET ?";
+        // List rows only carry what the table shows; the full article is loaded on demand by get_blog.
+        $fetchQuery = "SELECT id, title, slug, category, read_time, image_url, status, views, author_name, created_at, updated_at FROM blogs $whereSql ORDER BY id DESC LIMIT ? OFFSET ?";
         $fetchParams = $params;
         $fetchParams[] = $limit;
         $fetchParams[] = $offset;
         $fetchTypes = $types . "ii";
-        
+
         $stmt = $conn->prepare($fetchQuery);
         $stmt->bind_param($fetchTypes, ...$fetchParams);
         $stmt->execute();
-        $res = $stmt->get_result();
-        
-        $rowsHtml = "";
-        if ($res->num_rows === 0) {
-            $rowsHtml = '<tr><td colspan="9" class="text-center" style="padding: 40px; color: var(--text-muted);"><i class="fa-solid fa-folder-open" style="font-size: 28px; margin-bottom: 10px; display: block; opacity: 0.5;"></i> No matching blog posts found.</td></tr>';
-        } else {
-            while ($b = $res->fetch_assoc()) {
-                $blogStatus = (($b['status'] ?? 'draft') === 'published') ? 'published' : 'draft';
-                $isActive = $blogStatus === 'published';
-                $statusLabel = $isActive ? 'Active' : 'Inactive';
-                $nextStatus = $isActive ? 'draft' : 'published';
-                $toggleTitle = $isActive ? 'Set Inactive' : 'Set Active';
-                $badgeClass = $isActive ? 'badge-approved' : 'badge-draft';
-                
-                $rowsHtml .= '<tr id="blog-row-' . (int) $b['id'] . '" data-id="' . (int) $b['id'] . '" data-category="' . htmlspecialchars($b['category']) . '" data-author="' . htmlspecialchars($b['author_name']) . '" data-status="' . htmlspecialchars($blogStatus) . '" data-status-label="' . strtolower($statusLabel) . '">';
-                $rowsHtml .= '<td><img src="../' . htmlspecialchars($b['image_url'] ?? 'assets/images/default-blog.jpg') . '" class="blog-thumb" alt="cover"></td>';
-                $rowsHtml .= '<td><strong style="color: var(--text-main); font-weight: 700;">' . htmlspecialchars($b['title']) . '</strong></td>';
-                $rowsHtml .= '<td><span style="text-transform: capitalize; color: var(--text-main);">' . htmlspecialchars($b['category']) . '</span></td>';
-                $rowsHtml .= '<td style="font-family: monospace; font-size:12px; color: var(--info);">/blog/' . htmlspecialchars($b['slug']) . '</td>';
-                $rowsHtml .= '<td>' . htmlspecialchars($b['read_time'] ?: '5 Min Read') . '</td>';
-                $rowsHtml .= '<td><strong style="color: var(--text-main);">' . number_format((int)($b['views'] ?? 0)) . '</strong></td>';
-                $rowsHtml .= '<td><span class="badge-status ' . $badgeClass . ' status-badge">' . $statusLabel . '</span></td>';
-                $rowsHtml .= '<td>' . date('d M Y', strtotime($b['created_at'])) . '</td>';
-                $rowsHtml .= '<td>';
-                $rowsHtml .= '<div class="row-actions">';
-                $rowsHtml .= '<button type="button" class="btn-action edit-btn" data-blog=\'' . htmlspecialchars(json_encode($b, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') . '\' title="Edit Article"><i class="fa-solid fa-pen-to-square"></i></button>';
-                $rowsHtml .= '<button type="button" class="btn-action status-toggle-btn ' . ($isActive ? 'is-active' : 'is-inactive') . '" data-id="' . (int) $b['id'] . '" data-next-status="' . $nextStatus . '" title="' . $toggleTitle . '" aria-label="' . $toggleTitle . '"><i class="fa-solid ' . ($isActive ? 'fa-toggle-on' : 'fa-toggle-off') . '"></i></button>';
-                $rowsHtml .= '<button type="button" class="btn-action delete-btn" data-id="' . (int) $b['id'] . '" title="Delete Article"><i class="fa-solid fa-trash" style="color:#dc2626;"></i></button>';
-                $rowsHtml .= '</div>';
-                $rowsHtml .= '</td>';
-                $rowsHtml .= '</tr>';
-            }
-        }
-        
-        $paginationHtml = "";
-        if ($totalPages > 1) {
-            $paginationHtml .= '<ul class="pagination">';
-            $paginationHtml .= '<li class="page-item ' . ($page <= 1 ? 'disabled' : '') . '">';
-            if ($page <= 1) {
-                $paginationHtml .= '<span style="opacity:0.5; cursor:not-allowed;">&laquo; Prev</span>';
-            } else {
-                $paginationHtml .= '<a href="#" data-page="' . ($page - 1) . '">&laquo; Prev</a>';
-            }
-            $paginationHtml .= '</li>';
-            
-            for ($p = 1; $p <= $totalPages; $p++) {
-                $paginationHtml .= '<li class="page-item ' . ($p === $page ? 'active' : '') . '">';
-                if ($p === $page) {
-                    $paginationHtml .= '<span>' . $p . '</span>';
-                } else {
-                    $paginationHtml .= '<a href="#" data-page="' . $p . '">' . $p . '</a>';
-                }
-                $paginationHtml .= '</li>';
-            }
-            
-            $paginationHtml .= '<li class="page-item ' . ($page >= $totalPages ? 'disabled' : '') . '">';
-            if ($page >= $totalPages) {
-                $paginationHtml .= '<span style="opacity:0.5; cursor:not-allowed;">Next &raquo;</span>';
-            } else {
-                $paginationHtml .= '<a href="#" data-page="' . ($page + 1) . '">Next &raquo;</a>';
-            }
-            $paginationHtml .= '</li>';
-            $paginationHtml .= '</ul>';
-        }
-        
+        $records = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        $statsRow = $conn->query("SELECT COUNT(*) AS total, SUM(status = 'published') AS active, SUM(status <> 'published') AS inactive, COALESCE(SUM(views), 0) AS views FROM blogs");
+        $stats = $statsRow ? ($statsRow->fetch_assoc() ?: []) : [];
+
         json_response([
             'status' => 'success',
-            'html' => $rowsHtml,
-            'pagination' => $paginationHtml,
+            'records' => $records,
             'page' => $page,
-            'totalPages' => $totalPages
+            'limit' => $limit,
+            'total_records' => $totalRecords,
+            'total_pages' => $totalPages,
+            'stats' => [
+                'total' => (int) ($stats['total'] ?? 0),
+                'active' => (int) ($stats['active'] ?? 0),
+                'inactive' => (int) ($stats['inactive'] ?? 0),
+                'views' => (int) ($stats['views'] ?? 0),
+            ],
         ]);
+        break;
+
+    case 'get_blog':
+        admin_require_capability('blog.manage');
+        $id = (int) ($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            json_response(['status' => 'error', 'message' => 'Invalid article ID.'], 400);
+        }
+        $stmt = $conn->prepare("SELECT * FROM blogs WHERE id = ? LIMIT 1");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $blog = $stmt->get_result()->fetch_assoc();
+        if (!$blog) {
+            json_response(['status' => 'error', 'message' => 'Article not found. It may have been deleted.'], 404);
+        }
+        json_response(['status' => 'success', 'blog' => $blog]);
         break;
 
     case 'upload_editor_image':
@@ -1001,6 +981,90 @@ switch ($action) {
         }
         break;
 
+    case 'save_location_product':
+    case 'reset_location_product':
+        // Product content for product + city pages (Admin > Location CMS > Product content).
+        admin_require_capability('location.manage');
+        require_once __DIR__ . '/../includes/location_data.php';
+        if (!waqt_location_table_exists($conn, 'location_product_templates')) {
+            json_response(['status' => 'error', 'message' => 'Run storage/migrations/2026_11_19_location_cms.sql first.'], 409);
+        }
+        $defaults = require __DIR__ . '/../config/location-product-templates.php';
+        $productKey = trim((string) ($_POST['product_key'] ?? ''));
+        if (!isset($defaults[$productKey])) {
+            json_response(['status' => 'error', 'message' => 'Unknown product.'], 400);
+        }
+        $by = (string) ($_SESSION['admin_email'] ?? 'admin');
+
+        if ($action === 'reset_location_product') {
+            $json = json_encode($defaults[$productKey], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $stmt = $conn->prepare("INSERT INTO location_product_templates (product_key, content, updated_by) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE content = VALUES(content), updated_by = VALUES(updated_by)");
+            $stmt->bind_param('sss', $productKey, $json, $by);
+            $stmt->execute();
+            waqt_admin_audit($conn, 'location_product.reset', 'location_product_templates', $productKey);
+            json_response(['status' => 'success', 'message' => 'Default content restored.']);
+        }
+
+        $text = static fn(string $field, int $max): string => mb_substr(trim(strip_tags((string) ($_POST[$field] ?? ''))), 0, $max);
+        $list = static function (string $field, int $maxItems = 20): array {
+            $items = preg_split('/\R/', (string) ($_POST[$field] ?? '')) ?: [];
+            $items = array_values(array_filter(array_map(static fn($line) => mb_substr(trim(strip_tags($line)), 0, 300), $items), 'strlen'));
+            return array_slice($items, 0, $maxItems);
+        };
+        $qa = static function (string $field, int $maxItems = 20): array {
+            $rows = json_decode((string) ($_POST[$field] ?? '[]'), true);
+            $clean = [];
+            foreach (is_array($rows) ? $rows : [] as $row) {
+                if (!is_array($row) || !is_string($row['q'] ?? null) || !is_string($row['a'] ?? null) || (trim($row['q']) === '') !== (trim($row['a']) === '')) json_response(['status' => 'error', 'message' => 'Complete both fields in each product Q&A row.'], 422);
+                $q = mb_substr(trim(strip_tags((string) ($row['q'] ?? ''))), 0, 200);
+                // Answers may keep simple formatting; the page sanitises them again when rendering.
+                $a = mb_substr(trim(waqt_sanitize_rich_html((string) ($row['a'] ?? ''))), 0, 1500);
+                if ($q !== '' && $a !== '') $clean[] = ['q' => $q, 'a' => $a];
+            }
+            return array_slice($clean, 0, $maxItems);
+        };
+
+        $name = $text('name', 80);
+        if ($name === '') {
+            json_response(['status' => 'error', 'message' => 'Product name is required.'], 422);
+        }
+        $applyUrl = $text('apply_url', 120);
+        if ($applyUrl !== '' && !preg_match('#^[a-z0-9-]+(\?[a-z0-9=&_-]*)?$#i', $applyUrl)) {
+            json_response(['status' => 'error', 'message' => 'Apply page must be a site page such as personal-loan-apply.'], 422);
+        }
+        $content = array_replace($defaults[$productKey], [
+            'name' => $name,
+            'apply_url' => $applyUrl !== '' ? $applyUrl : $defaults[$productKey]['apply_url'],
+            'desc' => $text('desc', 600),
+            'range_text' => $text('range_text', 80),
+            'min_amount' => $text('min_amount', 40),
+            'max_amount_val' => max(1000, min(100000000, (int) ($_POST['max_amount_val'] ?? 0))),
+            'tenure' => $text('tenure', 60),
+            'default_tenure' => max(1, min(360, (int) ($_POST['default_tenure'] ?? 12))),
+            'interest' => $text('interest', 80),
+            'default_rate' => max(1, min(60, (float) ($_POST['default_rate'] ?? 12))),
+            'features' => $list('features'),
+            'eligibility' => $list('eligibility'),
+            'documents' => $list('documents'),
+            'benefits_vs_risks' => ['benefits' => $list('benefits'), 'risks' => $list('risks')],
+            'choice_scenarios' => ['title' => $text('choice_title', 120), 'items' => $qa('choice_items', 12)],
+            'common_mistakes' => $qa('common_mistakes', 12),
+            'faqs' => $qa('faqs', 20),
+        ]);
+        $json = json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $isActive = (int) (($_POST['is_active'] ?? '1') === '1');
+        $sortOrder = max(0, min(9999, (int) ($_POST['sort_order'] ?? 0)));
+        $stmt = $conn->prepare("INSERT INTO location_product_templates (product_key, content, is_active, sort_order, updated_by) VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE content = VALUES(content), is_active = VALUES(is_active), sort_order = VALUES(sort_order), updated_by = VALUES(updated_by)");
+        $stmt->bind_param('ssiis', $productKey, $json, $isActive, $sortOrder, $by);
+        if (!$stmt->execute()) {
+            json_response(['status' => 'error', 'message' => 'Could not save product content.'], 500);
+        }
+        waqt_admin_audit($conn, 'location_product.update', 'location_product_templates', $productKey, ['is_active' => $isActive]);
+        waqt_generate_sitemap_file();
+        json_response(['status' => 'success', 'message' => 'Saved. The ' . $name . ' pages now show this content.']);
+        break;
+
     case 'save_location':
         admin_require_capability('location.manage');
         $id = (int) ($_POST['id'] ?? 0);
@@ -1031,6 +1095,52 @@ switch ($action) {
         }
         if (!in_array($status, ['draft', 'published'], true)) {
             json_response(['status' => 'error', 'message' => 'Invalid status.'], 400);
+        }
+
+        if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug) || strlen($slug) > 80) {
+            json_response(['status' => 'error', 'message' => 'Slug must be 1-80 lowercase letters, numbers or single hyphens.'], 422);
+        }
+        if (mb_strlen($name) > 120 || mb_strlen($title) > 255 || mb_strlen($metaTitle) > 255 || mb_strlen($metaDescription) > 1000) {
+            json_response(['status' => 'error', 'message' => 'Name or page metadata is too long.'], 422);
+        }
+        if (trim($intro) === '' || ($type === 'office' && $address === '')) {
+            json_response(['status' => 'error', 'message' => 'Introduction is required. Office locations also need a physical address.'], 422);
+        }
+        if ($id > 0) {
+            $existing = $conn->prepare('SELECT id FROM location_pages WHERE id = ?');
+            $existing->bind_param('i', $id); $existing->execute();
+            if (!$existing->get_result()->fetch_row()) json_response(['status' => 'error', 'message' => 'Location no longer exists. Refresh the list.'], 404);
+        }
+        $localNote = waqt_sanitize_rich_html($localNote);
+        // Reject malformed nested data rather than replacing existing content with empty arrays.
+        foreach ([$areasRaw, $scenariosRaw, $nearbyRaw, $faqsRaw, $productContentRaw] as $jsonInput) {
+            if (!is_array(json_decode($jsonInput, true))) json_response(['status' => 'error', 'message' => 'Invalid location content format. Reload and try again.'], 422);
+        }
+        $validatePairs = static function (array $rows, string $first, string $second): void {
+            if (count($rows) > 100) json_response(['status' => 'error', 'message' => 'Use at most 100 rows per section.'], 422);
+            foreach ($rows as $row) {
+                if (!is_array($row) || !is_string($row[$first] ?? null) || !is_string($row[$second] ?? null) || trim($row[$first]) === '' || trim($row[$second]) === '') {
+                    json_response(['status' => 'error', 'message' => 'Complete both fields in every guidance and FAQ row, or remove the row.'], 422);
+                }
+            }
+        };
+        $validatePairs(json_decode($faqsRaw, true), 'q', 'a');
+        foreach (json_decode($scenariosRaw, true) as $row) {
+            if (!is_array($row) || count($row) !== 2 || !is_string($row[0] ?? null) || !is_string($row[1] ?? null) || trim($row[0]) === '' || trim($row[1]) === '') json_response(['status' => 'error', 'message' => 'Complete both guidance fields or remove the row.'], 422);
+        }
+        foreach (json_decode($areasRaw, true) as $area) {
+            if (!is_string($area)) json_response(['status' => 'error', 'message' => 'Areas must contain text values.'], 422);
+        }
+        foreach (json_decode($nearbyRaw, true) as $nearbySlug => $nearbyLabel) {
+            if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', (string) $nearbySlug) || !is_string($nearbyLabel) || trim($nearbyLabel) === '') json_response(['status' => 'error', 'message' => 'Nearby locations need a valid slug and label.'], 422);
+        }
+        $allowedProducts = array_keys(require __DIR__ . '/../config/location-product-templates.php');
+        foreach (json_decode($productContentRaw, true) as $productKey => $overrides) {
+            if (!in_array($productKey, $allowedProducts, true) || !is_array($overrides)) json_response(['status' => 'error', 'message' => 'Invalid product override.'], 422);
+            foreach ($overrides as $field => $value) {
+                if ($field === 'faqs' && is_array($value)) $validatePairs($value, 'q', 'a');
+                elseif (!in_array($field, ['title', 'meta_title', 'meta_description', 'description', 'min_amount', 'tenure', 'interest'], true) || !is_string($value)) json_response(['status' => 'error', 'message' => 'Invalid product override field.'], 422);
+            }
         }
 
         // Validate unique slug
@@ -1078,6 +1188,20 @@ switch ($action) {
         }
         $productContentClean = json_encode($productContentArr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
+        // Optional fields (phone, map link, hero image): validated before anything is saved.
+            $phone = mb_substr(trim((string) ($_POST['phone'] ?? '')), 0, 30);
+            if ($phone !== '' && !preg_match('/^[0-9+()\-\s]{7,30}$/', $phone)) {
+                json_response(['status' => 'error', 'message' => 'The phone number is not valid. Use digits, spaces, + or -.'], 422);
+            }
+            $mapUrl = trim((string) ($_POST['map_url'] ?? ''));
+            if ($mapUrl !== '' && !preg_match('#^https://#i', $mapUrl)) {
+                json_response(['status' => 'error', 'message' => 'The map link must start with https://'], 422);
+            }
+            $heroImage = trim((string) ($_POST['hero_image'] ?? ''));
+            if ($heroImage !== '' && (str_contains($heroImage, '..') || !preg_match('#^(https://[^\s\'"()]+|assets/[A-Za-z0-9_./-]+|uploads/[A-Za-z0-9_./-]+)$#', $heroImage))) {
+                json_response(['status' => 'error', 'message' => 'The hero image must be a site path (assets/... or uploads/...) or an https link.'], 422);
+            }
+
         $finalAddress = ($type === 'office') ? $address : null;
 
         if ($id > 0) {
@@ -1091,6 +1215,23 @@ switch ($action) {
         }
 
         if ($stmt->execute()) {
+            $savedId = $id > 0 ? $id : (int) $conn->insert_id;
+            // Optional columns added by storage/migrations/2026_11_19_location_cms.sql.
+            require_once __DIR__ . '/../includes/location_data.php';
+            if ($savedId > 0 && waqt_location_column_exists($conn, 'location_pages', 'phone')) {
+                $extra = $conn->prepare("UPDATE location_pages SET phone = ?, map_url = ?, hero_image = ? WHERE id = ?");
+                $extra->bind_param('sssi', $phone, $mapUrl, $heroImage, $savedId);
+                $extra->execute();
+            }
+            if ($savedId > 0 && waqt_location_column_exists($conn, 'location_pages', 'sort_order')) {
+                $sortOrder = max(0, min(9999, (int) ($_POST['sort_order'] ?? 0)));
+                $sortStmt = $conn->prepare("UPDATE location_pages SET sort_order = ? WHERE id = ?");
+                $sortStmt->bind_param('ii', $sortOrder, $savedId);
+                $sortStmt->execute();
+            }
+            if (function_exists('waqt_admin_audit')) {
+                waqt_admin_audit($conn, $id > 0 ? 'location.update' : 'location.create', 'location_pages', $savedId, ['slug' => $slug, 'status' => $status]);
+            }
             waqt_generate_sitemap_file();
             json_response(['status' => 'success', 'message' => 'Location page saved successfully.', 'slug' => $slug]);
         } else {
@@ -1320,6 +1461,7 @@ switch ($action) {
         break;
 
     case 'get_lead_details':
+        admin_require_capability('lead.read');
         $id = (int)($_POST['id'] ?? 0);
         $type = trim((string)($_POST['type'] ?? 'general'));
         
@@ -1402,6 +1544,7 @@ switch ($action) {
 
     case 'export_applications':
         admin_require_capability('export.leads');
+        waqt_admin_audit($conn, 'data.export', null, null, ['action' => $action, 'filters' => array_intersect_key($_POST, array_flip(['tab', 'type', 'search', 'status', 'date_from', 'date_to', 'loan_type']))]);
         $tab = trim((string)($_POST['tab'] ?? 'payday'));
         $search = trim((string)($_POST['search'] ?? ''));
         $status = trim((string)($_POST['status'] ?? ''));
@@ -1523,7 +1666,7 @@ switch ($action) {
             if (!empty($row['created_at'])) {
                 $row['created_at'] = date('d M Y, h:i A', strtotime((string)$row['created_at']));
             }
-            fputcsv($output, array_values($row));
+            fputcsv($output, waqt_csv_safe_row(array_values($row)));
         }
 
         fclose($output);
@@ -1554,7 +1697,7 @@ switch ($action) {
                 foreach ($exportConfig['columns'] as $column) {
                     $row[] = admin_website_export_value($column, $record[$column] ?? '');
                 }
-                fputcsv($output, $row);
+                fputcsv($output, waqt_csv_safe_row($row));
             }
         }
 
@@ -1563,6 +1706,7 @@ switch ($action) {
 
     case 'export_leads':
         admin_require_capability('export.leads');
+        waqt_admin_audit($conn, 'data.export', null, null, ['action' => $action, 'filters' => array_intersect_key($_POST, array_flip(['tab', 'type', 'search', 'status', 'date_from', 'date_to', 'loan_type']))]);
         $tab = trim((string)($_POST['tab'] ?? 'general'));
         $search = trim((string)($_POST['search'] ?? ''));
         $city = trim((string)($_POST['city'] ?? ''));
@@ -1696,7 +1840,7 @@ switch ($action) {
                 if (!empty($row['created_at'])) {
                     $row['created_at'] = date('d M Y, h:i A', strtotime((string)$row['created_at']));
                 }
-                fputcsv($output, array_values($row));
+                fputcsv($output, waqt_csv_safe_row(array_values($row)));
             }
         }
         fclose($output);
