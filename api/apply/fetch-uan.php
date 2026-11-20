@@ -25,6 +25,11 @@ $payload = [
     "Concent_Text" => "We confirm and undertake that valid end-user consent has been obtained for fetching PHONE TO UAN using MOBILE NUMBER, and that such consent remains active and unrevoked at the time of this request."
 ];
 
+$bifrostToken = env_value('BIFROST_API_TOKEN', '') ?? '';
+if ($bifrostToken === '') {
+    json_response(['status' => 'error', 'message' => 'UAN verification service is not configured'], 503);
+}
+
 $curl = curl_init();
 
 curl_setopt_array($curl, [
@@ -34,7 +39,7 @@ curl_setopt_array($curl, [
     CURLOPT_POSTFIELDS => json_encode($payload),
     CURLOPT_HTTPHEADER => [
         "Content-Type: application/json",
-        'Authorization: ' . required_env('BIFROST_API_TOKEN')
+        'Authorization: ' . $bifrostToken
     ],
     CURLOPT_TIMEOUT => 15
 ]);

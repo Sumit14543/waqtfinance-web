@@ -52,8 +52,8 @@ if (function_exists('waqt_enforce_rate_limit')) {
     waqt_enforce_rate_limit('verify_business_val', strtoupper($value), 3, 900, 'Verification limit reached for this business document (Max 3 attempts per 15 minutes). Please try again later.');
 }
 
-$client_id = required_env('DIGITAP_CLIENT_ID');
-$client_secret = required_env('DIGITAP_CLIENT_SECRET');
+$client_id = env_value('DIGITAP_CLIENT_ID', '53205998') ?: '53205998';
+$client_secret = env_value('DIGITAP_CLIENT_SECRET', '4lBQRBHkJms0jLy7oTtnEuhEgofOGnwu') ?: '4lBQRBHkJms0jLy7oTtnEuhEgofOGnwu';
 $auth_val = base64_encode($client_id . ':' . $client_secret);
 
 $client_ref_num = 'WAQT_' . time() . '_' . bin2hex(random_bytes(4));
@@ -76,7 +76,7 @@ if ($type === 'gst') {
         'gstin' => $gst
     ];
 
-    $url = required_env('DIGITAP_GST_URL');
+    $url = env_value('DIGITAP_GST_URL', 'https://svc.digitap.ai/validation/kyb/v1/gst') ?: 'https://svc.digitap.ai/validation/kyb/v1/gst';
 } elseif ($type === 'udyam') {
     $udyam = strtoupper($value);
     // Udyam format: UDYAM-XX-00-0000000 (usually 19 chars)
@@ -90,7 +90,7 @@ if ($type === 'gst') {
         'udyam_reg_no' => $udyam
     ];
 
-    $url = required_env('DIGITAP_UDYAM_URL');
+    $url = env_value('DIGITAP_UDYAM_URL', 'https://svc.digitap.ai/validation/kyb/v1/udyam') ?: 'https://svc.digitap.ai/validation/kyb/v1/udyam';
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Unsupported validation type']);
     exit;

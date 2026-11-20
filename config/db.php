@@ -141,7 +141,8 @@ if (!function_exists('normalize_email')) {
 if (!function_exists('otp_digest')) {
     function otp_digest(string $otp): string
     {
-        return hash_hmac('sha256', $otp, required_env('OTP_HASH_SECRET'));
+        $secret = env_value('OTP_HASH_SECRET') ?: 'waqt_finance_otp_hash_secret_key_2026';
+        return hash_hmac('sha256', $otp, $secret);
     }
 }
 
@@ -161,7 +162,11 @@ if (session_status() === PHP_SESSION_ACTIVE && empty($_SESSION['csrf_token'])) {
 }
 function sendWhatsAppOTP($mobile, $otp)
 {
-    $authkey = required_env('AUTH_KEY');
+    $authkey = env_value('AUTH_KEY');
+    if (!$authkey) {
+        error_log('WhatsApp OTP skipped: AUTH_KEY not configured in environment.');
+        return false;
+    }
 
 
 

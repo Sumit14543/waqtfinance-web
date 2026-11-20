@@ -55,6 +55,12 @@ try {
         'Concent_Text' => 'We confirm and undertake that valid end-user consent has been obtained for fetching CIBIL REPORT using MOBILE NUMBER, and that such consent remains active and unrevoked at the time of this request.',
     ];
 
+    $bifrostToken = env_value('BIFROST_API_TOKEN', '') ?? '';
+    if ($bifrostToken === '') {
+        echo json_encode(['status' => 'error', 'message' => 'CIBIL report service token is not configured']);
+        exit;
+    }
+
     $curl = curl_init();
     curl_setopt_array($curl, [
         CURLOPT_URL => env_value('BIFROST_API_URL', 'https://bifrost.unifers.ai/enrich/get-cibil-report'),
@@ -67,7 +73,7 @@ try {
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES),
         CURLOPT_HTTPHEADER => [
-            'Authorization: ' . required_env('BIFROST_API_TOKEN'),
+            'Authorization: ' . $bifrostToken,
             'Content-Type: application/json',
             'Accept: application/json',
         ],

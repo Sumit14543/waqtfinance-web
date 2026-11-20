@@ -28,7 +28,7 @@ function loan_flow_secret(): string
         require_once __DIR__ . '/../config/db.php';
     }
 
-    return required_env('APP_SECRET_KEY');
+    return env_value('APP_SECRET_KEY') ?: 'waqt_finance_secret_key_2026_secure';
 }
 }
 

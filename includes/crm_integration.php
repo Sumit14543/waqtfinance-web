@@ -4,8 +4,11 @@ declare(strict_types=1);
 if (!function_exists('push_payday_lead_to_crm')) {
     function push_payday_lead_to_crm(mysqli $conn, string $app_id): array
     {
-        $apiUrl = required_env('PAYDAY_CRM_LEAD_PUSH_URL');
-        $apiKey = required_env('PAYDAY_CRM_LEAD_PUSH_API_KEY');
+        $apiUrl = env_value('PAYDAY_CRM_LEAD_PUSH_URL') ?: env_value('CRM_LEAD_PUSH_URL');
+        $apiKey = env_value('PAYDAY_CRM_LEAD_PUSH_API_KEY') ?: env_value('CRM_LEAD_PUSH_API_KEY');
+        if (!$apiUrl || !$apiKey) {
+            return ['status' => 'skipped', 'message' => 'CRM integration skipped (credentials not configured)'];
+        }
 
         // 1. Fetch application details
         $stmt = $conn->prepare("SELECT * FROM loan_applications WHERE application_id = ? LIMIT 1");
@@ -358,8 +361,11 @@ if (!function_exists('push_create_lead_to_crm')) {
      */
     function push_create_lead_to_crm(mysqli $conn, string $app_id): array
     {
-        $apiUrl = required_env('CRM_LEAD_PUSH_URL');
-        $apiKey = required_env('CRM_LEAD_PUSH_API_KEY');
+        $apiUrl = env_value('CRM_LEAD_PUSH_URL');
+        $apiKey = env_value('CRM_LEAD_PUSH_API_KEY');
+        if (!$apiUrl || !$apiKey) {
+            return ['status' => 'skipped', 'message' => 'CRM integration skipped (credentials not configured)'];
+        }
 
         $stmt = $conn->prepare("SELECT * FROM loan_applied_master WHERE application_id = ? LIMIT 1");
         if (!$stmt) return ['status' => 'error', 'message' => 'Could not read the application'];
@@ -497,8 +503,11 @@ if (!function_exists('push_common_lead_to_crm')) {
 
     function push_common_lead_to_crm(mysqli $conn, string $loanType, string $app_id): array
     {
-        $apiUrl = required_env('CRM_LEAD_PUSH_URL');
-        $apiKey = required_env('CRM_LEAD_PUSH_API_KEY');
+        $apiUrl = env_value('CRM_LEAD_PUSH_URL');
+        $apiKey = env_value('CRM_LEAD_PUSH_API_KEY');
+        if (!$apiUrl || !$apiKey) {
+            return ['status' => 'skipped', 'message' => 'CRM integration skipped (credentials not configured)'];
+        }
 
         if ($loanType === 'edi') {
             // Fetch EDI details

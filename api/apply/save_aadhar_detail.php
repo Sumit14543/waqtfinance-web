@@ -83,6 +83,11 @@ if (!$stmt->execute()) {
 
 $ch = curl_init();
 
+$bifrostToken = env_value('BIFROST_API_TOKEN', '') ?? '';
+if ($bifrostToken === '') {
+    api_json_response('error', 'Aadhaar verification service is not configured');
+}
+
 curl_setopt_array($ch, [
     CURLOPT_URL => "https://bifrost.unifers.ai/enrich/get-aadhaar-verification",
     CURLOPT_RETURNTRANSFER => true,
@@ -92,7 +97,7 @@ curl_setopt_array($ch, [
     ]),
     CURLOPT_HTTPHEADER => [
         "Content-Type: application/json",
-        "Authorization: ". required_env('BIFROST_API_TOKEN')
+        "Authorization: " . $bifrostToken
     ]
 ]);
 

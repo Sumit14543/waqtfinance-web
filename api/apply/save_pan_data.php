@@ -30,6 +30,12 @@ function fetch_uan_safely(mysqli $conn, string $appId, string $mobile): void
             return;
         }
 
+        $bifrostToken = env_value('BIFROST_API_TOKEN', '') ?? '';
+        if ($bifrostToken === '') {
+            curl_close($curl);
+            return;
+        }
+
         curl_setopt_array($curl, [
             CURLOPT_URL => 'https://bifrost.unifers.ai/enrich/get-phone-to-uan',
             CURLOPT_RETURNTRANSFER => true,
@@ -37,7 +43,7 @@ function fetch_uan_safely(mysqli $conn, string $appId, string $mobile): void
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'Authorization: ' . required_env('BIFROST_API_TOKEN'),
+                'Authorization: ' . $bifrostToken,
             ],
             CURLOPT_TIMEOUT => 8,
         ]);

@@ -42,6 +42,13 @@ loan_flow_update_application($conn, (string) $app_id, [
 
 $ch = curl_init();
 
+$bifrostToken = env_value('BIFROST_API_TOKEN', '') ?? '';
+if ($bifrostToken === '') {
+    $_SESSION['aadhaar_error'] = 'Aadhaar verification service is not configured.';
+    header('Location: /aadhar-varification.php');
+    exit;
+}
+
 curl_setopt_array($ch, [
     CURLOPT_URL => "https://bifrost.unifers.ai/enrich/get-aadhaar-data",
     CURLOPT_RETURNTRANSFER => true,
@@ -51,7 +58,7 @@ curl_setopt_array($ch, [
     ]),
     CURLOPT_HTTPHEADER => [
         "Content-Type: application/json",
-        'Authorization: ' . required_env('BIFROST_API_TOKEN')
+        'Authorization: ' . $bifrostToken
     ]
 ]);
 $response = curl_exec($ch);
