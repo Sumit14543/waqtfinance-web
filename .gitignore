@@ -1,6 +1,6 @@
 # Environment & Secrets (Never push to GitHub)
 .env
-storage/keys/*.pem
+storage/keys/*
 config/*.json
 
 # User Uploads & Media (Privacy & Size)
